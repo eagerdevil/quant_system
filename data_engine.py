@@ -5,11 +5,14 @@
 覆盖：行情/指数/宏观/资金/情绪/基本面/事件
 数据源：东方财富 API（主）+ 腾讯/新浪 API（备用）
 """
-import json, urllib.request, time, sys, re
+import json, urllib.request, time, sys, re, os
 from datetime import datetime, timedelta
 
 TODAY = datetime.now().strftime("%Y%m%d")
 MAX_RETRY = 3
+
+# GitHub Actions 环境检测（东方财富API屏蔽美国IP，GitHub Actions Runner在美国）
+_ON_GITHUB = os.environ.get("GITHUB_ACTIONS") == "true" or os.environ.get("CI") == "true"
 
 # 备用数据源开关（东方财富API被限时自动使用）
 _USE_FALLBACK = False
@@ -24,6 +27,11 @@ INDEX_CODES = {
 }
 
 def fetch_json(url, timeout=10):
+    # GitHub Actions 在美国，东方财富API封禁美国IP → 直接走备用接口
+    if _ON_GITHUB and "eastmoney.com" in url:
+        print(f"  [SKIP] GitHub环境跳过东方财富，直接走备用源", file=sys.stderr)
+        return None
+
     for attempt in range(MAX_RETRY):
         try:
             req = urllib.request.Request(url, headers={

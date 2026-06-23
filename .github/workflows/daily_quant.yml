@@ -11,7 +11,7 @@ on:
 jobs:
   quant-analysis:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: 检出代码
