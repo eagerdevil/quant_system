@@ -1,0 +1,425 @@
+#!/usr/bin/env python
+"""
+量化系统 每日自动运行主程序
+============================
+整合: 数据采集 → 因子计算 → 择时判断 → 决策生成 → 输出报告
+用法: python daily_runner.py [--portfolio portfolio.json]
+"""
+import json, sys, os, io
+from datetime import datetime
+
+# Fix Windows encoding
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
+# 确保能找到模块
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from data_engine import (
+    collect_all_data, KEY_ETFS, USER_WATCHLIST, USER_STOCKS,
+    fetch_market_breadth, fetch_total_volume,
+    fetch_north_bound_flow, fetch_margin_balance, fetch_etf_kline,
+    fetch_etf_realtime, get_all_index_data
+)
+from quant_engine import (
+    score_etf_comprehensive, MarketTiming, TradeDecider
+)
+from report_mailer import generate_html_report, send_email, WeeklyReview
+
+TODAY = datetime.now().strftime("%Y%m%d")
+OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def load_portfolio(filepath=None):
+    """加载当前持仓"""
+    if filepath and os.path.exists(filepath):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    # 默认持仓（从user_investment记忆同步）
+    return {
+        "518850": {"shares": 200, "cost": 9.091, "name": "黄金ETF华夏"},
+        "159183": {"shares": 1000, "cost": 0.985, "name": "新能源车ETF招商"}
+    }
+
+def update_portfolio_prices(portfolio, etf_data):
+    """更新持仓的当前价格"""
+    for code in portfolio:
+        if code in etf_data and etf_data[code].get("realtime"):
+            portfolio[code]["current_price"] = etf_data[code]["realtime"]["price"]
+    return portfolio
+
+def analyze_watchlist_etf(s, timing, portfolio):
+    """对单只关注ETF生成买入/观望/回避建议"""
+    code = s["code"]
+    name = s["name"]
+    score = s["score"]
+    grade = s["grade"]
+    ind = s["indicators"]
+    ret = s["returns"]
+    vs = s["vs_ma"]
+    factors = s.get("factors", {})
+
+    # 已持仓的单独处理
+    is_holding = code in portfolio
+    holding_info = portfolio.get(code, {})
+
+    reasons_buy = []
+    reasons_avoid = []
+    action = "HOLD"
+
+    # 买入条件
+    if ind["rsi"] <= 58 and ind["consecutive_up"] <= 2:
+        reasons_buy.append(f"RSI={ind['rsi']:.0f}不热，连涨仅{ind['consecutive_up']}天")
+    if ret["r5d"] <= 1 and ret["r20d"] >= -5:
+        reasons_buy.append("短期未大涨，中期不差")
+    if factors.get("F1_趋势强度", 0) >= 7:
+        reasons_buy.append("趋势动能充沛")
+    if ind.get("sortino", 0) > 0.8:
+        reasons_buy.append(f"风险调整收益好(Sortino={ind['sortino']:.2f})")
+    if 30 <= ind["rsi"] <= 45:
+        reasons_buy.append("RSI偏冷，接近超卖区，反弹概率大")
+
+    # 回避条件
+    if ind["rsi"] > 68:
+        reasons_avoid.append(f"RSI={ind['rsi']:.0f}过热，追高风险大")
+    if ind["consecutive_up"] >= 5:
+        reasons_avoid.append(f"连涨{ind['consecutive_up']}天，获利盘压力极大")
+    if ret["r5d"] > 12:
+        reasons_avoid.append(f"5日涨{ret['r5d']:.1f}%，短期透支")
+    if factors.get("F1_趋势强度", 0) <= 3:
+        reasons_avoid.append("趋势信号偏弱")
+    if ind.get("sortino", 0) < -1.0:
+        reasons_avoid.append("风险收益比为负，持有风险大")
+    if ind["rsi"] < 25 and factors.get("F1_趋势强度", 0) <= 3:
+        reasons_avoid.append("超跌但趋势未反转，不建议接飞刀")
+
+    # 综合判断
+    if grade in ["A_强烈买入", "B_买入"] and len(reasons_avoid) <= 1:
+        action = "BUY"
+    elif grade in ["D_谨慎", "E_回避"] or len(reasons_avoid) >= 3:
+        action = "AVOID"
+    else:
+        action = "WATCH"
+
+    # 持仓特殊建议
+    holding_advice = ""
+    if is_holding:
+        cost = holding_info.get("cost", s["price"])
+        pnl = (s["price"]/cost - 1)*100
+        if pnl <= -8:
+            holding_advice = f"止损触发！浮亏{pnl:.1f}%，建议减仓"
+            action = "SELL"
+        elif action == "AVOID" and pnl > 3:
+            holding_advice = f"浮盈{pnl:.1f}%，但评分下滑，建议止盈"
+            action = "REDUCE"
+        elif action == "AVOID":
+            holding_advice = f"浮亏{pnl:.1f}%，评分走弱，关注止损线"
+        elif action == "BUY":
+            holding_advice = f"浮盈{pnl:.1f}%，可以加仓"
+        else:
+            holding_advice = f"浮盈{pnl:.1f}%，继续持有观察"
+
+    buy_price = s["price"]
+    stop_loss = round(buy_price * 0.95, 3)
+    take_profit = round(buy_price * 1.08, 3)
+
+    return {
+        "code": code, "name": name, "action": action,
+        "score": score, "grade": grade, "price": buy_price,
+        "reasons_buy": reasons_buy, "reasons_avoid": reasons_avoid,
+        "is_holding": is_holding, "holding_advice": holding_advice,
+        "stop_loss": stop_loss, "take_profit": take_profit,
+        "rsi": ind["rsi"], "consecutive_up": ind["consecutive_up"],
+        "r5d": ret["r5d"], "r20d": ret["r20d"]
+    }
+
+def format_institutional_flow(all_data):
+    """格式化机构资金流向"""
+    lines = []
+    lines.append(f"\n  {'─'*60}")
+    lines.append(f"  [机构资金流向]")
+    lines.append(f"  {'─'*60}")
+
+    # 行业主力资金 TOP5
+    sf = all_data.get("sector_flow")
+    if sf:
+        lines.append(f"  行业主力净流入 TOP5:")
+        for i, s in enumerate(sf[:5]):
+            emoji = "[+]" if s["main_net"] > 0 else "[-]"
+            lines.append(f"    {i+1}. {emoji} {s['name']} : {s['main_net']:+.1f}亿")
+
+    # 龙虎榜机构净买
+    dt = all_data.get("dragon_tiger")
+    if dt:
+        lines.append(f"  龙虎榜机构净买入:")
+        for s in dt[:5]:
+            lines.append(f"    {s['name']}({s['code']}) : {s['inst_net']:+.0f}万")
+
+    # ETF份额增长
+    ef = all_data.get("etf_flow")
+    if ef:
+        lines.append(f"  机构增持ETF:")
+        for s in ef[:5]:
+            lines.append(f"    {s['name']}({s['code']}) : 份额变化{s['share_change']:+.0f}")
+
+    # 北向行业偏好
+    nb = all_data.get("north_top")
+    if nb:
+        lines.append(f"  北向资金偏好行业:")
+        for s in nb[:5]:
+            lines.append(f"    {s['name']}")
+
+    return "\n".join(lines)
+
+def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=None):
+    """格式化输出报告 — 增强版：持仓实时+逐只分析+操作建议"""
+    lines = []
+    lines.append("=" * 70)
+    lines.append(f"  [A股量化决策系统] 每日报告")
+    lines.append(f"  [日期] {datetime.now().strftime('%Y年%m月%d日 %H:%M')}")
+    lines.append("=" * 70)
+
+    # ===== 大盘择时 =====
+    lines.append(f"\n  {'─'*60}")
+    lines.append(f"  [一] 大盘择时信号")
+    lines.append(f"  {'─'*60}")
+    lines.append(f"  看多信号: {timing['bull_signals']}/{timing['total_signals']} -> 建议仓位 {timing['base_position']*100:.0f}%")
+    for name, value in timing['signal_detail'].items():
+        icon = "[PASS]" if value else "[FAIL]"
+        label = name.replace("S1_HS300_above_MA20","沪深300在20日线上").replace("S2_HS300_MA60_up","沪深300的60日线向上").replace("S3_NorthFlow_5d_positive","北向资金5日净流入").replace("S4_Volume_active","成交额>2万亿").replace("S5_LimitDown_low","跌停<20家").replace("S6_Margin_increasing","融资余额增加")
+        lines.append(f"    {icon} {label}")
+    if timing['force_capped']:
+        lines.append(f"  [WARNING] 强制限制生效: 仓位上限30%")
+    lines.append(f"  择时判断: {timing['advice']}")
+    lines.append(f"  北向资金5日累计: {timing.get('north_flow_5d', 'N/A'):.1f}亿元")
+
+    # ===== 持仓实时数据 =====
+    lines.append(f"\n  {'─'*60}")
+    lines.append(f"  [二] 当前持仓（实时）")
+    lines.append(f"  {'─'*60}")
+
+    total_value = 0
+    total_pnl = 0
+    for code, pos in portfolio.items():
+        price = pos.get("current_price", pos.get("cost", 0))
+        cost = pos.get("cost", price)
+        shares = pos["shares"]
+        value = shares * price
+        pnl = value - shares * cost
+        pnl_pct = (price/cost - 1)*100 if cost > 0 else 0
+        total_value += value
+        total_pnl += pnl
+
+        # 获取当日涨跌
+        score_data = next((s for s in scores if s["code"] == code), None)
+        today_chg = 0
+        if score_data:
+            today_chg = score_data.get("returns", {}).get("r5d", 0)/5  # 近似
+
+        bar = "████" if pnl_pct > 0 else ("▁▁▁▁" if pnl_pct < -5 else "────")
+        lines.append(f"  [{code}] {pos['name']}")
+        lines.append(f"    成本:{cost:.3f} | 现价:{price:.3f} | 持股:{shares}股")
+        lines.append(f"    市值:{value:.2f}元 | 浮盈:{pnl:+.2f}元({pnl_pct:+.1f}%) {bar}")
+        if score_data:
+            lines.append(f"    量化评分:{score_data['score']}分 | RSI:{score_data['indicators']['rsi']:.0f} | 今日涨跌约:{today_chg:+.1f}%")
+
+    cash = 1361.04
+    lines.append(f"  {'─'*60}")
+    lines.append(f"  ETF总市值:{total_value:.2f}元 | 可用资金:{cash:.2f}元 | 总资产:{total_value+cash:.2f}元")
+    lines.append(f"  总浮盈:{total_pnl:+.2f}元 | 现金占比:{cash/(total_value+cash)*100:.1f}%")
+
+    # ===== 持仓操作建议 =====
+    lines.append(f"\n  {'─'*60}")
+    lines.append(f"  [三] 持仓操作建议")
+    lines.append(f"  {'─'*60}")
+
+    for code, pos in portfolio.items():
+        score_data = next((s for s in scores if s["code"] == code), None)
+        if not score_data:
+            lines.append(f"  {pos['name']}({code}): 数据缺失，无法评分")
+            continue
+
+        analysis = analyze_watchlist_etf(score_data, timing, portfolio)
+        action_label = {"BUY":"[加仓]","SELL":"[卖出]","REDUCE":"[减仓]","WATCH":"[持有观察]","HOLD":"[持有]","AVOID":"[回避]"}.get(analysis["action"], "[?]")
+
+        lines.append(f"  {action_label} {pos['name']}({code}) | 评分{analysis['score']}分 | 现价{analysis['price']:.3f}")
+        lines.append(f"    止损线:{analysis['stop_loss']:.3f}(-5%) | 止盈线:{analysis['take_profit']:.3f}(+8%)")
+        if analysis.get("holding_advice"):
+            lines.append(f"    {analysis['holding_advice']}")
+        for r in analysis.get("reasons_avoid", []):
+            lines.append(f"    [注意] {r}")
+
+    # ===== 关注ETF逐只分析 =====
+    lines.append(f"\n  {'─'*60}")
+    lines.append(f"  [四] 关注ETF逐只分析")
+    lines.append(f"  {'─'*60}")
+
+    watchlist = [s for s in scores if s.get("is_watchlist") and s["code"] not in portfolio]
+    for s in watchlist:
+        analysis = analyze_watchlist_etf(s, timing, portfolio)
+        action_label = {"BUY":"[可买入]","SELL":"[卖出]","REDUCE":"[减仓]","WATCH":"[观望]","HOLD":"[持有]","AVOID":"[回避]"}.get(analysis["action"], "[?]")
+
+        lines.append(f"  {action_label} {s['name']}({s['code']}) | 评分{s['score']}分 | 现价{s['price']:.4f}")
+        lines.append(f"    RSI:{analysis['rsi']:.0f} | 连涨:{analysis['consecutive_up']}天 | 5日:{analysis['r5d']:+.1f}% | 20日:{analysis['r20d']:+.1f}%")
+        for r in analysis.get("reasons_buy", []):
+            lines.append(f"    [+] {r}")
+        for r in analysis.get("reasons_avoid", []):
+            lines.append(f"    [-] {r}")
+        if analysis["action"] == "BUY":
+            lines.append(f"    建议买入价:{analysis['price']:.4f} | 止损:{analysis['stop_loss']:.4f}(-5%) | 止盈:{analysis['take_profit']:.4f}(+8%)")
+
+    # ===== 个股评分 =====
+    if stock_scores:
+        lines.append(f"\n  {'─'*60}")
+        lines.append(f"  [五] 个股评分")
+        lines.append(f"  {'─'*60}")
+        for s in stock_scores:
+            analysis = analyze_watchlist_etf(s, timing, portfolio)
+            action_label = {"BUY":"[可买入]","WATCH":"[观望]","AVOID":"[回避]"}.get(analysis["action"], "[?]")
+            lines.append(f"  {action_label} {s['name']}({s['code']}) | {s['score']}分 | 现价{s['price']:.2f}")
+            lines.append(f"    RSI:{s['indicators']['rsi']:.0f} | 20日:{s['returns']['r20d']:+.1f}% | 60日:{s['returns']['r60d']:+.1f}%")
+            for r in analysis.get("reasons_buy", []):
+                lines.append(f"    [+] {r}")
+            for r in analysis.get("reasons_avoid", []):
+                lines.append(f"    [-] {r}")
+
+    # ===== 全市场TOP10 =====
+    other_scores = [s for s in scores if not s.get("is_watchlist")]
+    lines.append(f"\n  {'─'*60}")
+    lines.append(f"  [六] 全市场ETF排名 TOP10")
+    lines.append(f"  {'─'*60}")
+    grade_icon = {"A_强烈买入":"[A]","B_买入":"[B]","C_观察":"[C]","D_谨慎":"[D]","E_回避":"[E]"}
+    for i, s in enumerate(other_scores[:10]):
+        gi = grade_icon.get(s['grade'], "[?]")
+        lines.append(f"  {i+1:2d}. {gi} {s['name']}({s['code']}) | {s['score']}分 | RSI:{s['indicators']['rsi']:.0f} | 5日:{s['returns']['r5d']:+.1f}% | 20日:{s['returns']['r20d']:+.1f}%")
+
+    lines.append(f"\n  {'='*70}")
+    lines.append(f"  [免责声明] 量化模型仅供辅助决策，不构成投资建议。投资有风险，入市需谨慎。")
+    return "\n".join(lines)
+
+def main():
+    print("[QUANT SYSTEM] 启动每日量化分析...", file=sys.stderr)
+
+    # 参数解析
+    portfolio_file = None
+    if "--portfolio" in sys.argv:
+        idx = sys.argv.index("--portfolio")
+        if idx+1 < len(sys.argv):
+            portfolio_file = sys.argv[idx+1]
+
+    # 加载持仓
+    portfolio = load_portfolio(portfolio_file)
+
+    # 确定分析标的
+    etf_list = list(set(list(KEY_ETFS.keys()) + USER_WATCHLIST))
+    stock_list = list(USER_STOCKS.keys())
+
+    # 1. 采集数据
+    print("[QUANT SYSTEM] Step 1/4: 采集数据...", file=sys.stderr)
+    all_data = collect_all_data(etf_list, stock_list)
+
+    # 2. 计算因子得分 - ETFs
+    print("[QUANT SYSTEM] Step 2/4: 计算因子...", file=sys.stderr)
+    etf_data = all_data.get("etfs", {})
+    scores = []
+    for code, edata in etf_data.items():
+        kline = edata.get("kline", [])
+        if len(kline) < 30: continue
+        closes = [k["close"] for k in kline]
+        highs = [k["high"] for k in kline]
+        lows = [k["low"] for k in kline]
+        volumes = [k["volume"] for k in kline]
+        result = score_etf_comprehensive(code, edata["name"], closes, highs, lows, volumes)
+        result["is_watchlist"] = code in USER_WATCHLIST
+        result["is_holding"] = code in portfolio
+        scores.append(result)
+
+    # 2b. 计算因子得分 - 个股
+    stock_data = all_data.get("stocks", {})
+    stock_scores = []
+    for code, sdata in stock_data.items():
+        kline = sdata.get("kline", [])
+        if len(kline) < 30: continue
+        closes = [k["close"] for k in kline]
+        highs = [k["high"] for k in kline]
+        lows = [k["low"] for k in kline]
+        volumes = [k["volume"] for k in kline]
+        result = score_etf_comprehensive(code, sdata["name"], closes, highs, lows, volumes)
+        result["is_stock"] = True
+        stock_scores.append(result)
+
+    # 3. 大盘择时
+    print("[QUANT SYSTEM] Step 3/4: 大盘择时...", file=sys.stderr)
+    timing_engine = MarketTiming(
+        all_data.get("indices", {}),
+        all_data.get("north_bound", []),
+        all_data.get("total_volume", 0),
+        all_data.get("breadth", {}),
+        all_data.get("margin", {})
+    )
+    timing_result = timing_engine.position_advice()
+
+    # 4. 生成决策
+    print("[QUANT SYSTEM] Step 4/4: 生成决策...", file=sys.stderr)
+    portfolio = load_portfolio(portfolio_file)
+    portfolio = update_portfolio_prices(portfolio, etf_data)
+
+    decider = TradeDecider(scores, timing_result, portfolio)
+    plan = decider.generate_plan()
+
+    # 输出报告
+    # 机构资金流向
+    inst_flow_section = format_institutional_flow(all_data)
+
+    report = format_report(plan, scores, timing_result, portfolio, all_data, stock_scores)
+    report += inst_flow_section
+    print(report)
+
+    # 保存结果
+    output = {
+        "date": TODAY,
+        "timestamp": datetime.now().isoformat(),
+        "timing": timing_result,
+        "scores": scores,
+        "plan": plan,
+        "report": report
+    }
+    output_path = os.path.join(OUTPUT_DIR, f"report_{TODAY}.json")
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(output, f, ensure_ascii=False, indent=2, default=str)
+
+    print(f"\n[QUANT SYSTEM] 报告已保存: {output_path}", file=sys.stderr)
+
+    # 生成HTML并发送邮件
+    email_pw = os.environ.get("QQMAIL_AUTH_CODE")
+    if "--email-pw" in sys.argv:
+        idx = sys.argv.index("--email-pw")
+        if idx+1 < len(sys.argv):
+            email_pw = sys.argv[idx+1]
+    # Fallback: 从配置文件读取
+    if not email_pw:
+        config_path = os.path.join(OUTPUT_DIR, "email_config.json")
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                email_pw = config.get("QQMAIL_AUTH_CODE")
+            except:
+                pass
+
+    if email_pw:
+        print("[QUANT SYSTEM] 生成HTML报告并发送邮件...", file=sys.stderr)
+        html = generate_html_report(output)
+        send_email(html, email_pw)
+
+    # 周六自动复盘
+    if datetime.now().weekday() == 5:  # 周六
+        print("[QUANT SYSTEM] 周六自动复盘...", file=sys.stderr)
+        reviewer = WeeklyReview()
+        review_report = reviewer.weekly_summary()
+        review_path = os.path.join(OUTPUT_DIR, f"review_{TODAY}.txt")
+        with open(review_path, 'w', encoding='utf-8') as f:
+            f.write(review_report)
+        print(review_report, file=sys.stderr)
+
+if __name__ == "__main__":
+    main()

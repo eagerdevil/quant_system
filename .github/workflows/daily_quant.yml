@@ -1,0 +1,42 @@
+name: 每日A股量化分析
+
+# 每天 UTC 09:00 = 北京时间 17:00 自动运行
+# 周一到周五运行（A股交易日）
+on:
+  schedule:
+    - cron: '0 9 * * 1-5'
+  # 也可以手动触发
+  workflow_dispatch:
+
+jobs:
+  quant-analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装依赖（仅标准库，跳过）
+        run: echo "所有依赖均为Python标准库，无需安装"
+
+      - name: 运行量化模型
+        env:
+          TZ: Asia/Shanghai
+          QQMAIL_AUTH_CODE: ${{ secrets.QQMAIL_AUTH_CODE }}
+        run: |
+          echo "===== 开始运行: $(date '+%Y-%m-%d %H:%M') ====="
+          python daily_runner.py --email-pw "$QQMAIL_AUTH_CODE" 2>&1
+          echo "===== 运行完成: $(date '+%Y-%m-%d %H:%M') ====="
+
+      - name: 上传报告（可选，留作存档）
+        uses: actions/upload-artifact@v4
+        with:
+          name: quant-report-${{ github.run_id }}
+          path: report_*.json
+          retention-days: 7

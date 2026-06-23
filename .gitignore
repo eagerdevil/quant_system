@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+
+# 敏感信息
+email_config.json
+
+# 报告文件（本地存档即可，不必上传）
+report_*.json
+review_*.txt
