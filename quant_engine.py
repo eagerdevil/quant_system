@@ -1,16 +1,52 @@
 #!/usr/bin/env python
 """
-量化系统 核心引擎
-=================
+量化系统 核心引擎 v2.0
+=====================
 模块2: 数据预处理（去极值+标准化+中性化）
 模块3: 多因子模型（动量/波动/基本面/资金/情绪）
 模块4: 大盘择时与仓位管理
 模块5: 交易决策生成
+
+v2.0 新增:
+- 因子权重从 factor_weights.json 自动加载
+- compute_indicators() 和 score_factors() 导出供 optimizer 使用
+- 每周日 optimizer.py 自动更新权重 → 周一自动生效
 """
-import json, math, sys
+import json, math, sys, os
 from datetime import datetime
 
 TODAY = datetime.now().strftime("%Y%m%d")
+
+# ============================================================
+# 因子权重系统（v2.0 新增）
+# ============================================================
+FACTOR_MAX = {
+    "F1_趋势强度": 10, "F2_动量": 8, "F3_反转": 8,
+    "F4_RSI": 8, "F5_均线偏离": 6, "F6_低波动": 6,
+    "F7_成交量": 6, "F8_回调": 10, "F9_Sortino": 6,
+    "F10_MaxDD": 6, "F11_布林带": 6, "F12_多周期": 6,
+    "F13_均线排列": 4, "F14_长期": 4, "F15_夏普": 6
+}
+FACTOR_NAMES = list(FACTOR_MAX.keys())
+DEFAULT_WEIGHTS = {k: 1.0 for k in FACTOR_NAMES}
+
+def _load_weights():
+    """加载因子权重配置，失败时返回默认等权"""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    weights_path = os.path.join(script_dir, "factor_weights.json")
+    try:
+        with open(weights_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        w = config.get("factor_weights", DEFAULT_WEIGHTS)
+        # 确保所有因子都有权重
+        for k in FACTOR_NAMES:
+            if k not in w:
+                w[k] = 1.0
+        return w, config
+    except (FileNotFoundError, json.JSONDecodeError, KeyError):
+        return dict(DEFAULT_WEIGHTS), {"meta": {"version": 0, "ic_score": 0}}
+
+CURRENT_WEIGHTS, WEIGHT_CONFIG = _load_weights()
 
 # ============================================================
 # 模块2: 数据预处理
@@ -36,7 +72,7 @@ def zscore_normalize(series):
     return [(x-mean)/std for x in series]
 
 # ============================================================
-# 模块3: 多因子计算
+# 模块3: 多因子计算 — 指标函数
 # ============================================================
 def sma(data, n):
     if len(data) < n: return data[-1] if data else 0
@@ -161,18 +197,18 @@ def bollinger_position(closes, n=20):
     return (closes[-1] - lower)/(upper - lower)*100
 
 # ============================================================
-# 综合因子评分（ETF级别）
+# 模块3b: 因子计算（导出供 optimizer 使用）
 # ============================================================
-def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
-                             north_flow_5d=None, industry_return=None):
+def compute_indicators(closes, highs, lows, volumes):
     """
-    15因子综合评分系统
-    返回: {score, grade, factor_details, indicators}
+    计算所有原始指标。
+    输入: ETF的价格序列（按时间升序）
+    输出: 指标字典，可直接传给 score_factors()
+
+    此函数被 optimizer.py 导入用于回测。
     """
     cur = closes[-1]
-    n = len(closes)
 
-    # ---- 计算所有指标 ----
     rsi_now = rsi(closes, 14)
     dif, dea, hist = macd_calc(closes)
     vol = volatility(closes, 20)
@@ -200,21 +236,41 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
     pm20 = pma(closes, 20)
     pm60 = pma(closes, 60) if len(closes)>=60 else pm20
 
-    # ---- 15因子评分 ----
+    return {
+        "rsi": rsi_now, "dif": dif, "dea": dea, "hist": hist,
+        "volatility": vol, "max_drawdown": maxdd, "sharpe": shp,
+        "sortino": srt, "consecutive_up": cons_up,
+        "consecutive_down": cons_down, "ma_alignment": ma_align,
+        "bb_position": bb_pos, "atr_pct": atr_pct,
+        "r5d": r5, "r10d": r10, "r20d": r20, "r60d": r60, "r120d": r120,
+        "vol_ratio_5d": v_ratio, "vol_ratio_10d": v_ratio_10,
+        "pma5": pm5, "pma10": pm10, "pma20": pm20, "pma60": pm60,
+        "price": cur
+    }
+
+def score_factors(indicators):
+    """
+    将原始指标转换为15个因子得分（0-10/0-8/0-6/0-4）。
+    输入: compute_indicators() 的输出
+    输出: {F1_趋势强度: 5, F2_动量: 8, ...}
+
+    此函数被 optimizer.py 导入用于回测。
+    """
     factors = {}
+    ind = indicators
 
     # F1: 趋势强度(0-10)
     f1 = 5
-    if dif > 0 and hist > 0: f1 = 10
-    elif dif > 0: f1 = 7
-    elif dif > -0.01 and hist > 0: f1 = 6
-    elif dif > -0.01: f1 = 4
+    if ind["dif"] > 0 and ind["hist"] > 0: f1 = 10
+    elif ind["dif"] > 0: f1 = 7
+    elif ind["dif"] > -0.01 and ind["hist"] > 0: f1 = 6
+    elif ind["dif"] > -0.01: f1 = 4
     else: f1 = 2
-    if ma_align >= 2: f1 = min(10, f1+1)
+    if ind["ma_alignment"] >= 2: f1 = min(10, f1+1)
     factors['F1_趋势强度'] = f1
 
     # F2: 动量(0-8)
-    f2 = 4
+    r20 = ind["r20d"]
     if 0 <= r20 <= 10: f2 = 8
     elif -3 <= r20 < 0: f2 = 6
     elif 10 < r20 <= 20: f2 = 5
@@ -223,7 +279,7 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
     factors['F2_动量'] = f2
 
     # F3: 反转信号(0-8)
-    f3 = 4
+    r5 = ind["r5d"]
     if r5 < -5: f3 = 8
     elif -5 <= r5 < -2: f3 = 6
     elif r5 < 0: f3 = 5
@@ -233,7 +289,7 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
     factors['F3_反转'] = f3
 
     # F4: RSI位置(0-8)
-    f4 = 4
+    rsi_now = ind["rsi"]
     if 40 <= rsi_now <= 50: f4 = 8
     elif 35 <= rsi_now < 40: f4 = 7
     elif 50 < rsi_now <= 58: f4 = 6
@@ -244,7 +300,7 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
     factors['F4_RSI'] = f4
 
     # F5: 均线偏离(0-6)
-    f5 = 3
+    pm5 = ind["pma5"]
     if -3 <= pm5 <= 3: f5 = 6
     elif -5 <= pm5 < -3: f5 = 5
     elif 3 < pm5 <= 8: f5 = 4
@@ -253,23 +309,24 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
     factors['F5_均线偏离'] = f5
 
     # F6: 低波动(0-6)
-    f6 = 3
-    if 15 <= vol*100 <= 30: f6 = 6
-    elif 10 <= vol*100 < 15: f6 = 5
-    elif 30 < vol*100 <= 40: f6 = 4
-    elif vol*100 < 10: f6 = 3
+    vol_pct = ind["volatility"] * 100
+    if 15 <= vol_pct <= 30: f6 = 6
+    elif 10 <= vol_pct < 15: f6 = 5
+    elif 30 < vol_pct <= 40: f6 = 4
+    elif vol_pct < 10: f6 = 3
     else: f6 = 2
     factors['F6_低波动'] = f6
 
     # F7: 成交量健康(0-6)
-    f7 = 3
+    v_ratio = ind["vol_ratio_5d"]
     if 0.85 <= v_ratio <= 1.20: f7 = 6
     elif 0.70 <= v_ratio <= 1.40: f7 = 4
     else: f7 = 2
     factors['F7_成交量'] = f7
 
     # F8: 回调质量(0-10)
-    f8 = 5
+    cons_down = ind["consecutive_down"]
+    cons_up = ind["consecutive_up"]
     if cons_down >= 3: f8 = 10
     elif cons_down >= 2: f8 = 8
     elif cons_down == 1: f8 = 7
@@ -280,7 +337,7 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
     factors['F8_回调'] = f8
 
     # F9: Sortino(0-6)
-    f9 = 3
+    srt = ind["sortino"]
     if srt > 1.5: f9 = 6
     elif srt > 0.8: f9 = 5
     elif srt > 0.3: f9 = 4
@@ -289,7 +346,7 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
     factors['F9_Sortino'] = f9
 
     # F10: 最大回撤(0-6)
-    f10 = 3
+    maxdd = ind["max_drawdown"]
     if maxdd < 0.10: f10 = 6
     elif maxdd < 0.18: f10 = 5
     elif maxdd < 0.25: f10 = 4
@@ -298,7 +355,7 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
     factors['F10_MaxDD'] = f10
 
     # F11: 布林带位置(0-6)
-    f11 = 3
+    bb_pos = ind["bb_position"]
     if 15 <= bb_pos <= 55: f11 = 6
     elif 5 <= bb_pos < 15: f11 = 5
     elif 55 < bb_pos <= 75: f11 = 4
@@ -307,7 +364,7 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
     factors['F11_布林带'] = f11
 
     # F12: 多周期收益(0-6)
-    f12 = 3
+    r60 = ind["r60d"]
     if r5 > 0 and r20 > 0 and r60 > 0: f12 = 6
     elif r20 > 0 and r60 > 0: f12 = 5
     elif r60 > 0: f12 = 4
@@ -316,11 +373,10 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
     factors['F12_多周期'] = f12
 
     # F13: 均线排列(0-4)
-    f13 = ma_align
-    factors['F13_均线排列'] = f13
+    factors['F13_均线排列'] = ind["ma_alignment"]
 
     # F14: 长期收益(0-4)
-    f14 = 2
+    r120 = ind["r120d"]
     if r120 > 10: f14 = 4
     elif r120 > 0: f14 = 3
     elif r120 > -10: f14 = 2
@@ -328,7 +384,7 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
     factors['F14_长期'] = f14
 
     # F15: 夏普比率(0-6)
-    f15 = 3
+    shp = ind["sharpe"]
     if shp > 1.5: f15 = 6
     elif shp > 0.8: f15 = 5
     elif shp > 0.3: f15 = 4
@@ -336,35 +392,82 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
     else: f15 = 2
     factors['F15_夏普'] = f15
 
-    total = sum(factors.values())
-    max_score = 100
+    return factors
 
-    # Grade
-    if total >= 78: grade = "A_强烈买入"
-    elif total >= 65: grade = "B_买入"
-    elif total >= 55: grade = "C_观察"
-    elif total >= 42: grade = "D_谨慎"
-    else: grade = "E_回避"
+# ============================================================
+# 综合因子评分（ETF级别）— v2.0 支持自适应权重
+# ============================================================
+def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
+                             north_flow_5d=None, industry_return=None,
+                             weights=None):
+    """
+    15因子综合评分系统
+    参数:
+        weights: dict {factor_name: weight}, None时使用factor_weights.json配置
+    返回: {score, grade, factor_details, indicators}
+    """
+    # 加载权重（参数 > 配置文件 > 默认等权）
+    if weights is None:
+        weights = CURRENT_WEIGHTS
+    if weights is None:
+        weights = DEFAULT_WEIGHTS
+
+    # 计算指标和因子
+    indicators = compute_indicators(closes, highs, lows, volumes)
+    factors = score_factors(indicators)
+
+    # 加权汇总（归一化到0-100）
+    weighted_sum = sum(factors[k] * weights.get(k, 1.0) for k in FACTOR_NAMES)
+    max_weighted = sum(FACTOR_MAX[k] * weights.get(k, 1.0) for k in FACTOR_NAMES)
+    if max_weighted > 0:
+        total = round(weighted_sum / max_weighted * 100)
+    else:
+        total = sum(factors.values())
+
+    # Grade（使用可配置阈值）
+    grade_thresholds = WEIGHT_CONFIG.get("grade_thresholds", {
+        "A_强烈买入": 78, "B_买入": 65, "C_观察": 55, "D_谨慎": 42
+    })
+    if total >= grade_thresholds.get("A_强烈买入", 78):
+        grade = "A_强烈买入"
+    elif total >= grade_thresholds.get("B_买入", 65):
+        grade = "B_买入"
+    elif total >= grade_thresholds.get("C_观察", 55):
+        grade = "C_观察"
+    elif total >= grade_thresholds.get("D_谨慎", 42):
+        grade = "D_谨慎"
+    else:
+        grade = "E_回避"
 
     return {
         "code": code, "name": name,
-        "score": total, "max_score": max_score,
+        "score": total, "max_score": 100,
         "grade": grade,
-        "price": round(cur, 4),
+        "price": round(indicators["price"], 4),
         "indicators": {
-            "rsi": round(rsi_now, 1), "volatility_pct": round(vol*100, 1),
-            "sharpe": round(shp, 2), "sortino": round(srt, 2),
-            "max_dd_pct": round(maxdd*100, 1),
-            "consecutive_up": cons_up, "consecutive_down": cons_down,
-            "ma_alignment": ma_align, "bb_position": round(bb_pos, 1),
-            "atr_pct": round(atr_pct, 2),
-            "vol_ratio_5d": round(v_ratio, 2),
-            "macd_dif": round(dif, 4), "macd_hist": round(hist, 4)
+            "rsi": round(indicators["rsi"], 1),
+            "volatility_pct": round(indicators["volatility"]*100, 1),
+            "sharpe": round(indicators["sharpe"], 2),
+            "sortino": round(indicators["sortino"], 2),
+            "max_dd_pct": round(indicators["max_drawdown"]*100, 1),
+            "consecutive_up": indicators["consecutive_up"],
+            "consecutive_down": indicators["consecutive_down"],
+            "ma_alignment": indicators["ma_alignment"],
+            "bb_position": round(indicators["bb_position"], 1),
+            "atr_pct": round(indicators["atr_pct"], 2),
+            "vol_ratio_5d": round(indicators["vol_ratio_5d"], 2),
+            "macd_dif": round(indicators["dif"], 4),
+            "macd_hist": round(indicators["hist"], 4)
         },
-        "returns": {"r5d": round(r5,1), "r10d": round(r10,1), "r20d": round(r20,1),
-                     "r60d": round(r60,1), "r120d": round(r120,1)},
-        "vs_ma": {"pct_ma5": round(pm5,1), "pct_ma10": round(pm10,1),
-                   "pct_ma20": round(pm20,1), "pct_ma60": round(pm60,1)},
+        "returns": {
+            "r5d": round(indicators["r5d"], 1), "r10d": round(indicators["r10d"], 1),
+            "r20d": round(indicators["r20d"], 1), "r60d": round(indicators["r60d"], 1),
+            "r120d": round(indicators["r120d"], 1)
+        },
+        "vs_ma": {
+            "pct_ma5": round(indicators["pma5"], 1), "pct_ma10": round(indicators["pma10"], 1),
+            "pct_ma20": round(indicators["pma20"], 1), "pct_ma60": round(indicators["pma60"], 1)
+        },
         "factors": factors
     }
 
@@ -593,5 +696,9 @@ class TradeDecider:
 # ============================================================
 if __name__ == "__main__":
     # 简易测试
-    print("Quant Engine v1.0 — Ready", file=sys.stderr)
+    print("Quant Engine v2.0 — Ready (自适应权重)", file=sys.stderr)
+    print(f"  已加载权重: {len(CURRENT_WEIGHTS)}个因子", file=sys.stderr)
+    if WEIGHT_CONFIG.get("meta", {}).get("last_optimized"):
+        print(f"  上次优化: {WEIGHT_CONFIG['meta']['last_optimized']}", file=sys.stderr)
+        print(f"  优化IC: {WEIGHT_CONFIG['meta'].get('ic_score', 'N/A')}", file=sys.stderr)
     print("Usage: import quant_engine and call score_etf_comprehensive()")
