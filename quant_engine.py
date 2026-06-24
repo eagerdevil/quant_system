@@ -596,7 +596,7 @@ class TradeDecider:
         target_amount = total_capital * target_pos
         current_invested = sum(
             p.get("shares", 0) * p.get("current_price", p.get("cost", 0))
-            for p in self.portfolio.values()
+            for p in self.portfolio.values() if isinstance(p, dict)
         )
 
         # 排名前40%的ETF
@@ -609,6 +609,8 @@ class TradeDecider:
 
         # 卖出判断
         for code, pos in self.portfolio.items():
+            if code.startswith("_") or not isinstance(pos, dict):
+                continue  # 跳过元数据（如_available_cash）
             score_data = next((s for s in self.scores if s["code"] == code), None)
             if not score_data:
                 continue
