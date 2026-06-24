@@ -30,12 +30,13 @@ TODAY = datetime.now().strftime("%Y%m%d")
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def load_portfolio(filepath=None):
-    """加载当前持仓"""
+    """加载当前持仓，包含可用资金"""
     if filepath and os.path.exists(filepath):
         with open(filepath, 'r', encoding='utf-8') as f:
             return json.load(f)
     # 默认持仓（从user_investment记忆同步）
     return {
+        "_available_cash": 84.64,  # 可用资金
         "518850": {"shares": 200, "cost": 9.091, "name": "黄金ETF华夏"},
         "159183": {"shares": 1000, "cost": 0.985, "name": "新能源车ETF招商"},
         "159659": {"shares": 300, "cost": 2.343, "name": "纳斯达克100ETF招商"},
@@ -43,11 +44,88 @@ def load_portfolio(filepath=None):
     }
 
 def update_portfolio_prices(portfolio, etf_data):
-    """更新持仓的当前价格"""
+    """更新持仓的当前价格和昨日收盘价"""
     for code in portfolio:
-        if code in etf_data and etf_data[code].get("realtime"):
-            portfolio[code]["current_price"] = etf_data[code]["realtime"]["price"]
+        if code.startswith("_"): continue  # 跳过元数据
+        if code in etf_data:
+            rt = etf_data[code].get("realtime") or {}
+            kline = etf_data[code].get("kline", [])
+            portfolio[code]["current_price"] = rt.get("price") if rt.get("price") else portfolio[code].get("cost", 0)
+            # 昨收价：优先实时数据，其次K线倒数第二根
+            prev_close = rt.get("prev_close")
+            if not prev_close and len(kline) >= 2:
+                prev_close = kline[-2].get("close")
+            portfolio[code]["prev_close"] = prev_close
     return portfolio
+
+
+def compute_portfolio_summary(portfolio, scores):
+    """计算账户概览：市值、盈亏、仓位等"""
+    holdings = []
+    total_value = 0
+    total_cost = 0
+    total_daily_pnl = 0
+
+    score_map = {s["code"]: s for s in scores}
+
+    for code, pos in portfolio.items():
+        if code.startswith("_"): continue
+        shares = pos["shares"]
+        cost = pos.get("cost", 0)
+        price = pos.get("current_price", cost)
+        prev_close = pos.get("prev_close")
+
+        value = shares * price
+        cost_value = shares * cost
+        pnl = value - cost_value
+        pnl_pct = (price / cost - 1) * 100 if cost > 0 else 0
+
+        # 今日盈亏
+        daily_pnl = 0
+        daily_pnl_pct = 0
+        if prev_close and prev_close > 0:
+            daily_pnl = (price - prev_close) * shares
+            daily_pnl_pct = (price / prev_close - 1) * 100
+
+        total_value += value
+        total_cost += cost_value
+        total_daily_pnl += daily_pnl
+
+        holdings.append({
+            "code": code,
+            "name": pos.get("name", code),
+            "shares": shares,
+            "cost": cost,
+            "price": price,
+            "prev_close": prev_close,
+            "value": round(value, 2),
+            "pnl": round(pnl, 2),
+            "pnl_pct": round(pnl_pct, 2),
+            "daily_pnl": round(daily_pnl, 2),
+            "daily_pnl_pct": round(daily_pnl_pct, 2),
+            "score": score_map[code]["score"] if code in score_map else None,
+            "grade": score_map[code]["grade"] if code in score_map else None,
+        })
+
+    available_cash = portfolio.get("_available_cash", 0)
+    total_assets = total_value + available_cash
+    total_pnl = total_value - total_cost
+
+    # 为每个持仓计算仓位占比
+    for h in holdings:
+        h["weight"] = round(h["value"] / total_assets * 100, 1) if total_assets > 0 else 0
+
+    return {
+        "holdings": holdings,
+        "available_cash": available_cash,
+        "total_value": round(total_value, 2),
+        "total_cost": round(total_cost, 2),
+        "total_assets": round(total_assets, 2),
+        "total_pnl": round(total_pnl, 2),
+        "total_pnl_pct": round(total_pnl / total_cost * 100, 2) if total_cost > 0 else 0,
+        "total_daily_pnl": round(total_daily_pnl, 2),
+        "cash_ratio": round(available_cash / total_assets * 100, 1) if total_assets > 0 else 0,
+    }
 
 def analyze_watchlist_etf(s, timing, portfolio):
     """对单只关注ETF生成买入/观望/回避建议"""
@@ -172,7 +250,7 @@ def format_institutional_flow(all_data):
 
     return "\n".join(lines)
 
-def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=None):
+def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=None, port_summary=None):
     """格式化输出报告 — 增强版：持仓实时+逐只分析+操作建议"""
     lines = []
     lines.append("=" * 70)
@@ -194,47 +272,39 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
     lines.append(f"  择时判断: {timing['advice']}")
     lines.append(f"  北向资金5日累计: {timing.get('north_flow_5d', 'N/A'):.1f}亿元")
 
-    # ===== 持仓实时数据 =====
+    # ===== 账户概览 =====
+    ps = port_summary or {}
     lines.append(f"\n  {'─'*60}")
-    lines.append(f"  [二] 当前持仓（实时）")
+    lines.append(f"  [二] 账户概览")
     lines.append(f"  {'─'*60}")
+    lines.append(f"  总资产: {ps.get('total_assets', 0):.2f}元 | 总市值: {ps.get('total_value', 0):.2f}元 | 可用资金: {ps.get('available_cash', 0):.2f}元")
+    lines.append(f"  持仓盈亏: {ps.get('total_pnl', 0):+.2f}元 ({ps.get('total_pnl_pct', 0):+.2f}%) | 今日盈亏: {ps.get('total_daily_pnl', 0):+.2f}元")
+    lines.append(f"  现金占比: {ps.get('cash_ratio', 0):.1f}%")
 
-    total_value = 0
-    total_pnl = 0
-    for code, pos in portfolio.items():
-        price = pos.get("current_price", pos.get("cost", 0))
-        cost = pos.get("cost", price)
-        shares = pos["shares"]
-        value = shares * price
-        pnl = value - shares * cost
-        pnl_pct = (price/cost - 1)*100 if cost > 0 else 0
-        total_value += value
-        total_pnl += pnl
-
-        # 获取当日涨跌
-        score_data = next((s for s in scores if s["code"] == code), None)
-        today_chg = 0
-        if score_data:
-            today_chg = score_data.get("returns", {}).get("r5d", 0)/5  # 近似
-
-        bar = "████" if pnl_pct > 0 else ("▁▁▁▁" if pnl_pct < -5 else "────")
-        lines.append(f"  [{code}] {pos['name']}")
-        lines.append(f"    成本:{cost:.3f} | 现价:{price:.3f} | 持股:{shares}股")
-        lines.append(f"    市值:{value:.2f}元 | 浮盈:{pnl:+.2f}元({pnl_pct:+.1f}%) {bar}")
-        if score_data:
-            lines.append(f"    量化评分:{score_data['score']}分 | RSI:{score_data['indicators']['rsi']:.0f} | 今日涨跌约:{today_chg:+.1f}%")
-
-    cash = 1361.04
+    # ===== 持仓明细 =====
+    lines.append(f"\n  {'─'*60}")
+    lines.append(f"  [三] 持仓明细")
     lines.append(f"  {'─'*60}")
-    lines.append(f"  ETF总市值:{total_value:.2f}元 | 可用资金:{cash:.2f}元 | 总资产:{total_value+cash:.2f}元")
-    lines.append(f"  总浮盈:{total_pnl:+.2f}元 | 现金占比:{cash/(total_value+cash)*100:.1f}%")
+    lines.append(f"  {'代码':<8} {'名称':<16} {'持股':>5} {'成本':>8} {'现价':>8} {'市值':>10} {'持仓盈亏':>12} {'今日盈亏':>12} {'仓位':>6} {'评分'}")
+    lines.append(f"  {'─'*8} {'─'*16} {'─'*5} {'─'*8} {'─'*8} {'─'*10} {'─'*12} {'─'*12} {'─'*6} {'─'*4}")
+
+    holdings = ps.get("holdings", [])
+    for h in holdings:
+        lines.append(
+            f"  {h['code']:<8} {h['name']:<16} {h['shares']:>5} "
+            f"{h['cost']:>8.3f} {h['price']:>8.3f} {h['value']:>10.2f} "
+            f"{h['pnl']:>+10.2f}({h['pnl_pct']:>+.1f}%) "
+            f"{h['daily_pnl']:>+10.2f}({h['daily_pnl_pct']:>+.1f}%) "
+            f"{h['weight']:>5.1f}% {h.get('grade','?'):>4s}"
+        )
 
     # ===== 持仓操作建议 =====
     lines.append(f"\n  {'─'*60}")
-    lines.append(f"  [三] 持仓操作建议")
+    lines.append(f"  [四] 持仓操作建议")
     lines.append(f"  {'─'*60}")
 
     for code, pos in portfolio.items():
+        if code.startswith("_"): continue
         score_data = next((s for s in scores if s["code"] == code), None)
         if not score_data:
             lines.append(f"  {pos['name']}({code}): 数据缺失，无法评分")
@@ -252,7 +322,7 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
 
     # ===== 关注ETF逐只分析 =====
     lines.append(f"\n  {'─'*60}")
-    lines.append(f"  [四] 关注ETF逐只分析")
+    lines.append(f"  [五] 关注ETF逐只分析")
     lines.append(f"  {'─'*60}")
 
     watchlist = [s for s in scores if s.get("is_watchlist") and s["code"] not in portfolio]
@@ -272,7 +342,7 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
     # ===== 个股评分 =====
     if stock_scores:
         lines.append(f"\n  {'─'*60}")
-        lines.append(f"  [五] 个股评分")
+        lines.append(f"  [六] 个股评分")
         lines.append(f"  {'─'*60}")
         for s in stock_scores:
             analysis = analyze_watchlist_etf(s, timing, portfolio)
@@ -287,7 +357,7 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
     # ===== 全市场TOP10 =====
     other_scores = [s for s in scores if not s.get("is_watchlist")]
     lines.append(f"\n  {'─'*60}")
-    lines.append(f"  [六] 全市场ETF排名 TOP10")
+    lines.append(f"  [七] 全市场ETF排名 TOP10")
     lines.append(f"  {'─'*60}")
     grade_icon = {"A_强烈买入":"[A]","B_买入":"[B]","C_观察":"[C]","D_谨慎":"[D]","E_回避":"[E]"}
     for i, s in enumerate(other_scores[:10]):
@@ -365,6 +435,9 @@ def main():
     portfolio = load_portfolio(portfolio_file)
     portfolio = update_portfolio_prices(portfolio, etf_data)
 
+    # 计算持仓概览（市值、盈亏、仓位等）
+    port_summary = compute_portfolio_summary(portfolio, scores)
+
     decider = TradeDecider(scores, timing_result, portfolio)
     plan = decider.generate_plan()
 
@@ -372,7 +445,7 @@ def main():
     # 机构资金流向
     inst_flow_section = format_institutional_flow(all_data)
 
-    report = format_report(plan, scores, timing_result, portfolio, all_data, stock_scores)
+    report = format_report(plan, scores, timing_result, portfolio, all_data, stock_scores, port_summary)
     report += inst_flow_section
     print(report)
 
@@ -383,6 +456,7 @@ def main():
         "timing": timing_result,
         "scores": scores,
         "plan": plan,
+        "portfolio": port_summary,
         "report": report
     }
     output_path = os.path.join(OUTPUT_DIR, f"report_{TODAY}.json")

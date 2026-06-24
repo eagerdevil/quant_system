@@ -45,6 +45,7 @@ def generate_html_report(report_data):
     timing = report_data.get("timing", {})
     plan = report_data.get("plan", {})
     scores = report_data.get("scores", [])
+    port = report_data.get("portfolio", {})  # 账户概览数据
 
     # 关注列表
     watchlist = [s for s in scores if s.get("is_watchlist") and not s.get("is_holding")]
@@ -97,30 +98,77 @@ def generate_html_report(report_data):
 
     html += f"<p>{timing.get('advice', '')}</p></div>"
 
-    # 二、持仓实时
+    # 二、账户概览
+    if port:
+        total_assets = port.get("total_assets", 0)
+        total_value = port.get("total_value", 0)
+        available_cash = port.get("available_cash", 0)
+        total_pnl = port.get("total_pnl", 0)
+        total_pnl_pct = port.get("total_pnl_pct", 0)
+        total_daily_pnl = port.get("total_daily_pnl", 0)
+        cash_ratio = port.get("cash_ratio", 0)
+        pnl_color = "#00ff88" if total_pnl >= 0 else "#ff4757"
+        daily_color = "#00ff88" if total_daily_pnl >= 0 else "#ff4757"
+
+        html += f'''<div class="card"><h2>二、账户概览</h2>
+        <table style="font-size:14px">
+        <tr><td style="width:25%"><b>总资产</b></td><td style="width:25%">{total_assets:.2f}元</td><td style="width:25%"><b>总市值</b></td><td style="width:25%">{total_value:.2f}元</td></tr>
+        <tr><td><b>可用资金</b></td><td>{available_cash:.2f}元</td><td><b>现金占比</b></td><td>{cash_ratio:.1f}%</td></tr>
+        <tr><td><b>持仓盈亏</b></td><td style="color:{pnl_color}">{total_pnl:+.2f}元 ({total_pnl_pct:+.2f}%)</td><td><b>今日盈亏</b></td><td style="color:{daily_color}">{total_daily_pnl:+.2f}元</td></tr>
+        </table></div>'''
+
+    # 三、持仓明细
+    holdings = port.get("holdings", [])
     hold_list = plan.get("hold_list", [])
     sell_list = plan.get("sell_list", [])
-    if hold_list or sell_list:
-        html += '<div class="card"><h2>二、当前持仓与操作建议</h2><table><tr><th>标的</th><th>建议</th><th>现价</th><th>盈亏</th><th>止损</th><th>止盈</th></tr>'
-        for h in hold_list:
-            html += f'<tr><td>{h["name"]}<br><small>{h["code"]}</small></td><td class="watch">持有观察</td><td>{h.get("current_price", "-")}</td><td style="color:{ "#00ff88" if h.get("pnl_pct",0)>0 else "#ff4757" }">{h.get("pnl_pct",0):+.1f}%</td><td>-</td><td>-</td></tr>'
-        for s in sell_list:
-            html += f'<tr><td>{s["name"]}<br><small>{s["code"]}</small></td><td class="sell">建议卖出</td><td>{s.get("current_price", "-")}</td><td style="color:#ff4757">{s.get("pnl_pct",0):+.1f}%</td><td>{"止损触发" if s.get("pnl_pct",0)<-8 else "评分下滑"}</td><td>-</td></tr>'
+    hold_map = {h["code"]: h for h in hold_list}
+    sell_map = {s["code"]: s for s in sell_list}
+    if holdings:
+        html += '<div class="card"><h2>三、持仓明细</h2><table style="font-size:12px"><tr><th>代码</th><th>名称</th><th>持股</th><th>成本</th><th>现价</th><th>市值</th><th>持仓盈亏</th><th>今日盈亏</th><th>仓位</th><th>评分</th><th>建议</th></tr>'
+        for h in holdings:
+            code = h["code"]
+            action_html = ""
+            if code in sell_map:
+                reason = "止损触发" if sell_map[code].get("pnl_pct", 0) < -8 else "评分下滑"
+                action_html = f'<span class="sell">卖出</span><br><small style="color:#ff4757">{reason}</small>'
+            elif code in hold_map:
+                action_html = '<span class="watch">持有</span>'
+            else:
+                action_html = '<span class="watch">—</span>'
+
+            pnl_c = "#00ff88" if h["pnl"] >= 0 else "#ff4757"
+            daily_c = "#00ff88" if h["daily_pnl"] >= 0 else "#ff4757"
+            grade = h.get("grade", "?")
+            grade_c = {"A":"#00ff88","B":"#00ff88","C":"#ffa502","D":"#ff4757","E":"#ff4757"}.get(grade[0] if grade else "?", "#eee")
+
+            html += f'<tr>'
+            html += f'<td><small>{code}</small></td>'
+            html += f'<td><b>{h["name"]}</b></td>'
+            html += f'<td>{h["shares"]}股</td>'
+            html += f'<td>{h["cost"]:.3f}</td>'
+            html += f'<td>{h["price"]:.3f}</td>'
+            html += f'<td>{h["value"]:.2f}</td>'
+            html += f'<td style="color:{pnl_c}">{h["pnl"]:+.2f}<br><small>({h["pnl_pct"]:+.1f}%)</small></td>'
+            html += f'<td style="color:{daily_c}">{h["daily_pnl"]:+.2f}<br><small>({h["daily_pnl_pct"]:+.1f}%)</small></td>'
+            html += f'<td>{h["weight"]:.1f}%</td>'
+            html += f'<td><span style="color:{grade_c};font-weight:bold">{grade}</span><br><small>{h.get("score","?")}分</small></td>'
+            html += f'<td>{action_html}</td>'
+            html += f'</tr>'
         html += '</table></div>'
 
-    # 三、买入建议
+    # 四、买入建议
     buy_list = plan.get("buy_list", [])
     if buy_list:
-        html += '<div class="card"><h2>三、买入建议</h2><table><tr><th>标的</th><th>数量</th><th>价格</th><th>金额</th><th>止损</th><th>止盈</th><th>理由</th></tr>'
+        html += '<div class="card"><h2>四、买入建议</h2><table><tr><th>标的</th><th>数量</th><th>价格</th><th>金额</th><th>止损</th><th>止盈</th><th>理由</th></tr>'
         for b in buy_list:
             sl = round(b["price"]*0.95, 3); tp = round(b["price"]*1.08, 3)
             reasons = "; ".join(b.get("reasons", [])[:2])
             html += f'<tr><td class="buy">{b["name"]}<br><small>{b["code"]}</small></td><td>{b["shares"]}股</td><td>{b["price"]:.3f}</td><td>{b["amount"]:.0f}元</td><td class="limit">{sl:.3f}</td><td style="color:#00ff88">{tp:.3f}</td><td style="font-size:11px">{reasons}</td></tr>'
         html += '</table></div>'
 
-    # 四、关注ETF逐只分析
+    # 五、关注ETF逐只分析
     if watchlist:
-        html += '<div class="card"><h2>四、关注ETF逐只分析</h2>'
+        html += '<div class="card"><h2>五、关注ETF逐只分析</h2>'
         for s in watchlist:
             ind = s.get("indicators", {})
             ret = s.get("returns", {})
@@ -140,9 +188,9 @@ def generate_html_report(report_data):
             html += '</div>'
         html += '</div>'
 
-    # 五、个股
+    # 六、个股
     if stock_scores:
-        html += '<div class="card"><h2>五、个股评分</h2>'
+        html += '<div class="card"><h2>六、个股评分</h2>'
         for s in stock_scores:
             ind = s.get("indicators", {})
             ret = s.get("returns", {})
@@ -156,7 +204,6 @@ def generate_html_report(report_data):
         <p>投资有风险，入市需谨慎</p>
     </div></body></html>
     """
-    return html
     return html
 
 def send_email(report_html, password):
