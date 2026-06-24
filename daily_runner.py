@@ -37,7 +37,9 @@ def load_portfolio(filepath=None):
     # 默认持仓（从user_investment记忆同步）
     return {
         "518850": {"shares": 200, "cost": 9.091, "name": "黄金ETF华夏"},
-        "159183": {"shares": 1000, "cost": 0.985, "name": "新能源车ETF招商"}
+        "159183": {"shares": 1000, "cost": 0.985, "name": "新能源车ETF招商"},
+        "159659": {"shares": 300, "cost": 2.343, "name": "纳斯达克100ETF招商"},
+        "562500": {"shares": 500, "cost": 1.147, "name": "机器人ETF华夏"}
     }
 
 def update_portfolio_prices(portfolio, etf_data):
@@ -405,6 +407,34 @@ def main():
                 email_pw = config.get("QQMAIL_AUTH_CODE")
             except:
                 pass
+
+    # ---- 回测 + 仪表盘（可选）----
+    if "--backtest" in sys.argv:
+        print("\n[QUANT SYSTEM] === 回测模式 ===", file=sys.stderr)
+        try:
+            from backtest_engine import prepare_backtest_data, run_backtest
+            from dashboard import generate_from_backtest_result
+
+            # 运行回测
+            bt_data = prepare_backtest_data("2024-01-01", TODAY)
+            bt_result = run_backtest(bt_data)
+
+            if bt_result:
+                # 生成仪表盘
+                dash_path = generate_from_backtest_result(bt_result)
+                print(f"[QUANT SYSTEM] 仪表盘: {dash_path}", file=sys.stderr)
+
+                # 复制到部署目录
+                deploy_dir = os.path.join(OUTPUT_DIR, "deploy")
+                os.makedirs(deploy_dir, exist_ok=True)
+                import shutil
+                deploy_path = os.path.join(deploy_dir, "index.html")
+                shutil.copy(dash_path, deploy_path)
+                print(f"[QUANT SYSTEM] 部署副本: {deploy_path}", file=sys.stderr)
+        except Exception as e:
+            print(f"[QUANT SYSTEM] 回测失败: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc(file=sys.stderr)
 
     if email_pw:
         print("[QUANT SYSTEM] 生成HTML报告并发送邮件...", file=sys.stderr)
