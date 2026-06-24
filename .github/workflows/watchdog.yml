@@ -21,12 +21,10 @@ jobs:
           TODAY=$(date +%Y-%m-%d)
           echo "检查日期: $TODAY (UTC)"
 
-          # 查询今日daily_quant工作流运行记录
-          RUNS=$(curl -s -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/daily_quant.yml/runs?created=$TODAY&status=success&per_page=3")
-
-          SUCCESS_COUNT=$(echo "$RUNS" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('total_count',0))")
+          # 查询今日 daily_quant 工作流成功运行次数
+          SUCCESS_COUNT=$(gh api \
+            "repos/${{ github.repository }}/actions/workflows/300855962/runs?created=$TODAY&status=success&per_page=3" \
+            --jq '.total_count')
 
           echo "今日成功运行次数: $SUCCESS_COUNT"
 
@@ -44,9 +42,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           echo "触发每日A股量化分析..."
-          curl -s -X POST \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/daily_quant.yml/dispatches" \
-            -d '{"ref":"main"}'
+          gh api --method POST \
+            "repos/${{ github.repository }}/actions/workflows/300855962/dispatches" \
+            -f ref="main"
           echo "✅ 补触发完成，请检查邮箱"
