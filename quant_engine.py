@@ -618,8 +618,10 @@ class TradeDecider:
             pnl_pct = (current_price/cost - 1)*100 if cost > 0 else 0
 
             reasons = []
-            # 条件1: 得分跌出前40%
-            if score_data["score"] < (self.scores[len(self.scores)*4//10]["score"] if len(self.scores)>=10 else 50):
+            # 条件1: 得分跌出前40% 且 评分低于B级(65)
+            # ⚠️ 双重条件：排名下滑+分数弱才触发，避免"昨天B级买今天B级卖"
+            rank_threshold = self.scores[len(self.scores)*4//10]["score"] if len(self.scores)>=10 else 50
+            if score_data["score"] < rank_threshold and score_data["score"] < 65:
                 reasons.append("得分排名下滑")
             # 条件2: 从最高点回撤-8%
             if pnl_pct <= -8:
