@@ -1,0 +1,52 @@
+name: 量化报告看门狗（17:10兜底触发）
+
+# 每天 UTC 09:10 = 北京时间 17:10 检查
+# 如果17:00的主工作流没跑成功，自动补触发
+on:
+  schedule:
+    - cron: '10 9 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 检查今日主工作流是否已成功运行
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          TODAY=$(date +%Y-%m-%d)
+          echo "检查日期: $TODAY (UTC)"
+
+          # 查询今日daily_quant工作流运行记录
+          RUNS=$(curl -s -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/daily_quant.yml/runs?created=$TODAY&status=success&per_page=3")
+
+          SUCCESS_COUNT=$(echo "$RUNS" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('total_count',0))")
+
+          echo "今日成功运行次数: $SUCCESS_COUNT"
+
+          if [ "$SUCCESS_COUNT" -gt 0 ]; then
+            echo "✅ 今日主工作流已成功运行，看门狗无需补触发"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ 今日主工作流尚未成功，看门狗补触发..."
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 补触发主工作流
+        if: steps.check.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          echo "触发每日A股量化分析..."
+          curl -s -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/daily_quant.yml/dispatches" \
+            -d '{"ref":"main"}'
+          echo "✅ 补触发完成，请检查邮箱"
