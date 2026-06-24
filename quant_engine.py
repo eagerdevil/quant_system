@@ -625,8 +625,10 @@ class TradeDecider:
             if pnl_pct <= -8:
                 reasons.append(f"止损触发(浮亏{pnl_pct:.1f}%)")
             # 条件3: 大盘择时转为防御且仓位需要削减
+            # ⚠️ B级以上（≥65分）不因防御模式强制卖出，避免"昨天买今天卖"
             if target_pos < 0.3 and current_invested > target_amount:
-                reasons.append("大盘防御模式，需减仓")
+                if score_data["score"] < 65:
+                    reasons.append("大盘防御模式，需减仓")
 
             if reasons:
                 sell_list.append({
