@@ -1,11 +1,8 @@
 name: 每日A股量化分析
 
-# 每天 UTC 09:00 = 北京时间 17:00 自动运行
-# 周一到周五运行（A股交易日）
+# 由 cron-job.org 外部触发（周一至周五 17:07 北京时间）
+# 也可手动触发
 on:
-  schedule:
-    - cron: '7 9 * * 1-5'
-  # 也可以手动触发
   workflow_dispatch:
 
 jobs:
