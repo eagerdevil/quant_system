@@ -5,7 +5,7 @@
 整合: 数据采集 → 因子计算 → 择时判断 → 决策生成 → 输出报告
 用法: python daily_runner.py [--portfolio portfolio.json]
 """
-import json, sys, os, io
+import json, sys, os, io, urllib.request
 from datetime import datetime
 
 # Fix Windows encoding
@@ -368,7 +368,48 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
     lines.append(f"  [免责声明] 量化模型仅供辅助决策，不构成投资建议。投资有风险，入市需谨慎。")
     return "\n".join(lines)
 
+def is_rest_day():
+    """判断今天是否为休息日（周末或中国法定节假日）
+    使用 timor.tech 免费节假日API
+    返回 (is_rest: bool, reason: str)
+    """
+    # 第一道：周末快速判断
+    weekday = datetime.now().weekday()
+    if weekday >= 5:
+        return True, f"周末 (weekday={weekday})"
+
+    # 第二道：查询法定节假日API
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    try:
+        url = f"https://timor.tech/api/holiday/info/{today_str}"
+        req = urllib.request.Request(url, headers={"User-Agent": "QuantSystem/1.0"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+        if data.get("code") == 0:
+            t = data.get("type", {})
+            type_code = t.get("type", 0)
+            # type: 0=工作日, 1=周末, 2=节假日, 3=调休工作日
+            if type_code == 2:
+                name = t.get("name", "节假日")
+                return True, f"法定假日 ({name})"
+            elif type_code == 1:
+                return True, f"周末"
+            # type==0 or type==3: 可以交易
+            return False, "工作日"
+    except Exception as e:
+        print(f"[QUANT SYSTEM] 节假日API查询失败: {e}，按工作日处理", file=sys.stderr)
+        return False, "API不可用，假定为工作日"
+
+    return False, "工作日"
+
+
 def main():
+    # 休息日跳过
+    is_rest, reason = is_rest_day()
+    if is_rest:
+        print(f"[QUANT SYSTEM] {reason}，休市跳过", file=sys.stderr)
+        return
+
     print("[QUANT SYSTEM] 启动每日量化分析...", file=sys.stderr)
 
     # 参数解析
@@ -465,23 +506,6 @@ def main():
 
     print(f"\n[QUANT SYSTEM] 报告已保存: {output_path}", file=sys.stderr)
 
-    # 生成HTML并发送邮件
-    email_pw = os.environ.get("QQMAIL_AUTH_CODE")
-    if "--email-pw" in sys.argv:
-        idx = sys.argv.index("--email-pw")
-        if idx+1 < len(sys.argv):
-            email_pw = sys.argv[idx+1]
-    # Fallback: 从配置文件读取
-    if not email_pw:
-        config_path = os.path.join(OUTPUT_DIR, "email_config.json")
-        if os.path.exists(config_path):
-            try:
-                with open(config_path, 'r') as f:
-                    config = json.load(f)
-                email_pw = config.get("QQMAIL_AUTH_CODE")
-            except:
-                pass
-
     # ---- 回测 + 仪表盘（可选）----
     if "--backtest" in sys.argv:
         print("\n[QUANT SYSTEM] === 回测模式 ===", file=sys.stderr)
@@ -510,10 +534,24 @@ def main():
             import traceback
             traceback.print_exc(file=sys.stderr)
 
+    # ---- 邮件发送 ----
+    email_pw = os.environ.get("QQMAIL_AUTH_CODE")
+    if not email_pw:
+        config_path = os.path.join(OUTPUT_DIR, "email_config.json")
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                email_pw = config.get("QQMAIL_AUTH_CODE")
+            except:
+                pass
+
     if email_pw:
         print("[QUANT SYSTEM] 生成HTML报告并发送邮件...", file=sys.stderr)
         html = generate_html_report(output)
         send_email(html, email_pw)
+    else:
+        print("[QUANT SYSTEM] 未配置QQ邮箱授权码，跳过发送", file=sys.stderr)
 
     # 周六自动复盘
     if datetime.now().weekday() == 5:  # 周六

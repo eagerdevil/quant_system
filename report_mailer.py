@@ -6,7 +6,7 @@
 - 发送到用户QQ邮箱
 - 每周六复盘并自适应调整因子权重
 """
-import json, smtplib, os, math
+import json, smtplib, os, math, urllib.request, urllib.parse
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
@@ -85,8 +85,8 @@ def generate_html_report(report_data):
 
     <div class="header"><h1>A股量化决策系统 - 每日报告</h1><p>{datetime.now().strftime('%Y年%m月%d日')} | 收盘后自动生成</p></div>
 
-    <!-- 一、大盘择时 -->
-    <div class="card"><h2>一、大盘择时</h2>
+    <!-- 大盘择时 -->
+    <div class="card"><h2>大盘择时</h2>
     <p>看多信号: <b>{timing.get('bull_signals', 0)}/{timing.get('total_signals', 6)}</b> | 建议仓位: <b>{pos_pct}%</b></p>
     <div class="position-bar"><div class="position-fill" style="width:{pos_pct}%"></div></div>
     """
@@ -98,7 +98,7 @@ def generate_html_report(report_data):
 
     html += f"<p>{timing.get('advice', '')}</p></div>"
 
-    # 二、账户概览
+    # 账户概览
     if port:
         total_assets = port.get("total_assets", 0)
         total_value = port.get("total_value", 0)
@@ -110,21 +110,21 @@ def generate_html_report(report_data):
         pnl_color = "#00ff88" if total_pnl >= 0 else "#ff4757"
         daily_color = "#00ff88" if total_daily_pnl >= 0 else "#ff4757"
 
-        html += f'''<div class="card"><h2>二、账户概览</h2>
+        html += f'''<div class="card"><h2>账户概览</h2>
         <table style="font-size:14px">
         <tr><td style="width:25%"><b>总资产</b></td><td style="width:25%">{total_assets:.2f}元</td><td style="width:25%"><b>总市值</b></td><td style="width:25%">{total_value:.2f}元</td></tr>
         <tr><td><b>可用资金</b></td><td>{available_cash:.2f}元</td><td><b>现金占比</b></td><td>{cash_ratio:.1f}%</td></tr>
         <tr><td><b>持仓盈亏</b></td><td style="color:{pnl_color}">{total_pnl:+.2f}元 ({total_pnl_pct:+.2f}%)</td><td><b>今日盈亏</b></td><td style="color:{daily_color}">{total_daily_pnl:+.2f}元</td></tr>
         </table></div>'''
 
-    # 三、持仓明细
+    # 持仓明细
     holdings = port.get("holdings", [])
     hold_list = plan.get("hold_list", [])
     sell_list = plan.get("sell_list", [])
     hold_map = {h["code"]: h for h in hold_list}
     sell_map = {s["code"]: s for s in sell_list}
     if holdings:
-        html += '<div class="card"><h2>三、持仓明细</h2><table style="font-size:12px"><tr><th>代码</th><th>名称</th><th>持股</th><th>成本</th><th>现价</th><th>市值</th><th>持仓盈亏</th><th>今日盈亏</th><th>仓位</th><th>评分</th><th>建议</th></tr>'
+        html += '<div class="card"><h2>持仓明细</h2><table style="font-size:12px"><tr><th>代码</th><th>名称</th><th>持股</th><th>成本</th><th>现价</th><th>市值</th><th>持仓盈亏</th><th>今日盈亏</th><th>仓位</th><th>评分</th><th>建议</th></tr>'
         for h in holdings:
             code = h["code"]
             action_html = ""
@@ -156,19 +156,19 @@ def generate_html_report(report_data):
             html += f'</tr>'
         html += '</table></div>'
 
-    # 四、买入建议
+    # 买入建议
     buy_list = plan.get("buy_list", [])
     if buy_list:
-        html += '<div class="card"><h2>四、买入建议</h2><table><tr><th>标的</th><th>数量</th><th>价格</th><th>金额</th><th>止损</th><th>止盈</th><th>理由</th></tr>'
+        html += '<div class="card"><h2>买入建议</h2><table><tr><th>标的</th><th>数量</th><th>价格</th><th>金额</th><th>止损</th><th>止盈</th><th>理由</th></tr>'
         for b in buy_list:
             sl = round(b["price"]*0.95, 3); tp = round(b["price"]*1.08, 3)
             reasons = "; ".join(b.get("reasons", [])[:2])
             html += f'<tr><td class="buy">{b["name"]}<br><small>{b["code"]}</small></td><td>{b["shares"]}股</td><td>{b["price"]:.3f}</td><td>{b["amount"]:.0f}元</td><td class="limit">{sl:.3f}</td><td style="color:#00ff88">{tp:.3f}</td><td style="font-size:11px">{reasons}</td></tr>'
         html += '</table></div>'
 
-    # 五、关注ETF逐只分析
+    # 关注ETF逐只分析
     if watchlist:
-        html += '<div class="card"><h2>五、关注ETF逐只分析</h2>'
+        html += '<div class="card"><h2>关注ETF逐只分析</h2>'
         for s in watchlist:
             ind = s.get("indicators", {})
             ret = s.get("returns", {})
@@ -188,9 +188,9 @@ def generate_html_report(report_data):
             html += '</div>'
         html += '</div>'
 
-    # 六、个股
+    # 个股
     if stock_scores:
-        html += '<div class="card"><h2>六、个股评分</h2>'
+        html += '<div class="card"><h2>个股评分</h2>'
         for s in stock_scores:
             ind = s.get("indicators", {})
             ret = s.get("returns", {})
@@ -198,6 +198,24 @@ def generate_html_report(report_data):
             html += f'<b>{s["name"]}</b> <small>({s["code"]})</small> | {s["score"]}分 | RSI:{ind.get("rsi",0):.0f} | 现价:{s["price"]:.2f}<br>'
             html += f'<small>20日:{ret.get("r20d",0):+.1f}% | 60日:{ret.get("r60d",0):+.1f}% | 120日:{ret.get("r120d",0):+.1f}%</small></div>'
         html += '</div>'
+
+    # 全市场ETF TOP10
+    etf_scores = [s for s in scores if not s.get("is_stock")]
+    if etf_scores:
+        top10 = sorted(etf_scores, key=lambda s: s["score"], reverse=True)[:10]
+        html += '<div class="card"><h2>全市场ETF TOP10</h2><table><tr><th>排名</th><th>标的</th><th>评分</th><th>评级</th><th>RSI</th><th>5日</th><th>20日</th></tr>'
+        for i, s in enumerate(top10):
+            ind = s.get("indicators", {})
+            ret = s.get("returns", {})
+            grade = s.get("grade", "?")
+            gc = {"A":"#00ff88","B":"#00ff88","C":"#ffa502","D":"#ff4757","E":"#ff4757"}.get(grade[0] if grade else "?", "#eee")
+            r5d = ret.get("r5d", 0)
+            r20d = ret.get("r20d", 0)
+            c5d = "#00ff88" if r5d >= 0 else "#ff4757"
+            c20d = "#00ff88" if r20d >= 0 else "#ff4757"
+            html += f'<tr><td>{i+1}</td><td><b>{s["name"]}</b><br><small>{s["code"]}</small></td><td>{s["score"]}</td><td style="color:{gc};font-weight:bold">{grade}</td><td>{ind.get("rsi",0):.0f}</td><td style="color:{c5d}">{r5d:+.1f}%</td><td style="color:{c20d}">{r20d:+.1f}%</td></tr>'
+        html += '</table></div>'
+
     html += """
     <div class="footer">
         <p>本报告由A股量化决策系统自动生成 | 仅供辅助决策 | 不构成投资建议</p>
@@ -232,6 +250,190 @@ def send_email(report_html, password):
     except Exception as e:
         print(f"[MAIL] 发送失败: {e}", file=__import__('sys').stderr)
         return False
+
+def generate_wechat_markdown(report_data):
+    """将JSON报告转为微信推送用的Markdown文本 — 章节与HTML报告一致"""
+    if not report_data:
+        return "报告生成失败"
+
+    timing = report_data.get("timing", {})
+    plan = report_data.get("plan", {})
+    port = report_data.get("portfolio", {})
+    scores = report_data.get("scores", [])
+
+    pos_pct = int(timing.get('base_position', 0) * 100)
+    date_str = datetime.now().strftime('%Y.%m.%d')
+
+    lines = []
+    lines.append(f"## 📊 A股量化日报 {date_str}")
+    lines.append("")
+
+    # ══════════════════════════════════════
+    # 一、大盘择时
+    # ══════════════════════════════════════
+    signal_labels = {
+        "S1_HS300_above_MA20":"沪深300站上20日线", "S2_HS300_MA60_up":"沪深300的60日线向上",
+        "S3_NorthFlow_5d_positive":"北向资金5日净流入", "S4_Volume_active":"成交额>2万亿",
+        "S5_LimitDown_low":"跌停<20家", "S6_Margin_increasing":"融资余额增加"
+    }
+    lines.append(f"### 一、大盘择时")
+    lines.append(f"看多信号: **{timing.get('bull_signals', 0)}/{timing.get('total_signals', 6)}** → 建议仓位 **{pos_pct}%**")
+    sigs = []
+    for name, value in timing.get("signal_detail", {}).items():
+        label = signal_labels.get(name, name)
+        sigs.append(f"{'✅' if value else '❌'} {label}")
+    lines.append(" | ".join(sigs))
+    lines.append(f"> {timing.get('advice', '')}")
+    if timing.get('force_capped'):
+        lines.append(f"> ⚠️ 强制限制生效: 仓位上限30%")
+    lines.append("")
+
+    # ══════════════════════════════════════
+    # 二、账户概览
+    # ══════════════════════════════════════
+    total_assets = port.get("total_assets", 0)
+    total_pnl = port.get("total_pnl", 0)
+    total_daily_pnl = port.get("total_daily_pnl", 0)
+    pnl_emoji = "🟢" if total_pnl >= 0 else "🔴"
+    daily_emoji = "🟢" if total_daily_pnl >= 0 else "🔴"
+    lines.append(f"### 二、账户概览")
+    lines.append(f"总资产: **{total_assets:.2f}元** | 总市值: {port.get('total_value', 0):.2f}元 | 可用: {port.get('available_cash', 0):.2f}元")
+    lines.append(f"持仓盈亏: {pnl_emoji} {total_pnl:+.2f}元 ({port.get('total_pnl_pct', 0):+.2f}%) | 今日盈亏: {daily_emoji} {total_daily_pnl:+.2f}元")
+    lines.append("")
+
+    # ══════════════════════════════════════
+    # 持仓明细
+    # ══════════════════════════════════════
+    holdings = port.get("holdings", [])
+    sell_list = plan.get("sell_list", [])
+    hold_list = plan.get("hold_list", [])
+    sell_codes = {s["code"] for s in sell_list}
+    hold_codes = {h["code"] for h in hold_list}
+
+    if holdings:
+        lines.append(f"### 持仓明细 ({len(holdings)}只)")
+        lines.append(f"| 名称 | 代码 | 持股 | 成本 | 现价 | 市值 | 盈亏 | 今日 | 仓位 | 评分 | 建议 |")
+        lines.append(f"|------|------|------|------|------|------|------|------|------|------|------|")
+        for h in holdings:
+            pnl_s = f"{h['pnl']:+.0f}"
+            daily_s = f"{h.get('daily_pnl', 0):+.0f}"
+            grade = h.get("grade", "?")
+
+            code = h["code"]
+            if code in sell_codes:
+                action = "🔴卖出"
+            elif code in hold_codes:
+                action = "🟡持有"
+            else:
+                action = "—"
+
+            lines.append(f"| {h['name']} | {h['code']} | {h['shares']}股 | {h['cost']:.3f} | {h['price']:.3f} | {h['value']:.0f} | {pnl_s} | {daily_s} | {h['weight']:.0f}% | {grade} | {action} |")
+        lines.append("")
+
+    # ══════════════════════════════════════
+    # 买入建议
+    # ══════════════════════════════════════
+    buy_list = plan.get("buy_list", [])
+    if buy_list:
+        lines.append(f"### 买入建议 ({len(buy_list)}只)")
+        for b in buy_list:
+            sl = round(b["price"]*0.95, 3)
+            tp = round(b["price"]*1.08, 3)
+            reasons = "; ".join(b.get("reasons", [])[:2])
+            lines.append(f"- 🟢 **{b['name']}**({b['code']}) {b['shares']}股 @{b['price']:.3f} | 止损{sl:.3f} 止盈{tp:.3f}")
+            if reasons:
+                lines.append(f"  > {reasons}")
+        lines.append("")
+
+    # ══════════════════════════════════════
+    # 关注ETF逐只分析
+    # ══════════════════════════════════════
+    watchlist = [s for s in scores if s.get("is_watchlist") and not s.get("is_holding")]
+    if watchlist:
+        lines.append(f"### 关注ETF逐只分析 ({len(watchlist)}只)")
+        for s in watchlist:
+            ind = s.get("indicators", {})
+            ret = s.get("returns", {})
+            score = s["score"]
+            rsi = ind.get("rsi", 50)
+            is_overbought = rsi > 68
+            is_extended = ind.get("consecutive_up", 0) >= 5
+
+            if score >= 65 and not is_overbought and not is_extended:
+                action = "🟢可买入"
+            elif score >= 50:
+                action = "🟡观望"
+            else:
+                action = "🔴回避"
+
+            lines.append(f"- {action} **{s['name']}**({s['code']}) | {score}分 | RSI:{rsi:.0f} | 现价:{s['price']:.4f}")
+            lines.append(f"  > 5日:{ret.get('r5d',0):+.1f}% | 20日:{ret.get('r20d',0):+.1f}% | 60日:{ret.get('r60d',0):+.1f}% | 连涨:{ind.get('consecutive_up',0)}天")
+
+            if is_overbought or is_extended:
+                warnings = []
+                if is_overbought: warnings.append(f"RSI过热({rsi:.0f})")
+                if is_extended: warnings.append(f"连涨{ind.get('consecutive_up',0)}天")
+                lines.append(f"  > ⚠️ {', '.join(warnings)}，追高风险大")
+        lines.append("")
+
+    # ══════════════════════════════════════
+    # 个股评分
+    # ══════════════════════════════════════
+    stock_scores = [s for s in scores if s.get("is_stock")]
+    if stock_scores:
+        lines.append(f"### 个股评分 ({len(stock_scores)}只)")
+        for s in stock_scores:
+            ind = s.get("indicators", {})
+            ret = s.get("returns", {})
+            lines.append(f"- **{s['name']}**({s['code']}) | {s['score']}分 | RSI:{ind.get('rsi',0):.0f} | 现价:{s['price']:.2f}")
+            lines.append(f"  > 20日:{ret.get('r20d',0):+.1f}% | 60日:{ret.get('r60d',0):+.1f}% | 120日:{ret.get('r120d',0):+.1f}%")
+        lines.append("")
+
+    lines.append("---")
+    lines.append(f"🕐 {datetime.now().strftime('%Y-%m-%d %H:%M')} 自动生成 | 仅供辅助决策，不构成投资建议")
+
+    return "\n".join(lines)
+
+
+def send_wechat(report_data, token):
+    """通过PushPlus推送到微信（免费200条/天，支持Markdown）"""
+    if not token:
+        print("[WECHAT] 未提供PushPlus Token，跳过微信推送", file=__import__('sys').stderr)
+        return False
+
+    try:
+        title = f"A股量化日报 {datetime.now().strftime('%m.%d')}"
+        markdown = generate_wechat_markdown(report_data)
+
+        # PushPlus API
+        url = "https://www.pushplus.plus/send"
+        data = json.dumps({
+            "token": token,
+            "title": title,
+            "content": markdown,
+            "template": "markdown"
+        }).encode('utf-8')
+
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={"Content-Type": "application/json; charset=utf-8"},
+            method="POST"
+        )
+
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            result = json.loads(resp.read().decode('utf-8'))
+            if result.get("code") == 200:
+                print(f"[WECHAT] 微信推送成功 ✓", file=__import__('sys').stderr)
+                return True
+            else:
+                print(f"[WECHAT] 推送失败: {result.get('msg', 'unknown')}", file=__import__('sys').stderr)
+                return False
+
+    except Exception as e:
+        print(f"[WECHAT] 推送异常: {e}", file=__import__('sys').stderr)
+        return False
+
 
 # ============================================================
 # 每周复盘 + 自适应参数优化
