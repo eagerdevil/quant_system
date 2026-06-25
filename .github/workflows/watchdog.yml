@@ -4,7 +4,7 @@ name: 量化报告看门狗（17:10兜底触发）
 # 如果17:00的主工作流没跑成功，自动补触发
 on:
   schedule:
-    - cron: '10 9 * * 1-5'
+    - cron: '40 13 * * 1-5'
   workflow_dispatch:
 
 jobs:

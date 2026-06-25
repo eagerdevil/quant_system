@@ -4,7 +4,7 @@ name: 每日A股量化分析
 # 周一到周五运行（A股交易日）
 on:
   schedule:
-    - cron: '0 9 * * 1-5'
+    - cron: '35 13 * * 1-5'
   # 也可以手动触发
   workflow_dispatch:
 
