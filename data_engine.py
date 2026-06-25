@@ -596,8 +596,11 @@ def fetch_etf_realtime(code):
 def calc_fear_index():
     """计算恐慌指数：今日下跌家数 / 总家数"""
     breadth = fetch_market_breadth()
-    if breadth["total"] > 0:
-        return breadth["down_count"] / breadth["total"] * 100
+    if breadth:
+        total = breadth.get("total") or 0
+        down = breadth.get("down_count") or 0
+        if total > 0:
+            return down / total * 100
     return 50
 
 # ============================================================
