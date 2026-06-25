@@ -1,10 +1,10 @@
 name: TEST-SCHEDULE
 on:
   schedule:
-    - cron: '6 * * * *'
+    - cron: '16 * * * *'
   workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "SCHEDULE WORKS at $(date)"
+      - run: echo "SCHEDULE WORKS"
