@@ -718,9 +718,10 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
 # ============================================================
 if __name__ == "__main__":
     import sys
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     etfs = sys.argv[1:] if len(sys.argv) > 1 else list(KEY_ETFS.keys())[:10]
     data = collect_all_data(etfs)
     # Save to file
-    with open(f"d:/Claudecode/quant_system/data_{TODAY}.json", "w", encoding="utf-8") as f:
+    with open(os.path.join(SCRIPT_DIR, f"data_{TODAY}.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2, default=str)
     print(f"[DATA ENGINE] 数据已保存到 data_{TODAY}.json")
