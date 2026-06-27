@@ -49,6 +49,16 @@ def _load_weights():
 
 CURRENT_WEIGHTS, WEIGHT_CONFIG = _load_weights()
 
+# v4.0: 从配置文件中读取自进化参数
+OPTIMIZED_PARAMS = {
+    "grade_thresholds": WEIGHT_CONFIG.get("grade_thresholds", {
+        "A_强烈买入": 78, "B_买入": 65, "C_观察": 55, "D_谨慎": 42
+    }),
+    "premium_steepness": WEIGHT_CONFIG.get("premium_steepness", 0.07),
+    "premium_threshold": WEIGHT_CONFIG.get("premium_threshold", 2.5),
+    "adx_trend_threshold": WEIGHT_CONFIG.get("adx_trend_threshold", 22)
+}
+
 # ============================================================
 # 模块2: 数据预处理
 # ============================================================
@@ -435,11 +445,12 @@ def classify_market_regime(index_closes, index_highs=None, index_lows=None,
 
     signals = {}
 
-    # Signal 1: ADX趋势强度
+    # Signal 1: ADX趋势强度（v4.0: 使用可配置阈值）
+    adx_threshold = OPTIMIZED_PARAMS.get("adx_trend_threshold", 22)
     adx_val = adx(index_closes, index_highs, index_lows, 14)
     signals["adx"] = round(adx_val, 1)
-    is_trending = adx_val > 22
-    is_strong_trend = adx_val > 28
+    is_trending = adx_val > adx_threshold
+    is_strong_trend = adx_val > (adx_threshold + 6)
 
     # Signal 2: 均线排列
     ma_align = ma_alignment(index_closes)
@@ -764,19 +775,25 @@ def _apply_premium_penalty(technical_score, premium_pct):
         # QDII ETF但无溢价数据 → 标记警告但不调整分数
         return technical_score, 1.0, "QDII溢价数据缺失，无法评估溢价风险"
 
-    if premium_pct < 2.0:
+    # v4.0: 从配置读取参数（可被optimizer自动调整）
+    premium_threshold = OPTIMIZED_PARAMS.get("premium_threshold", 2.0)
+    steepness = OPTIMIZED_PARAMS.get("premium_steepness", 0.07)
+
+    if premium_pct < premium_threshold:
         return technical_score, 1.0, None
 
-    # 分段惩罚系数
+    # 分段惩罚系数（使用可配置参数）
+    excess = premium_pct - premium_threshold
     if premium_pct <= 5.0:
-        # 2-5%: 每1%溢价扣6%分数
-        multiplier = 1.0 - (premium_pct - 2.0) * 0.06
+        multiplier = 1.0 - excess * steepness
     elif premium_pct <= 8.0:
-        # 5-8%: 前段扣18% + 每1%额外扣7%
-        multiplier = 0.82 - (premium_pct - 5.0) * 0.07
+        # 5-8%: 前段损失 + 加速惩罚
+        base_loss = (5.0 - premium_threshold) * steepness
+        multiplier = max(0.50, 1.0 - base_loss - (premium_pct - 5.0) * steepness * 1.3)
     else:
-        # >8%: 前段扣39% + 每1%额外扣8%，下限0.48
-        multiplier = max(0.48, 0.61 - (premium_pct - 8.0) * 0.08)
+        # >8%: 严重惩罚
+        base_loss = (5.0 - premium_threshold) * steepness + 3.0 * steepness * 1.3
+        multiplier = max(0.45, 1.0 - base_loss - (premium_pct - 8.0) * steepness * 1.6)
 
     multiplier = round(multiplier, 4)
 
@@ -828,8 +845,8 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
     # 最终评分 = 技术评分经溢价调整
     final_score = adjusted_score
 
-    # Grade（基于调整后评分，使用可配置阈值）
-    grade_thresholds = WEIGHT_CONFIG.get("grade_thresholds", {
+    # Grade（v4.0: 使用自进化可配置阈值）
+    grade_thresholds = OPTIMIZED_PARAMS.get("grade_thresholds", {
         "A_强烈买入": 78, "B_买入": 65, "C_观察": 55, "D_谨慎": 42
     })
     if final_score >= grade_thresholds.get("A_强烈买入", 78):
