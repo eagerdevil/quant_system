@@ -23,9 +23,12 @@ from data_engine import (
     fetch_etf_fund_nav, compute_etf_premium
 )
 from quant_engine import (
-    score_etf_comprehensive, MarketTiming, TradeDecider
+    score_etf_comprehensive, MarketTiming, TradeDecider,
+    compute_atr_stop_loss, MARKET_REGIME
 )
 from report_mailer import generate_html_report, send_email, WeeklyReview
+from risk_engine import portfolio_risk_report, format_risk_section
+from performance_tracker import generate_performance_summary
 
 TODAY = datetime.now().strftime("%Y%m%d")
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -268,16 +271,24 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
 
     # ===== 大盘择时 =====
     lines.append(f"\n  {'─'*60}")
-    lines.append(f"  [一] 大盘择时信号")
+    lines.append(f"  [一] 大盘择时 + 市场状态")
     lines.append(f"  {'─'*60}")
-    lines.append(f"  看多信号: {timing['bull_signals']}/{timing['total_signals']} -> 建议仓位 {timing['base_position']*100:.0f}%")
+    # 市场状态（v3.0 新增）
+    regime = timing.get("regime", "CHOPPY")
+    regime_emoji = {"TREND_UP": "🟢", "CHOPPY": "🟡", "TREND_DOWN": "🟠", "CRISIS": "🔴"}
+    lines.append(f"  市场状态: {regime_emoji.get(regime, '⚪')} {timing.get('regime_name', regime)} (置信度{timing.get('regime_confidence', 0):.0%})")
+    regime_signals = timing.get('regime_signals', [])
+    if regime_signals:
+        lines.append(f"    判定依据: {' | '.join(regime_signals)}")
+    lines.append(f"    策略: {timing.get('regime_description', '')}")
+    lines.append(f"  传统信号: {timing['bull_signals']}/{timing['total_signals']}看多 -> 建议仓位 {timing['base_position']*100:.0f}%")
+    lines.append(f"    状态止损: {timing.get('regime_stop_loss', -0.08)*100:.0f}% | 最低买入等级: {timing.get('regime_buy_grade_min', 'B_买入')}")
     for name, value in timing['signal_detail'].items():
         icon = "[PASS]" if value else "[FAIL]"
         label = name.replace("S1_HS300_above_MA20","沪深300在20日线上").replace("S2_HS300_MA60_up","沪深300的60日线向上").replace("S3_NorthFlow_5d_positive","北向资金5日净流入").replace("S4_Volume_active","成交额>2万亿").replace("S5_LimitDown_low","跌停<20家").replace("S6_Margin_increasing","融资余额增加")
         lines.append(f"    {icon} {label}")
     if timing['force_capped']:
         lines.append(f"  [WARNING] 强制限制生效: 仓位上限30%")
-    lines.append(f"  择时判断: {timing['advice']}")
     lines.append(f"  北向资金5日累计: {timing.get('north_flow_5d', 'N/A'):.1f}亿元")
 
     # ===== 账户概览 =====
@@ -335,6 +346,12 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
         for r in analysis.get("reasons_avoid", []):
             lines.append(f"    [注意] {r}")
 
+    # ===== 投资组合风险（v3.0 新增）=====
+    etf_data_map = all_data.get("etfs", {}) if all_data else {}
+    if port_summary and etf_data_map:
+        risk_report = portfolio_risk_report(portfolio, etf_data_map, scores)
+        lines.append(format_risk_section(risk_report))
+
     # ===== 关注ETF逐只分析 =====
     lines.append(f"\n  {'─'*60}")
     lines.append(f"  [五] 关注ETF逐只分析")
@@ -378,6 +395,10 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
     for i, s in enumerate(other_scores[:10]):
         gi = grade_icon.get(s['grade'], "[?]")
         lines.append(f"  {i+1:2d}. {gi} {s['name']}({s['code']}) | {s['score']}分 | RSI:{s['indicators']['rsi']:.0f} | 5日:{s['returns']['r5d']:+.1f}% | 20日:{s['returns']['r20d']:+.1f}%")
+
+    # ===== 绩效追踪（v3.0 新增）=====
+    perf_summary = generate_performance_summary()
+    lines.append(perf_summary)
 
     lines.append(f"\n  {'='*70}")
     lines.append(f"  [免责声明] 量化模型仅供辅助决策，不构成投资建议。投资有风险，入市需谨慎。")

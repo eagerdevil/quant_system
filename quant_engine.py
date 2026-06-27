@@ -25,7 +25,8 @@ FACTOR_MAX = {
     "F4_RSI": 8, "F5_均线偏离": 6, "F6_低波动": 6,
     "F7_成交量": 6, "F8_回调": 10, "F9_Sortino": 6,
     "F10_MaxDD": 6, "F11_布林带": 6, "F12_多周期": 6,
-    "F13_均线排列": 4, "F14_长期": 4, "F15_夏普": 6
+    "F13_均线排列": 4, "F14_长期": 4, "F15_夏普": 6,
+    "F16_量价关系": 8  # v3.0 新增：量价背离检测
 }
 FACTOR_NAMES = list(FACTOR_MAX.keys())
 DEFAULT_WEIGHTS = {k: 1.0 for k in FACTOR_NAMES}
@@ -196,7 +197,336 @@ def bollinger_position(closes, n=20):
     if upper == lower: return 50
     return (closes[-1] - lower)/(upper - lower)*100
 
+def adx(closes, highs, lows, n=14):
+    """
+    平均趋向指数 (Average Directional Index)
+    返回: adx值 (0-100, >25趋势市, <20震荡市)
+    用于市场状态分类
+    """
+    if len(closes) < n + 1:
+        return 20  # 数据不足默认震荡
+    # True Range
+    tr_list = []
+    for i in range(1, len(closes)):
+        hl = highs[i] - lows[i]
+        hc = abs(highs[i] - closes[i-1])
+        lc = abs(lows[i] - closes[i-1])
+        tr_list.append(max(hl, hc, lc))
+    atr_val = sum(tr_list[-n:]) / n
+    if atr_val == 0:
+        return 20
+
+    # +DM / -DM
+    plus_dm = []
+    minus_dm = []
+    for i in range(1, len(closes)):
+        up = highs[i] - highs[i-1]
+        down = lows[i-1] - lows[i]
+        if up > down and up > 0:
+            plus_dm.append(up)
+        else:
+            plus_dm.append(0)
+        if down > up and down > 0:
+            minus_dm.append(down)
+        else:
+            minus_dm.append(0)
+
+    # 平滑
+    def _smooth_adx(series, n):
+        if len(series) < n:
+            return sum(series) / len(series) if series else 0
+        smoothed = sum(series[:n])
+        for i in range(n, len(series)):
+            smoothed = smoothed - smoothed / n + series[i]
+        return smoothed / n
+
+    atr_smooth = _smooth_adx(tr_list, n)
+    plus_di = (_smooth_adx(plus_dm, n) / atr_smooth * 100) if atr_smooth > 0 else 0
+    minus_di = (_smooth_adx(minus_dm, n) / atr_smooth * 100) if atr_smooth > 0 else 0
+    dx = abs(plus_di - minus_di) / (plus_di + minus_di) * 100 if (plus_di + minus_di) > 0 else 0
+
+    # ADX = smoothed DX
+    if len(closes) >= n * 2:
+        dx_values = []
+        for i in range(n, len(closes)):
+            # 简化：用最后2n天近似
+            pass
+        return _smooth_adx([dx], min(n, 5))
+    return dx
+
+def bollinger_bandwidth(closes, n=20):
+    """布林带宽度 — 衡量波动率压缩/扩张"""
+    if len(closes) < n:
+        return 0.05  # 默认中等宽度
+    window = closes[-n:]
+    avg = sum(window) / n
+    std = math.sqrt(sum((x-avg)**2 for x in window) / n)
+    if avg == 0:
+        return 0
+    return (4 * std) / avg  # (upper - lower) / middle
+
+def calc_choppiness(closes, highs, lows, n=14):
+    """
+    震荡指数 (Choppiness Index)
+    值越高越震荡 (>61.8 = 震荡), 越低越趋势 (<38.2 = 趋势)
+    """
+    if len(closes) < n:
+        return 50
+    window_high = max(highs[-n:])
+    window_low = min(lows[-n:])
+    tr_sum = sum(
+        max(highs[i]-lows[i], abs(highs[i]-closes[i-1]), abs(lows[i]-closes[i-1]))
+        for i in range(-n+1, 0)
+    ) + (max(highs[-1]-lows[-1], abs(highs[-1]-closes[-2]), abs(lows[-1]-closes[-2])) if len(closes) > n else 0)
+    if tr_sum == 0 or window_high == window_low:
+        return 50
+    chop = 100 * math.log10(tr_sum / (window_high - window_low)) / math.log10(n)
+    return max(0, min(100, chop))
+
+
+def detect_volume_price_divergence(closes, volumes):
+    """
+    量价背离检测 (v3.0 新增)
+
+    检测四种关键背离模式：
+    1. 看跌背离: 价格创近期新高 + 成交量递减 → 上涨动力不足
+    2. 看涨背离: 价格创近期新低 + 成交量递增 → 下跌衰竭
+    3. 缩量反弹: 连续上涨 + 量能萎缩 → 虚假反弹
+    4. 放量下跌: 价格下跌 + 量暴增(非极端RSI) → 恐慌抛售
+
+    返回: {
+        "divergence_type": "bearish"|"bullish"|"weak_rally"|"panic_sell"|None,
+        "strength": 0-10 (越高越强),
+        "description": str
+    }
+    """
+    if len(closes) < 20 or len(volumes) < 20:
+        return {"divergence_type": None, "strength": 0, "description": ""}
+
+    # 分两段：前10日 vs 近10日
+    mid = len(closes) // 2
+    closes_recent = closes[-mid:]
+    closes_prior = closes[:mid]
+    volumes_recent = volumes[-mid:]
+    volumes_prior = volumes[:mid]
+
+    avg_vol_recent = sum(volumes_recent) / len(volumes_recent)
+    avg_vol_prior = sum(volumes_prior) / len(volumes_prior)
+    if avg_vol_prior == 0:
+        return {"divergence_type": None, "strength": 0, "description": ""}
+
+    vol_change = avg_vol_recent / avg_vol_prior
+
+    max_close_recent = max(closes_recent)
+    max_close_prior = max(closes_prior)
+    min_close_recent = min(closes_recent)
+    min_close_prior = min(closes_prior)
+
+    price_up = closes_recent[-1] > closes_prior[-1]
+    price_down = closes_recent[-1] < closes_prior[-1]
+
+    # 1. 看跌背离: 价格创新高 + 量缩 (>10%)
+    if max_close_recent > max_close_prior and vol_change < 0.90:
+        strength = min(10, round((1 - vol_change) * 10 + (max_close_recent/max_close_prior - 1) * 50))
+        return {
+            "divergence_type": "bearish",
+            "strength": strength,
+            "description": f"看跌背离: 价格创新高(+{(max_close_recent/max_close_prior-1)*100:.1f}%)但量缩{(1-vol_change)*100:.0f}%",
+            "vol_change": round(vol_change, 2),
+            "price_action": "新高量缩"
+        }
+
+    # 2. 看涨背离: 价格创新低 + 量增 (>10%)
+    if min_close_recent < min_close_prior and vol_change > 1.10:
+        strength = min(10, round((vol_change - 1) * 8 + (1 - min_close_recent/min_close_prior) * 50))
+        return {
+            "divergence_type": "bullish",
+            "strength": strength,
+            "description": f"看涨背离: 价格创新低(-{(1-min_close_recent/min_close_prior)*100:.1f}%)但量增{(vol_change-1)*100:.0f}%",
+            "vol_change": round(vol_change, 2),
+            "price_action": "新低量增"
+        }
+
+    # 3. 缩量反弹: 连涨3天+ + 近3日量<前10日均量80%
+    cons_up = 0
+    for i in range(len(closes)-1, 0, -1):
+        if closes[i] > closes[i-1]:
+            cons_up += 1
+        else:
+            break
+    recent_3vol = sum(volumes[-3:]) / 3 if len(volumes) >= 3 else avg_vol_recent
+    if cons_up >= 3 and recent_3vol < avg_vol_prior * 0.80:
+        strength = min(10, cons_up * 2 + round((1 - recent_3vol/avg_vol_prior) * 10))
+        return {
+            "divergence_type": "weak_rally",
+            "strength": strength,
+            "description": f"缩量反弹: 连涨{cons_up}天但近3日量仅为前均{(recent_3vol/avg_vol_prior)*100:.0f}%",
+            "vol_change": round(recent_3vol/avg_vol_prior, 2),
+            "price_action": "缩量连涨"
+        }
+
+    # 4. 放量下跌: 价格下跌 + 量暴增>1.3倍
+    rsi_now = rsi(closes, 14)
+    if price_down and vol_change > 1.30 and rsi_now > 30:
+        strength = min(10, round((vol_change - 1) * 7 + 3))
+        return {
+            "divergence_type": "panic_sell",
+            "strength": strength,
+            "description": f"放量下跌: 价格下跌+量暴增至{(vol_change)*100:.0f}%，恐慌抛售中(RSI={rsi_now:.0f})",
+            "vol_change": round(vol_change, 2),
+            "price_action": "放量下跌"
+        }
+
+    return {"divergence_type": None, "strength": 0, "description": ""}
+
 # ============================================================
+# 市场状态分类 (v3.0 新增)
+# ============================================================
+MARKET_REGIME = {
+    "TREND_UP": "趋势上涨",
+    "CHOPPY": "震荡整理",
+    "TREND_DOWN": "趋势下跌",
+    "CRISIS": "危机模式"
+}
+
+REGIME_STRATEGY = {
+    "TREND_UP": {
+        "base_position": (0.60, 1.00),  # 仓位范围
+        "stop_loss": -0.08,            # 止损
+        "buy_grade_min": "B_买入",     # 最低买入等级
+        "description": "趋势向好，正常操作"
+    },
+    "CHOPPY": {
+        "base_position": (0.20, 0.40),
+        "stop_loss": -0.05,            # 收紧止损
+        "buy_grade_min": "A_强烈买入",
+        "description": "方向不明，缩小头寸+收紧止损"
+    },
+    "TREND_DOWN": {
+        "base_position": (0.05, 0.20),
+        "stop_loss": -0.05,            # 硬止损
+        "buy_grade_min": None,         # 禁止买入
+        "description": "趋势向下，防御为主"
+    },
+    "CRISIS": {
+        "base_position": (0.0, 0.05),
+        "stop_loss": -0.05,
+        "buy_grade_min": None,
+        "description": "危机模式，现金为王"
+    }
+}
+
+def classify_market_regime(index_closes, index_highs=None, index_lows=None,
+                           bond_yield=None, vix=None):
+    """
+    综合判断市场状态
+    输入: 沪深300的日线数据
+    输出: {regime, confidence, signals, description}
+    """
+    if len(index_closes) < 60:
+        return {"regime": "CHOPPY", "confidence": 0.3,
+                "signals": {}, "description": "数据不足，默认震荡"}
+
+    # 用收盘价的复制简化highs/lows
+    if index_highs is None:
+        index_highs = [c * 1.005 for c in index_closes]  # 近似
+    if index_lows is None:
+        index_lows = [c * 0.995 for c in index_closes]
+
+    signals = {}
+
+    # Signal 1: ADX趋势强度
+    adx_val = adx(index_closes, index_highs, index_lows, 14)
+    signals["adx"] = round(adx_val, 1)
+    is_trending = adx_val > 22
+    is_strong_trend = adx_val > 28
+
+    # Signal 2: 均线排列
+    ma_align = ma_alignment(index_closes)
+    signals["ma_alignment"] = ma_align
+    ma_bullish = ma_align >= 2  # MA5>MA10>MA20 or MA10>MA20>MA60
+    ma_bearish = ma_align == 0  # 全空头
+
+    # Signal 3: 布林带宽度（波动率状态）
+    bbw = bollinger_bandwidth(index_closes, 20)
+    signals["bb_width"] = round(bbw, 4)
+    # 布林带宽<3% = 低波动（可能酝酿突破），>8% = 高波动
+    high_vol = bbw > 0.08
+
+    # Signal 4: 震荡指数
+    chop = calc_choppiness(index_closes, index_highs, index_lows, 14)
+    signals["choppiness"] = round(chop, 1)
+    is_choppy = chop > 55
+
+    # Signal 5: 近期收益率
+    r5 = ret_n(index_closes, 5)
+    r20 = ret_n(index_closes, 20)
+    signals["r5d"] = round(r5, 1)
+    signals["r20d"] = round(r20, 1)
+    sharp_decline = r5 < -6 or r20 < -12
+
+    # Signal 6: 价格位置 vs MA60
+    ma60 = sma(index_closes, 60)
+    below_ma60 = index_closes[-1] < ma60 * 0.95  # 低于MA60超过5%
+    signals["below_ma60_pct"] = round((index_closes[-1]/ma60 - 1)*100, 1) if ma60 > 0 else 0
+
+    # === 状态判定 ===
+    regime_signals = []
+    confidence = 0.5
+
+    # 危机判定：急速下跌 + 跌破关键均线
+    if sharp_decline and (below_ma60 or r20 < -15):
+        regime = "CRISIS"
+        confidence = 0.85
+        regime_signals.append(f"急速下跌(5日{r5:.1f}%, 20日{r20:.1f}%)")
+        if below_ma60:
+            regime_signals.append("跌破MA60超过5%")
+    # 趋势下跌：空头排列 + 有趋势
+    elif ma_bearish and is_trending:
+        regime = "TREND_DOWN"
+        confidence = 0.80
+        regime_signals.append("均线空头排列")
+        regime_signals.append(f"ADX={adx_val:.1f}(趋势明确)")
+    # 震荡：无明确方向
+    elif is_choppy or not is_trending:
+        regime = "CHOPPY"
+        if is_choppy and not is_trending:
+            confidence = 0.75
+            regime_signals.append(f"震荡指数={chop:.1f}(>55震荡)")
+            regime_signals.append(f"ADX={adx_val:.1f}(<22无趋势)")
+        else:
+            confidence = 0.55
+            regime_signals.append("方向不明确")
+    # 趋势上涨：多头排列 + 有趋势
+    elif ma_bullish and is_trending:
+        regime = "TREND_UP"
+        confidence = 0.80
+        regime_signals.append("均线多头排列")
+        regime_signals.append(f"ADX={adx_val:.1f}(趋势明确)")
+    else:
+        regime = "CHOPPY"
+        confidence = 0.40
+        regime_signals.append("综合判定为震荡")
+
+    # 高波动叠加
+    if high_vol:
+        regime_signals.append(f"高波动(布林带宽={bbw*100:.1f}%)")
+        if regime == "TREND_DOWN":
+            regime = "CRISIS"
+            confidence = min(1.0, confidence + 0.1)
+            regime_signals.append("高波动+下跌趋势 → 升级为危机模式")
+
+    strategy = REGIME_STRATEGY.get(regime, REGIME_STRATEGY["CHOPPY"])
+
+    return {
+        "regime": regime,
+        "regime_name": MARKET_REGIME.get(regime, regime),
+        "confidence": round(confidence, 2),
+        "signals": signals,
+        "regime_signals": regime_signals,
+        "strategy": strategy,
+        "description": strategy["description"]
+    }
 # 模块3b: 因子计算（导出供 optimizer 使用）
 # ============================================================
 def compute_indicators(closes, highs, lows, volumes):
@@ -245,7 +575,9 @@ def compute_indicators(closes, highs, lows, volumes):
         "r5d": r5, "r10d": r10, "r20d": r20, "r60d": r60, "r120d": r120,
         "vol_ratio_5d": v_ratio, "vol_ratio_10d": v_ratio_10,
         "pma5": pm5, "pma10": pm10, "pma20": pm20, "pma60": pm60,
-        "price": cur
+        "price": cur,
+        # v3.0 新增：量价背离
+        "volume_divergence": detect_volume_price_divergence(closes, volumes)
     }
 
 def score_factors(indicators):
@@ -392,6 +724,21 @@ def score_factors(indicators):
     else: f15 = 2
     factors['F15_夏普'] = f15
 
+    # F16: 量价关系 (0-8) — v3.0 新增
+    vol_div = ind.get("volume_divergence", {})
+    div_type = vol_div.get("divergence_type")
+    if div_type == "bullish":
+        f16 = 8  # 看涨背离：下跌衰竭信号，看多
+    elif div_type == "bearish":
+        f16 = 2  # 看跌背离：上涨动力不足，看空
+    elif div_type == "weak_rally":
+        f16 = 3  # 缩量反弹：虚假反弹，谨慎
+    elif div_type == "panic_sell":
+        f16 = 4  # 放量下跌：恐慌中，但可能接近底部
+    else:
+        f16 = 5  # 无量价背离，中性
+    factors['F16_量价关系'] = f16
+
     return factors
 
 # ============================================================
@@ -534,7 +881,9 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
             "pct_ma5": round(indicators["pma5"], 1), "pct_ma10": round(indicators["pma10"], 1),
             "pct_ma20": round(indicators["pma20"], 1), "pct_ma60": round(indicators["pma60"], 1)
         },
-        "factors": factors
+        "factors": factors,
+        # v3.0 新增：量价背离详情
+        "volume_divergence": indicators.get("volume_divergence", {})
     }
 
 # ============================================================
@@ -545,15 +894,20 @@ class MarketTiming:
 
     def __init__(self, index_data, north_flow, total_vol, breadth, margin):
         """
-        index_data: {code: {name, data: [{date,close,volume}...]}}
+        index_data: {code: {name, data: [{date,close,high,low,volume}...]}}
         north_flow: [{date, net_flow}]
         total_vol: float (亿元)
         breadth: {limit_up, limit_down, up_count, down_count}
         margin: {balance, change}
         """
         self.hs300 = None
+        self.hs300_highs = None
+        self.hs300_lows = None
         if "000300" in index_data:
-            self.hs300 = [d["close"] for d in index_data["000300"]["data"]]
+            data = index_data["000300"]["data"]
+            self.hs300 = [d["close"] for d in data]
+            self.hs300_highs = [d.get("high", d["close"]*1.005) for d in data]
+            self.hs300_lows = [d.get("low", d["close"]*0.995) for d in data]
 
         self.north_flow = north_flow or []
         self.total_vol = total_vol or 0
@@ -598,22 +952,45 @@ class MarketTiming:
         return signals, nf_5d
 
     def position_advice(self):
-        """根据择时信号计算建议仓位"""
+        """根据择时信号+市场状态计算建议仓位（v3.0 加入状态分类）"""
         signals, nf_5d = self.calc_signals()
         bull_count = sum(1 for v in signals.values() if v)
 
-        # 强制限制：HS300低于MA60且MA60向下 → 仓位上限30%
-        hs300_below_ma60 = not signals.get('S1_HS300_above_MA20', True)
-        ma60_down = not signals.get('S2_HS300_MA60_up', True)
-        force_cap = hs300_below_ma60 and ma60_down
+        # === v3.0: 市场状态分类 ===
+        regime_result = None
+        if self.hs300 and len(self.hs300) >= 60:
+            regime_result = classify_market_regime(
+                self.hs300, self.hs300_highs, self.hs300_lows
+            )
+        else:
+            regime_result = {"regime": "CHOPPY", "confidence": 0.3,
+                             "signals": {}, "regime_signals": ["数据不足"],
+                             "strategy": REGIME_STRATEGY["CHOPPY"],
+                             "description": "数据不足，默认震荡"}
 
-        # 仓位映射
+        # === 仓位映射: 结合传统信号+状态分类 ===
+        # 基础仓位（传统6信号）
         if bull_count >= 5: base_position = 1.0
         elif bull_count >= 4: base_position = 0.85
         elif bull_count >= 3: base_position = 0.65
         elif bull_count >= 2: base_position = 0.40
         elif bull_count >= 1: base_position = 0.20
         else: base_position = 0.05
+
+        # 状态覆盖（v3.0新增）：状态分类的仓位上限
+        regime_strategy = regime_result.get("strategy", REGIME_STRATEGY["CHOPPY"])
+        pos_range = regime_strategy.get("base_position", (0.20, 0.40))
+        regime_stop_pct = regime_strategy.get("stop_loss", -0.08)
+        buy_grade_min = regime_strategy.get("buy_grade_min", "B_买入")
+
+        # 状态仓位上限约束
+        base_position = min(base_position, pos_range[1])
+        base_position = max(base_position, pos_range[0])
+
+        # 强制限制：HS300低于MA60且MA60向下 → 仓位上限30%
+        hs300_below_ma60 = not signals.get('S1_HS300_above_MA20', True)
+        ma60_down = not signals.get('S2_HS300_MA60_up', True)
+        force_cap = hs300_below_ma60 and ma60_down
 
         if force_cap:
             base_position = min(base_position, 0.30)
@@ -625,7 +1002,15 @@ class MarketTiming:
             "base_position": round(base_position, 2),
             "force_capped": force_cap,
             "north_flow_5d": round(nf_5d, 1),
-            "advice": self._position_text(base_position, bull_count, force_cap)
+            "advice": self._position_text(base_position, bull_count, force_cap),
+            # v3.0 新增
+            "regime": regime_result["regime"],
+            "regime_name": MARKET_REGIME.get(regime_result["regime"], regime_result["regime"]),
+            "regime_confidence": regime_result.get("confidence", 0),
+            "regime_signals": regime_result.get("regime_signals", []),
+            "regime_stop_loss": regime_stop_pct,
+            "regime_buy_grade_min": buy_grade_min,
+            "regime_description": regime_result.get("description", "")
         }
 
     def _position_text(self, pos, bulls, capped):
@@ -638,6 +1023,79 @@ class MarketTiming:
 # ============================================================
 # 模块5: 交易决策生成器
 # ============================================================
+
+def compute_atr_stop_loss(closes, highs, lows, cost_price,
+                          atr_period=14, atr_mult=2.5,
+                          min_stop_pct=-5.0, max_stop_pct=-12.0):
+    """
+    ATR自适应动态止损 (v3.0 新增)
+
+    逻辑:
+    - 基于ATR（平均真实波幅）计算止损距离
+    - 高波动ETF → 更宽止损（避免被正常波动震出）
+    - 低波动ETF → 更窄止损（更快止损）
+    - 硬约束: 止损比例在min_stop_pct~max_stop_pct之间
+    - 市场危机状态下可以用更紧的止损
+
+    参数:
+        closes, highs, lows: 价格序列
+        cost_price: 持仓成本价
+        atr_period: ATR计算周期
+        atr_mult: ATR倍数（默认2.5倍ATR）
+        min_stop_pct: 最小止损百分比（如-5%）
+        max_stop_pct: 最大止损百分比（如-12%）
+
+    返回: {
+        "stop_price": float,
+        "stop_pct": float (负数),
+        "atr_value": float,
+        "atr_pct": float (ATR占价格百分比),
+        "method": "ATR自适应"
+    }
+    """
+    if len(closes) < atr_period + 1:
+        # 数据不足，回退到固定-8%
+        stop_pct = -0.08
+        return {
+            "stop_price": round(cost_price * (1 + stop_pct), 4),
+            "stop_pct": round(stop_pct * 100, 1),
+            "atr_value": 0,
+            "atr_pct": 0,
+            "method": "固定止损(数据不足)"
+        }
+
+    # 计算ATR
+    tr_list = []
+    for i in range(1, len(closes)):
+        hl = highs[i] - lows[i]
+        hc = abs(highs[i] - closes[i-1])
+        lc = abs(lows[i] - closes[i-1])
+        tr_list.append(max(hl, hc, lc))
+
+    atr_val = sum(tr_list[-atr_period:]) / atr_period
+    current_price = closes[-1]
+    atr_pct = atr_val / current_price * 100 if current_price > 0 else 2.0
+
+    # 止损距离 = ATR × 倍数，转换为百分比
+    stop_distance_pct = -(atr_pct * atr_mult)
+
+    # 硬约束
+    if stop_distance_pct > min_stop_pct:  # 比-5%更近 → 用最小值
+        stop_distance_pct = min_stop_pct
+    if stop_distance_pct < max_stop_pct:  # 比-12%更远 → 用最大值
+        stop_distance_pct = max_stop_pct
+
+    stop_price = cost_price * (1 + stop_distance_pct / 100)
+
+    return {
+        "stop_price": round(stop_price, 4),
+        "stop_pct": round(stop_distance_pct, 1),
+        "atr_value": round(atr_val, 4),
+        "atr_pct": round(atr_pct, 2),
+        "method": f"ATR({atr_period}d)×{atr_mult}"
+    }
+
+
 class TradeDecider:
     """根据因子得分+择时+持仓生成操作计划"""
 
