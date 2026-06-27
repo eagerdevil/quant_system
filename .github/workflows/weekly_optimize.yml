@@ -1,27 +1,23 @@
-name: 每周因子权重优化
+name: 自适应参数优化 (条件触发)
 
-# 每周日 UTC 09:00 = 北京时间 17:00 自动运行
-# 回测历史数据 → 搜索最优因子权重 → 自动提交
+# v4.0: 条件触发式 — 由 cron-job.org 每月第一个周日触发
+# 先检查条件 → 满足才优化 → 自动提交
+# 可手动触发（无视条件）
 on:
-  schedule:
-    - cron: '0 9 * * 0'
-  # 也支持手动触发
   workflow_dispatch:
 
-# 需要写权限以提交权重更新
 permissions:
   contents: write
 
 jobs:
-  optimize:
+  check-and-optimize:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
 
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
         with:
-          # 使用内置 token，推送不会触发新的 workflow
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 设置Python
@@ -29,41 +25,86 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: 检查是否需要优化
+        id: check
+        env:
+          TZ: Asia/Shanghai
+        run: |
+          echo "===== 条件检查: $(date '+%Y-%m-%d %H:%M') ====="
+          python check_optimize_needed.py
+          CHECK_EXIT=$?
+          echo "检查结果 exit code: $CHECK_EXIT"
+
+          if [ $CHECK_EXIT -eq 0 ]; then
+            echo "should_optimize=true" >> $GITHUB_OUTPUT
+          elif [ $CHECK_EXIT -eq 2 ]; then
+            echo "should_optimize=false" >> $GITHUB_OUTPUT
+          else
+            echo "检查脚本异常，退出"
+            exit 1
+          fi
+
+      - name: 跳过优化（条件不满足）
+        if: steps.check.outputs.should_optimize != 'true'
+        run: |
+          echo "===== ✓ 条件不满足，跳过本次优化 ====="
+          echo "下次检查将在下个触发日运行"
+
+  optimize:
+    needs: check-and-optimize
+    if: needs.check-and-optimize.outputs.should_optimize == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 拉取最新权重（合并可能的手动提交）
+        run: git pull origin main
+
       - name: 运行参数优化
         env:
           TZ: Asia/Shanghai
         run: |
-          echo "===== 每周因子优化: $(date '+%Y-%m-%d %H:%M') ====="
+          echo "===== 自进化优化: $(date '+%Y-%m-%d %H:%M') ====="
           python optimizer.py 2>&1
           echo "===== 优化完成: $(date '+%Y-%m-%d %H:%M') ====="
 
-      - name: 提交权重更新
+      - name: 提交参数更新
         env:
           TZ: Asia/Shanghai
         run: |
-          # 检查是否有变更
-          if git diff --quiet factor_weights.json && git diff --quiet --cached factor_weights.json; then
-            echo "权重未变更，跳过提交"
+          if git diff --quiet factor_weights.json && \
+             git diff --quiet evolution_log.json && \
+             git diff --quiet --cached factor_weights.json; then
+            echo "参数未变更，跳过提交"
             exit 0
           fi
 
-          echo "检测到权重更新，提交变更..."
+          echo "检测到参数更新，提交变更..."
           git config user.name "Quant Optimizer Bot"
           git config user.email "quant-bot@github.com"
 
-          # 获取本次优化IC
           IC=$(python -c "import json; c=json.load(open('factor_weights.json','r',encoding='utf-8')); print(c['meta']['ic_score'])")
           VER=$(python -c "import json; c=json.load(open('factor_weights.json','r',encoding='utf-8')); print(c['meta']['version'])")
+          REASON=$(python -c "import json; c=json.load(open('factor_weights.json','r',encoding='utf-8')); print(c['meta'].get('optimization_reason','条件触发'))")
 
-          git add factor_weights.json
-          git commit -m "optimize: 第${VER}次因子权重优化 IC=${IC}
+          git add factor_weights.json evolution_log.json
+          git commit -m "optimize(v${VER}): ${REASON} IC=${IC}
 
-          每周自动优化 — 回测驱动参数搜索
+          条件触发式自进化 — 每月保底+市场剧变加跑
           Co-Authored-By: Quant Optimizer Bot <quant-bot@github.com>"
 
           git push origin HEAD
-
-          echo "权重更新已推送 ✓"
+          echo "参数更新已推送 ✓"
 
       - name: 上传优化报告
         uses: actions/upload-artifact@v4
@@ -71,5 +112,6 @@ jobs:
           name: optimize-result-${{ github.run_id }}
           path: |
             factor_weights.json
+            evolution_log.json
             optimize_result_*.json
           retention-days: 30
