@@ -19,7 +19,8 @@ from data_engine import (
     collect_all_data, KEY_ETFS, USER_WATCHLIST, USER_STOCKS,
     fetch_market_breadth, fetch_total_volume,
     fetch_north_bound_flow, fetch_margin_balance, fetch_etf_kline,
-    fetch_etf_realtime, get_all_index_data
+    fetch_etf_realtime, get_all_index_data,
+    fetch_etf_fund_nav, compute_etf_premium
 )
 from quant_engine import (
     score_etf_comprehensive, MarketTiming, TradeDecider
@@ -145,6 +146,13 @@ def analyze_watchlist_etf(s, timing, portfolio):
     reasons_buy = []
     reasons_avoid = []
     action = "HOLD"
+
+    # 溢价风险检查（v2.1 新增 — 优先于所有技术信号）
+    premium_info = s.get("premium_info", {})
+    if premium_info.get("premium_pct") is not None and premium_info["premium_pct"] > 5:
+        reasons_avoid.append(f"🚨 ETF溢价{premium_info['premium_pct']:.1f}%！溢价回归将直接亏损{premium_info['premium_pct']:.1f}%")
+    elif premium_info.get("premium_pct") is not None and premium_info["premium_pct"] > 3:
+        reasons_avoid.append(f"⚠️ ETF溢价{premium_info['premium_pct']:.1f}%，偏高需等待回落")
 
     # 买入条件
     if ind["rsi"] <= 58 and ind["consecutive_up"] <= 2:
@@ -314,6 +322,13 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
         action_label = {"BUY":"[加仓]","SELL":"[卖出]","REDUCE":"[减仓]","WATCH":"[持有观察]","HOLD":"[持有]","AVOID":"[回避]"}.get(analysis["action"], "[?]")
 
         lines.append(f"  {action_label} {pos['name']}({code}) | 评分{analysis['score']}分 | 现价{analysis['price']:.3f}")
+        # 溢价信息（v2.1 新增）
+        p_info = score_data.get("premium_info", {})
+        tech_score = score_data.get("technical_score", analysis["score"])
+        if p_info.get("premium_pct") is not None and p_info["premium_pct"] > 2:
+            lines.append(f"    ⚡ 溢价{p_info['premium_pct']:.1f}% → 技术分{tech_score}扣至{analysis['score']}分")
+        elif p_info.get("premium_pct") is not None and p_info["premium_pct"] < -1:
+            lines.append(f"    💚 折价{abs(p_info['premium_pct']):.1f}%，低于净值买入")
         lines.append(f"    止损线:{analysis['stop_loss']:.3f}(-5%) | 止盈线:{analysis['take_profit']:.3f}(+8%)")
         if analysis.get("holding_advice"):
             lines.append(f"    {analysis['holding_advice']}")
@@ -441,9 +456,19 @@ def main():
         highs = [k["high"] for k in kline]
         lows = [k["low"] for k in kline]
         volumes = [k["volume"] for k in kline]
-        result = score_etf_comprehensive(code, edata["name"], closes, highs, lows, volumes)
+
+        # 获取溢价率（v2.1 新增）
+        rt = edata.get("realtime") or {}
+        current_price = rt.get("price") if rt.get("price") else closes[-1]
+        fund_nav = fetch_etf_fund_nav(code)
+        premium_info = compute_etf_premium(code, current_price, fund_nav)
+        premium_pct = premium_info.get("premium_pct")
+
+        result = score_etf_comprehensive(code, edata["name"], closes, highs, lows, volumes,
+                                         premium_pct=premium_pct)
         result["is_watchlist"] = code in USER_WATCHLIST
         result["is_holding"] = code in portfolio
+        result["premium_info"] = premium_info  # 保存完整溢价信息用于报告
         scores.append(result)
 
     # 2b. 计算因子得分 - 个股

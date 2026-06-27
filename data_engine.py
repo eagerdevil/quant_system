@@ -577,6 +577,11 @@ def fetch_etf_realtime(code):
     data = fetch_json(url)
     if data and data.get("data"):
         d = data["data"]
+        # 解析IOPV（实时估值，f169；部分QDII ETF返回无效值如-61）
+        raw_iopv = d.get("f169", 0)
+        iopv = None
+        if raw_iopv and raw_iopv > 0:
+            iopv = raw_iopv / 1000 if raw_iopv > 100 else raw_iopv
         return {
             "price": d.get("f43", 0)/1000 if d.get("f43", 0) > 100 else d.get("f43", 0),
             "high": d.get("f44", 0)/1000 if d.get("f44", 0) > 100 else d.get("f44", 0),
@@ -585,14 +590,104 @@ def fetch_etf_realtime(code):
             "volume": d.get("f47", 0), "amount": d.get("f48", 0),
             "change_pct": d.get("f170", 0)/100 if abs(d.get("f170", 0)) > 1 else d.get("f170", 0),
             "prev_close": d.get("f60", 0)/1000 if d.get("f60", 0) > 100 else d.get("f60", 0),
-            "name": d.get("f58", ""), "code": d.get("f57", "")
+            "name": d.get("f58", ""), "code": d.get("f57", ""),
+            "iopv": iopv  # 实时估值（QDII ETF可能为None）
         }
     # 备用: 新浪API
     return _fetch_sina_realtime(code)
 
 # ============================================================
-# 7. 恐慌指数（20日下跌家数占比）
+# 6b. ETF净值与溢价率（新增 — 修正量化模型对QDII溢价的盲区）
 # ============================================================
+
+# QDII ETF列表（跨境ETF，存在溢价风险）
+# 以15、16、51、52、56开头且跟踪海外指数的ETF
+QDII_ETF_CODES = {
+    "159659", "513100", "513500",  # 纳斯达克ETF招商、纳指ETF国泰、标普500ETF
+    "159660", "513050", "513060",  # 纳指相关
+    "513520", "513880", "513220",  # 日经、恒生科技等
+}
+
+def fetch_etf_fund_nav(code):
+    """
+    获取ETF最新官方净值（基金公司T+1公布）
+    数据源: 天天基金API
+    返回: {"nav": float, "date": str, "name": str} 或 None
+    """
+    try:
+        url = f"https://api.fund.eastmoney.com/f10/lsjz?callback=&fundCode={code}&pageIndex=1&pageSize=2"
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Referer": "https://fundf10.eastmoney.com/",
+        })
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+        lsjz_list = data.get("Data", {}).get("LSJZList", [])
+        if lsjz_list:
+            latest = lsjz_list[0]
+            return {
+                "nav": float(latest.get("DWJZ", 0)),
+                "date": latest.get("FSRQ", ""),
+                "name": data.get("Data", {}).get("FundName", "")
+            }
+    except Exception as e:
+        print(f"  [NAV ERROR] {code}: {e}", file=sys.stderr)
+    return None
+
+def compute_etf_premium(code, current_price, nav_data=None):
+    """
+    计算ETF溢价率
+    返回: {
+        "premium_pct": float (正=溢价, 负=折价),
+        "nav": float,
+        "nav_date": str,
+        "data_source": "official_nav" | "iopv" | "estimated" | "unavailable",
+        "is_qdii": bool
+    }
+    """
+    is_qdii = code in QDII_ETF_CODES
+
+    # 优先级1: 官方净值（最可靠）
+    if nav_data and nav_data.get("nav", 0) > 0:
+        premium = (current_price / nav_data["nav"] - 1) * 100
+        return {
+            "premium_pct": round(premium, 2),
+            "nav": round(nav_data["nav"], 4),
+            "nav_date": nav_data.get("date", ""),
+            "data_source": "official_nav",
+            "is_qdii": is_qdii
+        }
+
+    # 优先级2: 尝试实时IOPV
+    rt = fetch_etf_realtime(code)
+    if rt and rt.get("iopv") and rt["iopv"] > 0:
+        premium = (current_price / rt["iopv"] - 1) * 100
+        return {
+            "premium_pct": round(premium, 2),
+            "nav": round(rt["iopv"], 4),
+            "nav_date": TODAY,
+            "data_source": "iopv",
+            "is_qdii": is_qdii
+        }
+
+    # 优先级3: QDII ETF无数据时标记为数据缺失
+    if is_qdii:
+        return {
+            "premium_pct": None,
+            "nav": None,
+            "nav_date": None,
+            "data_source": "unavailable",
+            "is_qdii": True
+        }
+
+    # 非QDII ETF: 溢价通常可忽略
+    return {
+        "premium_pct": 0.0,
+        "nav": None,
+        "nav_date": None,
+        "data_source": "assumed_zero",
+        "is_qdii": False
+    }
 def calc_fear_index():
     """计算恐慌指数：今日下跌家数 / 总家数"""
     breadth = fetch_market_breadth()

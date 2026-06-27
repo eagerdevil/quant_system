@@ -397,14 +397,64 @@ def score_factors(indicators):
 # ============================================================
 # 综合因子评分（ETF级别）— v2.0 支持自适应权重
 # ============================================================
+def _apply_premium_penalty(technical_score, premium_pct):
+    """
+    溢价惩罚函数 — 修正量化模型对QDII ETF溢价的盲区
+
+    设计逻辑:
+    - 溢价<2%: 不惩罚（正常交易区间）
+    - 溢价2-5%: 线性衰减，从100%→85%
+    - 溢价5-8%: 加速衰减，从85%→65%
+    - 溢价>8%: 严重惩罚，最低到50%
+
+    参数:
+        technical_score: 原始15因子技术评分 (0-100)
+        premium_pct: 溢价率（正=溢价，None=数据缺失）
+    返回:
+        (adjusted_score, penalty_multiplier, warning)
+    """
+    if premium_pct is None:
+        # QDII ETF但无溢价数据 → 标记警告但不调整分数
+        return technical_score, 1.0, "QDII溢价数据缺失，无法评估溢价风险"
+
+    if premium_pct < 2.0:
+        return technical_score, 1.0, None
+
+    # 分段惩罚系数
+    if premium_pct <= 5.0:
+        # 2-5%: 每1%溢价扣6%分数
+        multiplier = 1.0 - (premium_pct - 2.0) * 0.06
+    elif premium_pct <= 8.0:
+        # 5-8%: 前段扣18% + 每1%额外扣7%
+        multiplier = 0.82 - (premium_pct - 5.0) * 0.07
+    else:
+        # >8%: 前段扣39% + 每1%额外扣8%，下限0.48
+        multiplier = max(0.48, 0.61 - (premium_pct - 8.0) * 0.08)
+
+    multiplier = round(multiplier, 4)
+
+    if premium_pct > 8:
+        warning = f"🚨 溢价{premium_pct:.1f}%极度危险！市价远超净值，面临停牌+溢价回归双重风险"
+    elif premium_pct > 5:
+        warning = f"⚠️ 溢价{premium_pct:.1f}%偏高，买入即多付{premium_pct:.1f}%成本，需等溢价回落"
+    elif premium_pct > 3:
+        warning = f"⚡ 溢价{premium_pct:.1f}%，略高于安全线，关注溢价收敛趋势"
+    else:
+        warning = None
+
+    adjusted = round(technical_score * multiplier)
+    return adjusted, multiplier, warning
+
+
 def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
                              north_flow_5d=None, industry_return=None,
-                             weights=None):
+                             weights=None, premium_pct=None):
     """
-    15因子综合评分系统
+    15因子综合评分系统 + 溢价惩罚
     参数:
         weights: dict {factor_name: weight}, None时使用factor_weights.json配置
-    返回: {score, grade, factor_details, indicators}
+        premium_pct: ETF溢价率（%），None表示数据缺失
+    返回: {score, grade, factor_details, indicators, premium_info}
     """
     # 加载权重（参数 > 配置文件 > 默认等权）
     if weights is None:
@@ -420,30 +470,46 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
     weighted_sum = sum(factors[k] * weights.get(k, 1.0) for k in FACTOR_NAMES)
     max_weighted = sum(FACTOR_MAX[k] * weights.get(k, 1.0) for k in FACTOR_NAMES)
     if max_weighted > 0:
-        total = round(weighted_sum / max_weighted * 100)
+        technical_score = round(weighted_sum / max_weighted * 100)
     else:
-        total = sum(factors.values())
+        technical_score = sum(factors.values())
 
-    # Grade（使用可配置阈值）
+    # === 溢价惩罚（v2.1 新增）===
+    adjusted_score, premium_multiplier, premium_warning = _apply_premium_penalty(
+        technical_score, premium_pct
+    )
+    # 最终评分 = 技术评分经溢价调整
+    final_score = adjusted_score
+
+    # Grade（基于调整后评分，使用可配置阈值）
     grade_thresholds = WEIGHT_CONFIG.get("grade_thresholds", {
         "A_强烈买入": 78, "B_买入": 65, "C_观察": 55, "D_谨慎": 42
     })
-    if total >= grade_thresholds.get("A_强烈买入", 78):
+    if final_score >= grade_thresholds.get("A_强烈买入", 78):
         grade = "A_强烈买入"
-    elif total >= grade_thresholds.get("B_买入", 65):
+    elif final_score >= grade_thresholds.get("B_买入", 65):
         grade = "B_买入"
-    elif total >= grade_thresholds.get("C_观察", 55):
+    elif final_score >= grade_thresholds.get("C_观察", 55):
         grade = "C_观察"
-    elif total >= grade_thresholds.get("D_谨慎", 42):
+    elif final_score >= grade_thresholds.get("D_谨慎", 42):
         grade = "D_谨慎"
     else:
         grade = "E_回避"
 
     return {
         "code": code, "name": name,
-        "score": total, "max_score": 100,
+        "score": final_score,  # 溢价调整后的最终评分
+        "technical_score": technical_score,  # 原始技术评分（不含溢价）
+        "max_score": 100,
         "grade": grade,
         "price": round(indicators["price"], 4),
+        # 溢价信息（v2.1新增）
+        "premium_info": {
+            "premium_pct": premium_pct,
+            "penalty_multiplier": premium_multiplier,
+            "warning": premium_warning,
+            "score_penalty": technical_score - final_score
+        },
         "indicators": {
             "rsi": round(indicators["rsi"], 1),
             "volatility_pct": round(indicators["volatility"]*100, 1),
