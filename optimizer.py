@@ -2,7 +2,7 @@
 """
 量化系统 v4.0 — 自进化参数优化引擎
 ===================================
-每周日自动运行（或手动执行）
+每月自动运行（或手动执行）
 - 回测历史数据，评估因子+阈值+溢价惩罚的预测能力
 - 时间加权IC（近期数据权重更高 → 自适应市场变化）
 - 随机搜索 + 局部精化 → 最优参数
@@ -13,13 +13,18 @@
   python optimizer.py --dry-run    # 预览不保存
   python optimizer.py --fast       # 快速模式（80次搜索）
 """
-import json, sys, os, math, random, io, time
+import json, math, sys, os, time, random, logging, traceback, io, re as _re
 from datetime import datetime, timedelta
 from collections import defaultdict
 
-# 编码修复
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# 编码修复 (仅直接运行时)
+if __name__ == "__main__":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s',
+                    datefmt='%H:%M:%S', handlers=[logging.StreamHandler(sys.stderr)])
+logger = logging.getLogger("optimizer")
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -207,7 +212,7 @@ def compute_scores_with_params(params, precomputed):
 # ============================================================
 def collect_backtest_data(etf_list, max_days=250, min_days=65):
     """采集回测所需历史数据并预计算因子"""
-    print(f"  采集 {len(etf_list)} 只ETF历史K线...", file=sys.stderr)
+    logger.info(f"  采集 {len(etf_list)} 只ETF历史K线...")
 
     all_points = []
     etf_with_data = 0
@@ -217,7 +222,7 @@ def collect_backtest_data(etf_list, max_days=250, min_days=65):
         try:
             kline = fetch_etf_kline(code, days=max_days)
         except Exception as e:
-            print(f"    [{i+1}/{len(etf_list)}] {name}({code}) API错误: {e}", file=sys.stderr)
+            logger.info(f"    [{i+1}/{len(etf_list)}] {name}({code}) API错误: {e}")
             continue
 
         if not kline or len(kline) < min_days:
@@ -253,7 +258,7 @@ def collect_backtest_data(etf_list, max_days=250, min_days=65):
                 continue
 
         etf_with_data += 1
-        print(f"    [{i+1}/{len(etf_list)}] {name}({code}) ✓ {len(kline)}天 → {etf_points}点", file=sys.stderr)
+        logger.info(f"    [{i+1}/{len(etf_list)}] {name}({code}) ✓ {len(kline)}天 → {etf_points}点")
 
         if i < len(etf_list) - 1:
             time.sleep(0.4)
@@ -261,7 +266,7 @@ def collect_backtest_data(etf_list, max_days=250, min_days=65):
     # 按日期排序（时间加权需要）
     all_points.sort(key=lambda p: p.get('date', ''))
 
-    print(f"  合计: {etf_with_data}只ETF, {len(all_points)}个数据点", file=sys.stderr)
+    logger.info(f"  合计: {etf_with_data}只ETF, {len(all_points)}个数据点")
     return all_points, {'etf_count': etf_with_data, 'point_count': len(all_points)}
 
 
@@ -324,7 +329,7 @@ def save_config(params, ic_score, old_config=None, reason=""):
             "last_optimized": TODAY,
             "ic_score": round(ic_score, 5),
             "optimization_reason": reason,
-            "description": "自进化参数配置 — optimizer.py每周日自动更新"
+            "description": "自进化参数配置 — optimizer.py每月自动更新"
         },
         "factor_weights": params["factor_weights"],
         "grade_thresholds": params["grade_thresholds"],
@@ -371,38 +376,38 @@ def main():
     n_random = 80 if fast_mode else 200
     n_local = 15 if fast_mode else 35
 
-    print("=" * 60, file=sys.stderr)
-    print(f"  [量化系统 v4.0] 自进化参数优化引擎", file=sys.stderr)
-    print(f"  [时间] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", file=sys.stderr)
-    print(f"  [模式] {'预览(不保存)' if dry_run else ('快速' if fast_mode else '标准')}", file=sys.stderr)
-    print(f"  [搜索范围] 15因子权重 + 4等级阈值 + 溢价惩罚曲线 + ADX阈值", file=sys.stderr)
-    print("=" * 60, file=sys.stderr)
+    logger.info("=" * 60)
+    logger.info(f"  [量化系统 v4.0] 自进化参数优化引擎")
+    logger.info(f"  [时间] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(f"  [模式] {'预览(不保存)' if dry_run else ('快速' if fast_mode else '标准')}")
+    logger.info(f"  [搜索范围] 15因子权重 + 4等级阈值 + 溢价惩罚曲线 + ADX阈值")
+    logger.info("=" * 60)
 
     # Load current config
     old_config = load_current_config()
     current_params = current_params_from_config(old_config)
     old_ic = old_config.get("meta", {}).get("ic_score", 0.0)
-    print(f"\n  当前配置版本: v{old_config['meta'].get('version', 0)}", file=sys.stderr)
-    print(f"  上次优化IC: {old_ic}", file=sys.stderr)
+    logger.info(f"\n  当前配置版本: v{old_config['meta'].get('version', 0)}")
+    logger.info(f"  上次优化IC: {old_ic}")
 
     # ================================================================
     # Phase 1: 采集数据
     # ================================================================
-    print(f"\n  [Phase 1/4] 采集历史数据...", file=sys.stderr)
+    logger.info(f"\n  [Phase 1/4] 采集历史数据...")
     all_etfs = list(dict.fromkeys(list(KEY_ETFS.keys()) + USER_WATCHLIST))
     precomputed, stats = collect_backtest_data(all_etfs)
 
     if stats['etf_count'] < 5:
-        print(f"\n  [ERROR] 有效ETF不足({stats['etf_count']}只)。退出。", file=sys.stderr)
+        logger.info(f"\n  [ERROR] 有效ETF不足({stats['etf_count']}只)。退出。")
         sys.exit(1)
     if len(precomputed) < 100:
-        print(f"\n  [ERROR] 回测数据点不足({len(precomputed)}个)。退出。", file=sys.stderr)
+        logger.info(f"\n  [ERROR] 回测数据点不足({len(precomputed)}个)。退出。")
         sys.exit(1)
 
     # ================================================================
     # Phase 2: 基线测试
     # ================================================================
-    print(f"\n  [Phase 2/4] 基线测试...", file=sys.stderr)
+    logger.info(f"\n  [Phase 2/4] 基线测试...")
 
     baseline_params = {
         "factor_weights": dict(DEFAULT_WEIGHTS),
@@ -413,14 +418,14 @@ def main():
     }
     baseline_ic = time_weighted_ic(baseline_params["factor_weights"], precomputed)
     current_ic = time_weighted_ic(current_params["factor_weights"], precomputed)
-    print(f"  等权基线 IC: {baseline_ic:.5f}", file=sys.stderr)
-    print(f"  当前权重 IC: {current_ic:.5f}", file=sys.stderr)
-    print(f"  (使用时间加权: 近期数据权重更高，半衰期=60交易日)", file=sys.stderr)
+    logger.info(f"  等权基线 IC: {baseline_ic:.5f}")
+    logger.info(f"  当前权重 IC: {current_ic:.5f}")
+    logger.info(f"  (使用时间加权: 近期数据权重更高，半衰期=60交易日)")
 
     # ================================================================
     # Phase 3: 随机搜索（v4.0: 搜索完整参数空间）
     # ================================================================
-    print(f"\n  [Phase 3/4] 随机搜索 ({n_random}次迭代)...", file=sys.stderr)
+    logger.info(f"\n  [Phase 3/4] 随机搜索 ({n_random}次迭代)...")
 
     best_params = dict(current_params)
     best_ic = current_ic
@@ -435,14 +440,14 @@ def main():
             best_ic = ic
             best_params = params
         if (i + 1) % milestone == 0:
-            print(f"    [{i+1}/{n_random}] 最佳IC: {best_ic:.5f}", file=sys.stderr)
+            logger.info(f"    [{i+1}/{n_random}] 最佳IC: {best_ic:.5f}")
 
-    print(f"  随机搜索完成，最佳IC: {best_ic:.5f}", file=sys.stderr)
+    logger.info(f"  随机搜索完成，最佳IC: {best_ic:.5f}")
 
     # ================================================================
     # Phase 4: 局部精化
     # ================================================================
-    print(f"\n  [Phase 4/4] 局部精化 ({n_local}次扰动)...", file=sys.stderr)
+    logger.info(f"\n  [Phase 4/4] 局部精化 ({n_local}次扰动)...")
 
     refine_best_ic = best_ic
     refine_best_params = best_params
@@ -455,19 +460,19 @@ def main():
                 refine_best_ic = ic
                 refine_best_params = p
 
-    print(f"  精化完成，最终IC: {refine_best_ic:.5f}", file=sys.stderr)
+    logger.info(f"  精化完成，最终IC: {refine_best_ic:.5f}")
 
     # ================================================================
     # 决策：是否更新
     # ================================================================
     ic_improvement = refine_best_ic - current_ic
 
-    print(f"\n  {'─' * 50}", file=sys.stderr)
-    print(f"  [优化结果]", file=sys.stderr)
-    print(f"  基线IC (等权):    {baseline_ic:.5f}", file=sys.stderr)
-    print(f"  当前参数IC:       {current_ic:.5f}", file=sys.stderr)
-    print(f"  最优参数IC:       {refine_best_ic:.5f}", file=sys.stderr)
-    print(f"  IC提升:           {ic_improvement:+.5f}", file=sys.stderr)
+    logger.info(f"\n  {'─' * 50}")
+    logger.info(f"  [优化结果]")
+    logger.info(f"  基线IC (等权):    {baseline_ic:.5f}")
+    logger.info(f"  当前参数IC:       {current_ic:.5f}")
+    logger.info(f"  最优参数IC:       {refine_best_ic:.5f}")
+    logger.info(f"  IC提升:           {ic_improvement:+.5f}")
 
     should_update = False
     final_params = dict(current_params)
@@ -489,36 +494,36 @@ def main():
     else:
         reason = "现有参数已是最优"
 
-    print(f"  决策: {'✓ 更新' if should_update else '✗ 保持'} — {reason}", file=sys.stderr)
+    logger.info(f"  决策: {'✓ 更新' if should_update else '✗ 保持'} — {reason}")
 
     # ================================================================
     # 输出参数变化
     # ================================================================
-    print(f"\n  [因子权重变化]", file=sys.stderr)
-    print(f"  {'因子':<16s} {'旧':>6s} {'新':>6s}  {'变化':>6s}", file=sys.stderr)
-    print(f"  {'─' * 42}", file=sys.stderr)
+    logger.info(f"\n  [因子权重变化]")
+    logger.info(f"  {'因子':<16s} {'旧':>6s} {'新':>6s}  {'变化':>6s}")
+    logger.info(f"  {'─' * 42}")
     for k in FACTOR_NAMES:
         old_w = current_params["factor_weights"].get(k, 1.0)
         new_w = final_params["factor_weights"].get(k, 1.0)
         diff = new_w - old_w
         arrow = "↑↑" if diff > 0.3 else ("↑" if diff > 0.05 else ("↓↓" if diff < -0.3 else ("↓" if diff < -0.05 else " ·")))
-        print(f"  {k:<16s} {old_w:6.2f} {new_w:6.2f}  {diff:+5.2f} {arrow}", file=sys.stderr)
+        logger.info(f"  {k:<16s} {old_w:6.2f} {new_w:6.2f}  {diff:+5.2f} {arrow}")
 
     # 阈值变化
-    print(f"\n  [等级阈值变化]", file=sys.stderr)
+    logger.info(f"\n  [等级阈值变化]")
     for k in ["A_强烈买入", "B_买入", "C_观察", "D_谨慎"]:
         old_t = current_params["grade_thresholds"].get(k, 0)
         new_t = final_params["grade_thresholds"].get(k, 0)
-        print(f"  {k:<12s}: {old_t:3d} → {new_t:3d}  ({new_t-old_t:+d})", file=sys.stderr)
+        logger.info(f"  {k:<12s}: {old_t:3d} → {new_t:3d}  ({new_t-old_t:+d})")
 
     # 溢价惩罚参数
-    print(f"\n  [溢价惩罚曲线]", file=sys.stderr)
-    print(f"  陡峭度: {current_params['premium_steepness']:.3f} → {final_params['premium_steepness']:.3f}", file=sys.stderr)
-    print(f"  阈值:   {current_params['premium_threshold']:.1f}% → {final_params['premium_threshold']:.1f}%", file=sys.stderr)
+    logger.info(f"\n  [溢价惩罚曲线]")
+    logger.info(f"  陡峭度: {current_params['premium_steepness']:.3f} → {final_params['premium_steepness']:.3f}")
+    logger.info(f"  阈值:   {current_params['premium_threshold']:.1f}% → {final_params['premium_threshold']:.1f}%")
 
     # ADX
-    print(f"\n  [ADX趋势阈值]", file=sys.stderr)
-    print(f"  {current_params['adx_trend_threshold']} → {final_params['adx_trend_threshold']}", file=sys.stderr)
+    logger.info(f"\n  [ADX趋势阈值]")
+    logger.info(f"  {current_params['adx_trend_threshold']} → {final_params['adx_trend_threshold']}")
 
     # ================================================================
     # 保存 + 进化日志
@@ -555,13 +560,13 @@ def main():
     append_evolution_log(evolution_record)
 
     if dry_run:
-        print(f"\n  [DRY-RUN] 未保存。要应用: python optimizer.py", file=sys.stderr)
+        logger.info(f"\n  [DRY-RUN] 未保存。要应用: python optimizer.py")
     elif should_update:
         save_config(final_params, final_ic, old_config, reason)
-        print(f"\n  ✓ 参数已更新！下次运行将使用新参数。", file=sys.stderr)
-        print(f"  配置版本: v{old_config['meta'].get('version', 0) + 1}", file=sys.stderr)
+        logger.info(f"\n  ✓ 参数已更新！下次运行将使用新参数。")
+        logger.info(f"  配置版本: v{old_config['meta'].get('version', 0) + 1}")
     else:
-        print(f"\n  ✓ 无需更新，当前参数保持不变。", file=sys.stderr)
+        logger.info(f"\n  ✓ 无需更新，当前参数保持不变。")
 
     # ================================================================
     # 进化趋势摘要
@@ -572,8 +577,8 @@ def main():
         recent_ics = [r["best_ic"] for r in runs[-5:]]
         ic_trend = "上升" if len(recent_ics) >= 2 and recent_ics[-1] > recent_ics[0] else \
                    "下降" if len(recent_ics) >= 2 and recent_ics[-1] < recent_ics[0] else "平稳"
-        print(f"\n  [进化趋势] 最近{min(5, len(runs))}次优化IC趋势: {ic_trend}", file=sys.stderr)
-        print(f"  累计优化次数: {log['summary']['total_optimizations']}", file=sys.stderr)
+        logger.info(f"\n  [进化趋势] 最近{min(5, len(runs))}次优化IC趋势: {ic_trend}")
+        logger.info(f"  累计优化次数: {log['summary']['total_optimizations']}")
 
     # 输出JSON结果
     result = {
@@ -595,4 +600,8 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception as e:
+        logger.error(f"Optimizer failed: {e}\n{traceback.format_exc()}")
+        sys.exit(1)

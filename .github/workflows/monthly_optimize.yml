@@ -1,4 +1,4 @@
-name: 自适应参数优化 (条件触发)
+name: 月度自适应参数优化 (条件触发)
 
 # v4.0: 条件触发式 — 由 cron-job.org 每月第一个周日触发
 # 先检查条件 → 满足才优化 → 自动提交
@@ -24,6 +24,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: 安装依赖
+        run: pip install pandas numpy
 
       - name: 检查是否需要优化
         id: check
@@ -66,6 +69,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: 安装依赖
+        run: pip install pandas numpy
 
       - name: 拉取最新权重（合并可能的手动提交）
         run: git pull origin main

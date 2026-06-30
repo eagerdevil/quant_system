@@ -16,13 +16,15 @@
   4. 新增交易日 > 20天 且 IC下降 > 20%
 """
 
-import json, sys, os, io
+import json, sys, os, io, logging
 from datetime import datetime, timedelta
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+logger = logging.getLogger(__name__)
 sys.path.insert(0, SCRIPT_DIR)
 
 TODAY = datetime.now().strftime("%Y%m%d")
@@ -194,7 +196,7 @@ def main():
     if should_run:
         print(f"\n  → 触发优化！运行 optimizer.py")
         # 输出标记供 workflow 读取
-        print("::set-output name=should_optimize::true", file=sys.stderr)
+        logger.info("::set-output name=should_optimize::true")
         sys.exit(0)
     else:
         print(f"\n  → 跳过优化（条件不满足）")

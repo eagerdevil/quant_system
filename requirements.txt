@@ -1,4 +1,7 @@
-# 量化系统全部使用Python标准库，无需额外依赖
-# 如果将来需要添加依赖，按如下格式：
-# akshare==1.14.0
-# requests==2.31.0
+# 量化系统依赖
+pandas>=2.0.0
+numpy>=1.24.0
+# 可选依赖
+# scipy>=1.10.0  # 如需scipy.stats.rankdata（当前用纯numpy代替）
+# akshare>=1.14.0
+# requests>=2.31.0

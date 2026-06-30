@@ -4,6 +4,7 @@
 ====================
 将回测结果转换为交互式HTML仪表盘。
 
+logger = logging.getLogger(__name__)
 数据源: backtest_engine.py 输出的 JSON
 输出: 单文件HTML, 使用 Chart.js CDN (零依赖)
 
@@ -331,7 +332,7 @@ def generate_dashboard(backtest_json_path, output_path=None):
         f.write(html)
 
     file_size = os.path.getsize(output_path) / 1024
-    print(f"[Dashboard] 仪表盘已生成: {output_path} ({file_size:.0f} KB)", file=sys.stderr)
+    logger.info(f"[Dashboard] 仪表盘已生成: {output_path} ({file_size:.0f} KB)")
     return output_path
 
 # ============================================================
@@ -364,7 +365,7 @@ def generate_from_backtest_result(result, output_path=None):
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(html)
 
-    print(f"[Dashboard] 仪表盘已生成: {output_path}", file=sys.stderr)
+    logger.info(f"[Dashboard] 仪表盘已生成: {output_path}")
     return output_path
 
 # ============================================================
@@ -386,13 +387,13 @@ def main():
             if f.startswith("backtest_") and f.endswith(".json"):
                 candidates.append(os.path.join(script_dir, f))
         if not candidates:
-            print("[Dashboard] 错误: 未找到回测结果JSON，请先运行 backtest_engine.py", file=sys.stderr)
+            logger.info("[Dashboard] 错误: 未找到回测结果JSON，请先运行 backtest_engine.py")
             sys.exit(1)
         input_path = max(candidates, key=os.path.getmtime)
-        print(f"[Dashboard] 自动选择: {os.path.basename(input_path)}", file=sys.stderr)
+        logger.info(f"[Dashboard] 自动选择: {os.path.basename(input_path)}")
 
     output_path = generate_dashboard(input_path, args.output)
-    print(f"[Dashboard] ✅ 完成! 用浏览器打开 {output_path}", file=sys.stderr)
+    logger.info(f"[Dashboard] ✅ 完成! 用浏览器打开 {output_path}")
 
 if __name__ == "__main__":
     main()

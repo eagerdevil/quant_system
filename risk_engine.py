@@ -1,83 +1,69 @@
 #!/usr/bin/env python
 """
-量化系统 v3.0 — 投资组合风控引擎
-================================
+量化系统 v6.0 — 投资组合风控引擎 (pandas+numpy 向量化)
+========================================================
 模块: 投资组合层级风险分析
 功能: 相关性矩阵 / VaR / CVaR / 集中度检测 / 风险报告
 
-专业量化系统的核心组件——在你亏钱之前告诉你风险有多大。
+v6.0: 相关性矩阵、VaR/CVaR 计算全部迁移到 numpy/pandas 向量化
 """
+import math, sys, os, logging
 
-import math, sys, os
+logger = logging.getLogger(__name__)
 from datetime import datetime
+import numpy as np
+import pandas as pd
 
 TODAY = datetime.now().strftime("%Y%m%d")
 
 
 # ============================================================
-# 1. 收益率计算
+# 1. 收益率计算 — numpy 向量化
 # ============================================================
 def daily_returns(closes):
-    """计算日收益率序列"""
+    """计算日收益率序列 — numpy向量化"""
     if len(closes) < 2:
         return []
-    return [(closes[i] - closes[i-1]) / closes[i-1] for i in range(1, len(closes))]
+    arr = np.array(closes, dtype=np.float64)
+    return ((arr[1:] - arr[:-1]) / arr[:-1]).tolist()
 
 
 def percentile(data, p):
-    """计算百分位数（不依赖numpy）"""
+    """计算百分位数 — numpy向量化"""
     if not data:
         return 0
-    sorted_data = sorted(data)
-    k = (len(sorted_data) - 1) * p / 100.0
-    f = math.floor(k)
-    c = math.ceil(k)
-    if f == c:
-        return sorted_data[int(k)]
-    d0 = sorted_data[int(f)] * (c - k)
-    d1 = sorted_data[int(c)] * (k - f)
-    return d0 + d1
+    return float(np.percentile(data, p))
 
 
 # ============================================================
-# 2. 相关性矩阵
+# 2. 相关性矩阵 — numpy 向量化
 # ============================================================
 def pearson_correlation(x, y):
-    """手动计算皮尔逊相关系数"""
+    """手动计算皮尔逊相关系数 — numpy向量化"""
     n = len(x)
     if n < 3:
         return 0
-    mean_x = sum(x) / n
-    mean_y = sum(y) / n
-    cov = sum((x[i] - mean_x) * (y[i] - mean_y) for i in range(n))
-    std_x = math.sqrt(sum((v - mean_x)**2 for v in x))
-    std_y = math.sqrt(sum((v - mean_y)**2 for v in y))
-    if std_x == 0 or std_y == 0:
-        return 0
-    return cov / (std_x * std_y)
+    x_arr = np.array(x, dtype=np.float64)
+    y_arr = np.array(y, dtype=np.float64)
+    corr = np.corrcoef(x_arr, y_arr)[0, 1]
+    return float(corr) if not np.isnan(corr) else 0.0
 
 
 def compute_correlation_matrix(etf_data, window=60):
     """
-    计算ETF间的滚动相关性矩阵
+    计算ETF间的滚动相关性矩阵 — numpy/pandas 向量化
     输入: etf_data = {code: {"name": str, "kline": [{close,...},...]}}
-          window = 滚动窗口天数
-    输出: {
-        "matrix": {code: {code: corr}},  # 两两相关性
-        "avg_correlation": float,         # 平均相关性
-        "max_pair": (code1, code2, corr), # 最相关的一对
-        "warning_pairs": [(code1, code2, corr)]  # >0.7的高相关对
-    }
+    输出: {matrix, avg_correlation, max_pair, warning_pairs, n_assets}
     """
-    # 对齐所有ETF的收益率序列（取最近window天）
+    # 提取所有ETF的收益率，构建DataFrame
     returns_map = {}
     for code, edata in etf_data.items():
         kline = edata.get("kline", [])
         if len(kline) < window + 1:
             continue
-        closes = [k["close"] for k in kline[-window-1:]]
+        closes = [k["close"] for k in kline[-window - 1:]]
         rets = daily_returns(closes)
-        if len(rets) >= window - 5:  # 允许少量缺失
+        if len(rets) >= window - 5:
             returns_map[code] = rets
 
     codes = list(returns_map.keys())
@@ -90,10 +76,18 @@ def compute_correlation_matrix(etf_data, window=60):
             "n_assets": len(codes)
         }
 
-    # 计算两两相关性
-    matrix = {}
-    for c in codes:
-        matrix[c] = {}  # 预初始化所有inner dict
+    # 对齐到最短长度
+    min_len = min(len(v) for v in returns_map.values())
+    # 构建 numpy 矩阵: rows=时间, cols=ETF
+    ret_matrix = np.column_stack([
+        np.array(returns_map[code][-min_len:], dtype=np.float64)
+        for code in codes
+    ])
+    # 计算相关性矩阵
+    corr_matrix = np.corrcoef(ret_matrix, rowvar=False)
+
+    # 构建输出
+    matrix = {c: {} for c in codes}
     corr_values = []
     max_pair = None
     max_corr = -1
@@ -104,13 +98,9 @@ def compute_correlation_matrix(etf_data, window=60):
             if i == j:
                 matrix[c1][c2] = 1.0
             elif j > i:
-                # 对齐长度
-                min_len = min(len(returns_map.get(c1, [])), len(returns_map.get(c2, [])))
-                r1 = returns_map[c1][-min_len:]
-                r2 = returns_map[c2][-min_len:]
-                corr = round(pearson_correlation(r1, r2), 3)
+                corr = round(float(corr_matrix[i, j]), 3)
                 matrix[c1][c2] = corr
-                matrix[c2][c1] = corr  # 对称填充
+                matrix[c2][c1] = corr
                 corr_values.append(corr)
                 if corr > max_corr:
                     max_corr = corr
@@ -120,7 +110,7 @@ def compute_correlation_matrix(etf_data, window=60):
                     name2 = etf_data.get(c2, {}).get("name", c2)
                     warning_pairs.append((c1, c2, corr, name1, name2))
 
-    avg_corr = round(sum(corr_values) / len(corr_values), 3) if corr_values else 0
+    avg_corr = round(float(np.mean(corr_values)), 3) if corr_values else 0
 
     return {
         "matrix": matrix,
@@ -132,29 +122,13 @@ def compute_correlation_matrix(etf_data, window=60):
 
 
 # ============================================================
-# 3. VaR / CVaR 计算
+# 3. VaR / CVaR 计算 — numpy 向量化
 # ============================================================
 def compute_var_cvar(portfolio_value, etf_data, holdings,
                      confidence=0.95, window=60):
     """
-    历史模拟法计算投资组合 VaR 和 CVaR
-    输入:
-        portfolio_value: 组合总市值
-        etf_data: {code: {kline: [...]}}
-        holdings: {code: {shares, current_price}}
-        confidence: 置信水平 (0.95 = 95% VaR)
-        window: 回看窗口
-    输出: {
-        "var_95": float,    # 95%置信度下日最大亏损(元)
-        "var_95_pct": float, # 同上(百分比)
-        "cvar_95": float,   # 条件VaR（超过VaR的平均亏损）
-        "cvar_95_pct": float,
-        "worst_day": float, # 最差单日亏损
-        "worst_day_pct": float,
-        "method": "historical"
-    }
+    历史模拟法计算投资组合 VaR 和 CVaR — numpy/pandas 向量化
     """
-    # 为每个持仓计算日收益率
     asset_returns = {}
     asset_weights = {}
     total_value = portfolio_value if portfolio_value > 0 else 1
@@ -165,7 +139,7 @@ def compute_var_cvar(portfolio_value, etf_data, holdings,
         kline = etf_data[code].get("kline", [])
         if len(kline) < window + 1:
             continue
-        closes = [k["close"] for k in kline[-window-1:]]
+        closes = [k["close"] for k in kline[-window - 1:]]
         rets = daily_returns(closes)
         if len(rets) >= window - 5:
             asset_returns[code] = rets
@@ -180,17 +154,17 @@ def compute_var_cvar(portfolio_value, etf_data, holdings,
             "method": "historical", "error": "insufficient_data"
         }
 
-    # 计算组合历史日收益率（加权）
-    min_len = min(len(r) for r in asset_returns.values())
-    portfolio_rets = []
-    for i in range(-min_len, 0):
-        day_ret = 0
-        for code, rets in asset_returns.items():
-            if abs(i) <= len(rets):
-                day_ret += rets[i] * asset_weights.get(code, 0)
-        portfolio_rets.append(day_ret)
+    # 对齐并构建加权组合收益率
+    codes = list(asset_returns.keys())
+    min_len = min(len(asset_returns[code]) for code in codes)
+    weights_arr = np.array([asset_weights.get(code, 0) for code in codes], dtype=np.float64)
+    ret_matrix = np.column_stack([
+        np.array(asset_returns[code][-min_len:], dtype=np.float64)
+        for code in codes
+    ])
+    portfolio_rets = np.dot(ret_matrix, weights_arr)
 
-    if not portfolio_rets:
+    if len(portfolio_rets) == 0:
         return {
             "var_95": 0, "var_95_pct": 0,
             "cvar_95": 0, "cvar_95_pct": 0,
@@ -198,25 +172,22 @@ def compute_var_cvar(portfolio_value, etf_data, holdings,
             "method": "historical", "error": "empty_returns"
         }
 
-    # 排序找VaR
-    sorted_rets = sorted(portfolio_rets)
+    sorted_rets = np.sort(portfolio_rets)
     var_idx = int(len(sorted_rets) * (1 - confidence))
     var_ret = sorted_rets[var_idx] if var_idx < len(sorted_rets) else sorted_rets[-1]
 
-    # CVaR = VaR之外所有更差收益率的均值
-    tail_rets = sorted_rets[:var_idx+1]
-    cvar_ret = sum(tail_rets) / len(tail_rets) if tail_rets else var_ret
+    tail_rets = sorted_rets[:var_idx + 1]
+    cvar_ret = np.mean(tail_rets) if len(tail_rets) > 0 else var_ret
 
-    # 最差单日
     worst_ret = sorted_rets[0]
 
     return {
-        "var_95": round(abs(var_ret) * portfolio_value, 2),
-        "var_95_pct": round(abs(var_ret) * 100, 2),
-        "cvar_95": round(abs(cvar_ret) * portfolio_value, 2),
-        "cvar_95_pct": round(abs(cvar_ret) * 100, 2),
-        "worst_day": round(abs(worst_ret) * portfolio_value, 2),
-        "worst_day_pct": round(abs(worst_ret) * 100, 2),
+        "var_95": round(abs(float(var_ret)) * portfolio_value, 2),
+        "var_95_pct": round(abs(float(var_ret)) * 100, 2),
+        "cvar_95": round(abs(float(cvar_ret)) * portfolio_value, 2),
+        "cvar_95_pct": round(abs(float(cvar_ret)) * 100, 2),
+        "worst_day": round(abs(float(worst_ret)) * portfolio_value, 2),
+        "worst_day_pct": round(abs(float(worst_ret)) * 100, 2),
         "method": "historical",
         "confidence": confidence,
         "lookback_days": min_len
@@ -228,22 +199,17 @@ def compute_var_cvar(portfolio_value, etf_data, holdings,
 # ============================================================
 def detect_concentration_risk(corr_result, holdings, etf_data):
     """
-    检测投资组合集中度风险
-    返回: {
-        "level": "safe" | "warning" | "danger",
-        "issues": [str],
-        "diversification_score": 0-100
-    }
+    检测投资组合集中度风险 — 量化逻辑不变，保持原有输出
     """
     issues = []
-    score = 100  # 起始满分
+    score = 100
 
     # 检查1: 高相关对
     warning_pairs = corr_result.get("warning_pairs", [])
     if warning_pairs:
         for c1, c2, corr, n1, n2 in warning_pairs:
             issues.append(f"{n1}↔{n2} 相关性{corr:.2f}，同涨同跌风险高")
-            score -= 15 * (corr - 0.7) / 0.3  # 0.7→扣0, 1.0→扣15
+            score -= 15 * (corr - 0.7) / 0.3
 
     # 检查2: 平均相关性
     avg_corr = corr_result.get("avg_correlation", 0)
@@ -251,10 +217,8 @@ def detect_concentration_risk(corr_result, holdings, etf_data):
         issues.append(f"组合平均相关性{avg_corr:.2f}偏高，分散化不足")
         score -= 20 * (avg_corr - 0.6) / 0.4
     elif avg_corr > 0.4:
-        # 中等相关，正常
         pass
     else:
-        # 低相关，加分
         score = min(100, score + 10)
 
     # 检查3: 持仓数量
@@ -265,7 +229,7 @@ def detect_concentration_risk(corr_result, holdings, etf_data):
     elif n_assets <= 3:
         score -= 5
 
-    # 检查4: 仓位集中度（单只占比>40%）
+    # 检查4: 仓位集中度
     total_value = sum(
         h.get("shares", 0) * h.get("current_price", h.get("cost", 0))
         for code, h in holdings.items()
@@ -311,15 +275,7 @@ def _diversification_advice(level, score, issues):
 # 5. 一站式风险报告
 # ============================================================
 def portfolio_risk_report(portfolio, etf_data, scores=None):
-    """
-    生成投资组合风险报告
-    输入:
-        portfolio: {code: {shares, cost, current_price, name}}
-        etf_data: {code: {name, kline, realtime}}
-        scores: [{code, score, grade, ...}] 可选
-    输出: 完整的风险报告dict
-    """
-    # 计算组合市值
+    """生成投资组合风险报告 — 核心逻辑不变"""
     holdings_for_var = {}
     total_value = 0
     for code, pos in portfolio.items():
@@ -331,16 +287,11 @@ def portfolio_risk_report(portfolio, etf_data, scores=None):
         total_value += value
         holdings_for_var[code] = {"shares": shares, "current_price": price}
 
-    # 1. 相关性矩阵
     corr_result = compute_correlation_matrix(etf_data)
-
-    # 2. VaR/CVaR
     var_result = compute_var_cvar(total_value, etf_data, holdings_for_var)
-
-    # 3. 集中度风险
     conc_result = detect_concentration_risk(corr_result, holdings_for_var, etf_data)
 
-    # 4. 单只风险拆解
+    # 单只风险拆解 — numpy向量化
     single_risks = []
     for code, pos in portfolio.items():
         if code.startswith("_") or not isinstance(pos, dict):
@@ -352,21 +303,18 @@ def portfolio_risk_report(portfolio, etf_data, scores=None):
         if len(kline) < 60:
             continue
 
-        closes = [k["close"] for k in kline[-60:]]
-        rets = daily_returns(closes)
-        if not rets:
+        closes = np.array([k["close"] for k in kline[-60:]], dtype=np.float64)
+        rets = np.diff(closes) / closes[:-1]
+        if len(rets) == 0:
             continue
 
-        vol = math.sqrt(sum((r - sum(rets)/len(rets))**2 for r in rets) / (len(rets)-1)) * math.sqrt(252) if len(rets) > 1 else 0
-        ann_ret = (sum(rets)/len(rets)) * 252 if rets else 0
-        maxdd = 0
-        peak = closes[0]
-        for c in closes:
-            if c > peak:
-                peak = c
-            dd = (peak - c) / peak
-            if dd > maxdd:
-                maxdd = dd
+        vol = float(np.std(rets, ddof=1) * np.sqrt(252)) if len(rets) > 1 else 0.0
+        ann_ret = float(np.mean(rets) * 252) if len(rets) > 0 else 0.0
+
+        # max drawdown
+        peak = np.maximum.accumulate(closes)
+        dd = (peak - closes) / peak
+        maxdd = float(np.max(dd))
 
         price = pos.get("current_price", pos.get("cost", 0))
         cost = pos.get("cost", price)
@@ -374,7 +322,6 @@ def portfolio_risk_report(portfolio, etf_data, scores=None):
         shares = pos.get("shares", 0)
         value = shares * price
 
-        # 找评分
         grade = None
         if scores:
             s = next((s for s in scores if s["code"] == code), None)
@@ -405,16 +352,12 @@ def portfolio_risk_report(portfolio, etf_data, scores=None):
 
 
 def format_risk_section(report):
-    """
-    将风险报告格式化为可打印的文本段落
-    用于 daily_runner.py 和 quick_analysis.py
-    """
+    """将风险报告格式化为可打印的文本段落 — 保持原样"""
     lines = []
     lines.append(f"  {'─'*60}")
     lines.append(f"  [投资组合风险管理]")
     lines.append(f"  {'─'*60}")
 
-    # VaR
     var = report.get("var", {})
     if var and not var.get("error"):
         lines.append(f"  📉 风险价值 (历史模拟法, {var.get('lookback_days', '?')}日窗口):")
@@ -422,7 +365,6 @@ def format_risk_section(report):
         lines.append(f"     CVaR(95%): {var['cvar_95']:.2f}元 ({var['cvar_95_pct']:.1f}%) — 超过VaR时的平均亏损")
         lines.append(f"     历史最差日: {var['worst_day']:.2f}元 ({var['worst_day_pct']:.1f}%)")
 
-    # 相关性
     corr = report.get("correlation", {})
     if corr and corr.get("n_assets", 0) >= 2:
         lines.append(f"  🔗 持仓相关性 (60日):")
@@ -435,7 +377,6 @@ def format_risk_section(report):
             for c1, c2, r, n1, n2 in corr["warning_pairs"]:
                 lines.append(f"       {n1} ↔ {n2}: r={r:.3f}")
 
-    # 集中度
     conc = report.get("concentration", {})
     level_emoji = {"safe": "✅", "warning": "⚠️", "danger": "🚨"}
     emoji = level_emoji.get(conc.get("level", ""), "⚪")
@@ -445,7 +386,6 @@ def format_risk_section(report):
         for issue in conc["issues"]:
             lines.append(f"     - {issue}")
 
-    # 单只风险拆解
     risks = report.get("single_risks", [])
     if risks:
         lines.append(f"  📊 单只风险拆解:")
@@ -462,9 +402,8 @@ def format_risk_section(report):
 
 
 if __name__ == "__main__":
-    # 简易测试
-    print("Risk Engine v3.0 — Ready", file=sys.stderr)
-    print("  compute_correlation_matrix()", file=sys.stderr)
-    print("  compute_var_cvar()", file=sys.stderr)
-    print("  detect_concentration_risk()", file=sys.stderr)
-    print("  portfolio_risk_report()", file=sys.stderr)
+    logger.info("Risk Engine v6.0 — Ready")
+    logger.info("  compute_correlation_matrix()")
+    logger.info("  compute_var_cvar()")
+    logger.info("  detect_concentration_risk()")
+    logger.info("  portfolio_risk_report()")

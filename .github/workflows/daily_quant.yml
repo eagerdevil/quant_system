@@ -19,8 +19,8 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: 安装依赖（仅标准库，跳过）
-        run: echo "所有依赖均为Python标准库，无需安装"
+      - name: 安装依赖
+        run: pip install pandas numpy
 
       - name: 运行量化模型
         env:

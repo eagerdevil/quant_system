@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 """
-邮件报告 + 每周复盘 + 自适应参数优化
+邮件报告 + 每月复盘 + 自适应参数优化
 =====================================
 - 每日收盘后生成HTML报告
 - 发送到用户QQ邮箱
-- 每周六复盘并自适应调整因子权重
+- 每月复盘并自适应调整因子权重
 """
-import json, smtplib, os, math, urllib.request, urllib.parse
+import json, smtplib, os, math, urllib.request, urllib.parse, logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
 from collections import defaultdict
+
+logger = logging.getLogger(__name__)
 
 # ============================================================
 # 配置
@@ -23,6 +25,13 @@ SMTP_CONFIG = {
 }
 
 REPORT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Signal labels shared across HTML and WeChat report generators
+SIGNAL_LABELS = {
+    "S1_HS300_above_MA20": "沪深300在20日线上", "S2_HS300_MA60_up": "沪深300的60日线向上",
+    "S3_NorthFlow_5d_positive": "北向资金5日净流入", "S4_Volume_active": "成交额>2万亿",
+    "S5_LimitDown_low": "跌停<20家", "S6_Margin_increasing": "融资余额增加"
+}
 
 def load_latest_report():
     """加载最新报告"""
@@ -53,11 +62,6 @@ def generate_html_report(report_data):
     stock_scores = [s for s in scores if s.get("is_stock")]
 
     pos_pct = int(timing.get('base_position', 0) * 100)
-    signal_labels = {
-        "S1_HS300_above_MA20":"沪深300在20日线上", "S2_HS300_MA60_up":"沪深300的60日线向上",
-        "S3_NorthFlow_5d_positive":"北向资金5日净流入", "S4_Volume_active":"成交额>2万亿",
-        "S5_LimitDown_low":"跌停<20家", "S6_Margin_increasing":"融资余额增加"
-    }
 
     html = f"""
     <html><head><meta charset="utf-8"><style>
@@ -93,7 +97,7 @@ def generate_html_report(report_data):
 
     for name, value in timing.get("signal_detail", {}).items():
         cls = "pass" if value else "fail"
-        label = signal_labels.get(name, name)
+        label = SIGNAL_LABELS.get(name, name)
         html += f'<span class="{cls}" style="margin-right:12px">{"✓" if value else "✗"} {label}</span>'
 
     html += f"<p>{timing.get('advice', '')}</p></div>"
@@ -227,7 +231,7 @@ def generate_html_report(report_data):
 def send_email(report_html, password):
     """发送邮件报告"""
     if not password:
-        print("[MAIL] 未提供邮箱授权码，跳过发送", file=__import__('sys').stderr)
+        logger.warning("[MAIL] 未提供邮箱授权码，跳过发送")
         return False
 
     try:
@@ -245,11 +249,38 @@ def send_email(report_html, password):
             server.login(SMTP_CONFIG['user'], password)
             server.sendmail(SMTP_CONFIG['user'], SMTP_CONFIG['user'], msg.as_string())
 
-        print(f"[MAIL] 报告已发送到 {SMTP_CONFIG['user']}", file=__import__('sys').stderr)
+        logger.info(f"[MAIL] 报告已发送到 {SMTP_CONFIG['user']}")
         return True
     except Exception as e:
-        print(f"[MAIL] 发送失败: {e}", file=__import__('sys').stderr)
+        logger.error(f"[MAIL] 发送失败: {e}")
         return False
+
+
+def send_crash_report(error_msg, traceback_text, password):
+    if not password:
+        return False
+    try:
+        from email.header import Header
+        from email.utils import formataddr
+        now = datetime.now()
+        body = "<html><body><h2>Quant System Error</h2><p>Time: " + now.strftime("%Y-%m-%d %H:%M:%S") + "</p><h3>Error:</h3><pre style='background:#fff3f3;padding:10px;border-left:4px solid #e74c3c;'>" + str(error_msg) + "</pre><h3>Traceback:</h3><pre style='background:#f8f8f8;padding:10px;font-size:11px;max-height:400px;overflow:auto;'>" + str(traceback_text) + "</pre><p style='color:#999;font-size:12px;'>Auto crash report.</p></body></html>"
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = Header("Quant Error - " + now.strftime("%Y.%m.%d %H:%M"), "utf-8")
+        msg["From"] = formataddr(("A-Quant", SMTP_CONFIG["user"]))
+        msg["To"] = SMTP_CONFIG["user"]
+        msg.attach(MIMEText(body, "html", "utf-8"))
+
+        with smtplib.SMTP_SSL(SMTP_CONFIG["host"], SMTP_CONFIG["port"]) as server:
+            server.login(SMTP_CONFIG["user"], password)
+            server.sendmail(SMTP_CONFIG["user"], SMTP_CONFIG["user"], msg.as_string())
+
+        logger.info("[MAIL] Crash report sent")
+        return True
+    except Exception as e:
+        logger.error(f"[MAIL] Crash report failed: {e}")
+        return False
+
 
 def generate_wechat_markdown(report_data):
     """将JSON报告转为微信推送用的Markdown文本 — 章节与HTML报告一致"""
@@ -398,7 +429,7 @@ def generate_wechat_markdown(report_data):
 def send_wechat(report_data, token):
     """通过PushPlus推送到微信（免费200条/天，支持Markdown）"""
     if not token:
-        print("[WECHAT] 未提供PushPlus Token，跳过微信推送", file=__import__('sys').stderr)
+        logger.warning("[WECHAT] 未提供PushPlus Token，跳过微信推送")
         return False
 
     try:
@@ -424,22 +455,22 @@ def send_wechat(report_data, token):
         with urllib.request.urlopen(req, timeout=15) as resp:
             result = json.loads(resp.read().decode('utf-8'))
             if result.get("code") == 200:
-                print(f"[WECHAT] 微信推送成功 ✓", file=__import__('sys').stderr)
+                logger.info(f"[WECHAT] 微信推送成功 ✓")
                 return True
             else:
-                print(f"[WECHAT] 推送失败: {result.get('msg', 'unknown')}", file=__import__('sys').stderr)
+                logger.error(f"[WECHAT] 推送失败: {result.get('msg', 'unknown')}")
                 return False
 
     except Exception as e:
-        print(f"[WECHAT] 推送异常: {e}", file=__import__('sys').stderr)
+        logger.error(f"[WECHAT] 推送异常: {e}")
         return False
 
 
 # ============================================================
-# 每周复盘 + 自适应参数优化
+# 每月复盘 + 自适应参数优化
 # ============================================================
 class WeeklyReview:
-    """每周复盘引擎 —— 追踪因子表现，自适应调整权重"""
+    """每月复盘引擎 —— 追踪因子表现，自适应调整权重"""
 
     def __init__(self):
         self.factor_ic = defaultdict(list)       # 每个因子每日IC
@@ -527,13 +558,13 @@ class WeeklyReview:
         return self.current_weights
 
     def weekly_summary(self):
-        """生成周度复盘报告"""
+        """生成月度复盘报告"""
         self.load_history()
         self.adapt_weights()
 
         lines = []
         lines.append("=" * 60)
-        lines.append(f"  周度复盘报告 - {datetime.now().strftime('%Y.%m.%d')}")
+        lines.append(f"  月度复盘报告 - {datetime.now().strftime('%Y.%m.%d')}")
         lines.append("=" * 60)
         lines.append("")
         lines.append("  因子表现 (IC/IR):")
@@ -583,7 +614,7 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) >= 2 and sys.argv[1] == "--review":
-        # 周度复盘模式
+        # 月度复盘模式
         reviewer = WeeklyReview()
         print(reviewer.weekly_summary())
     elif len(sys.argv) >= 2 and sys.argv[1] == "--send":

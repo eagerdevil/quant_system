@@ -5,12 +5,41 @@
 整合: 数据采集 → 因子计算 → 择时判断 → 决策生成 → 输出报告
 用法: python daily_runner.py [--portfolio portfolio.json]
 """
-import json, sys, os, io, urllib.request
+import json, sys, os, io, urllib.request, logging, traceback
 from datetime import datetime
 
-# Fix Windows encoding
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# Fix Windows encoding (only when running as script)
+if __name__ == "__main__":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
+# === 日志系统 ===
+# 同时输出到控制台（INFO级别）和文件（DEBUG级别，保留7天）
+LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+log_file = os.path.join(LOG_DIR, f"daily_{datetime.now().strftime('%Y%m%d')}.log")
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    datefmt='%H:%M:%S',
+    handlers=[
+        logging.FileHandler(log_file, encoding='utf-8'),
+        logging.StreamHandler(sys.stderr)
+    ]
+)
+logger = logging.getLogger("quant")
+
+# 清理7天前的旧日志
+import glob as _glob
+for old_log in _glob.glob(os.path.join(LOG_DIR, "daily_*.log")):
+    try:
+        log_date = os.path.basename(old_log).replace("daily_", "").replace(".log", "")
+        from datetime import datetime as _dt
+        if (_dt.now() - _dt.strptime(log_date, "%Y%m%d")).days > 7:
+            os.remove(old_log)
+    except:
+        pass
 
 # 确保能找到模块
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -20,11 +49,15 @@ from data_engine import (
     fetch_market_breadth, fetch_total_volume,
     fetch_north_bound_flow, fetch_margin_balance, fetch_etf_kline,
     fetch_etf_realtime, get_all_index_data,
-    fetch_etf_fund_nav, compute_etf_premium
+    fetch_etf_fund_nav, compute_etf_premium,
+    compute_market_sentiment, fetch_sw_industry_returns
 )
 from quant_engine import (
-    score_etf_comprehensive, MarketTiming, TradeDecider,
-    compute_atr_stop_loss, MARKET_REGIME
+    score_etf_comprehensive, score_all_etfs_cross_sectional,
+    MarketTiming, TradeDecider,
+    compute_atr_stop_loss, MARKET_REGIME,
+    _apply_premium_penalty,
+    compute_industry_rotation_score, get_etf_industry_momentum
 )
 from report_mailer import generate_html_report, send_email, WeeklyReview
 from risk_engine import portfolio_risk_report, format_risk_section
@@ -34,18 +67,21 @@ TODAY = datetime.now().strftime("%Y%m%d")
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def load_portfolio(filepath=None):
-    """加载当前持仓，包含可用资金"""
+    """加载当前持仓，包含可用资金。
+    优先使用指定文件，其次 portfolio.json，最后报错。
+    修改持仓只需编辑 portfolio.json，无需改代码。"""
     if filepath and os.path.exists(filepath):
         with open(filepath, 'r', encoding='utf-8') as f:
             return json.load(f)
-    # 默认持仓（从user_investment记忆同步）
-    return {
-        "_available_cash": 84.64,  # 可用资金
-        "518850": {"shares": 200, "cost": 9.091, "name": "黄金ETF华夏"},
-        "159183": {"shares": 1000, "cost": 0.985, "name": "新能源车ETF招商"},
-        "159659": {"shares": 300, "cost": 2.343, "name": "纳斯达克100ETF招商"},
-        "562500": {"shares": 500, "cost": 1.147, "name": "机器人ETF华夏"}
-    }
+    # 默认从 portfolio.json 加载
+    default_path = os.path.join(OUTPUT_DIR, "portfolio.json")
+    if os.path.exists(default_path):
+        with open(default_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    raise FileNotFoundError(
+        f"找不到持仓文件。请创建 {default_path} 或使用 --portfolio 指定路径。"
+        f"\n格式: {{\"_available_cash\": 金额, \"代码\": {{\"shares\": 股数, \"cost\": 成本, \"name\": \"名称\"}}}}"
+    )
 
 def update_portfolio_prices(portfolio, etf_data):
     """更新持仓的当前价格和昨日收盘价"""
@@ -290,6 +326,11 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
     if timing['force_capped']:
         lines.append(f"  [WARNING] 强制限制生效: 仓位上限30%")
     lines.append(f"  北向资金5日累计: {timing.get('north_flow_5d', 'N/A'):.1f}亿元")
+    # v5.0: 市场情绪
+    sentiment = timing.get("sentiment", {})
+    if sentiment:
+        emoji = {"贪婪":"\U0001f525","偏乐观":"\U0001f60a","中性":"\U0001f610","偏恐慌":"\U0001f628","恐慌":"\U0001f480"}
+        lines.append(f"  \U0001f4ca 市场情绪: {emoji.get(sentiment.get('level',''),'')} {sentiment.get('level','?')} ({sentiment.get('score',50)}分)")
 
     # ===== 账户概览 =====
     ps = port_summary or {}
@@ -433,7 +474,7 @@ def is_rest_day():
             # type==0 or type==3: 可以交易
             return False, "工作日"
     except Exception as e:
-        print(f"[QUANT SYSTEM] 节假日API查询失败: {e}，按工作日处理", file=sys.stderr)
+        logger.warning(f"节假日API查询失败: {e}，按工作日处理")
         return False, "API不可用，假定为工作日"
 
     return False, "工作日"
@@ -443,10 +484,10 @@ def main():
     # 休息日跳过
     is_rest, reason = is_rest_day()
     if is_rest:
-        print(f"[QUANT SYSTEM] {reason}，休市跳过", file=sys.stderr)
+        logger.info(f"{reason}，休市跳过")
         return
 
-    print("[QUANT SYSTEM] 启动每日量化分析...", file=sys.stderr)
+    logger.info("启动每日量化分析...")
 
     # 参数解析
     portfolio_file = None
@@ -463,36 +504,75 @@ def main():
     stock_list = list(USER_STOCKS.keys())
 
     # 1. 采集数据
-    print("[QUANT SYSTEM] Step 1/4: 采集数据...", file=sys.stderr)
-    all_data = collect_all_data(etf_list, stock_list)
+    logger.info("Step 1/4: 采集数据...")
+    try:
+        all_data = collect_all_data(etf_list, stock_list)
+    except Exception as e:
+        logger.error(f"数据采集失败: {e}\n{traceback.format_exc()}")
+        raise RuntimeError(f"数据采集失败，量化分析无法继续: {e}") from e
 
-    # 2. 计算因子得分 - ETFs
-    print("[QUANT SYSTEM] Step 2/4: 计算因子...", file=sys.stderr)
-    etf_data = all_data.get("etfs", {})
-    scores = []
-    for code, edata in etf_data.items():
-        kline = edata.get("kline", [])
-        if len(kline) < 30: continue
-        closes = [k["close"] for k in kline]
-        highs = [k["high"] for k in kline]
-        lows = [k["low"] for k in kline]
-        volumes = [k["volume"] for k in kline]
+    # 2. 计算因子得分 - ETFs (v5.0: 横截面比较)
+    logger.info("Step 2/4: 计算因子(含截面比较)...")
+    try:
+        etf_data = all_data.get("etfs", {})
 
-        # 获取溢价率（v2.1 新增）
-        rt = edata.get("realtime") or {}
-        current_price = rt.get("price") if rt.get("price") else closes[-1]
-        fund_nav = fetch_etf_fund_nav(code)
-        premium_info = compute_etf_premium(code, current_price, fund_nav)
-        premium_pct = premium_info.get("premium_pct")
+        # v5.0: 行业轮动
+        logger.info("Step 2/4a: 行业轮动...")
+        industry_data = fetch_sw_industry_returns(days=60)
+        industry_rotation = compute_industry_rotation_score(industry_data, n_days=20)
 
-        result = score_etf_comprehensive(code, edata["name"], closes, highs, lows, volumes,
-                                         premium_pct=premium_pct)
-        result["is_watchlist"] = code in USER_WATCHLIST
-        result["is_holding"] = code in portfolio
-        result["premium_info"] = premium_info  # 保存完整溢价信息用于报告
-        scores.append(result)
+        # v5.0: 批量评分 + 横截面比较
+        batch_scores = score_all_etfs_cross_sectional(etf_data)
+
+        scores = []
+        for result in batch_scores:
+            code = result["code"]
+            edata = etf_data.get(code, {})
+
+            # 获取溢价率，应用溢价惩罚
+            kline = edata.get("kline", [])
+            closes = [k["close"] for k in kline]
+            rt = edata.get("realtime") or {}
+            current_price = rt.get("price") if rt.get("price") else (closes[-1] if closes else 0)
+            fund_nav = fetch_etf_fund_nav(code)
+            premium_info = compute_etf_premium(code, current_price, fund_nav)
+            premium_pct = premium_info.get("premium_pct")
+
+            # 溢价惩罚：在截面调整后的技术分上再应用
+            blended_tech = result["blended_technical"]
+            if premium_pct is not None:
+                adjusted_score, multiplier, warning = _apply_premium_penalty(blended_tech, premium_pct)
+                result["score"] = adjusted_score
+                result["premium_multiplier"] = multiplier
+                result["premium_warning"] = warning
+            else:
+                result["premium_info_raw"] = {"warning": "QDII溢价数据缺失"}
+
+            # 重新判定等级（因溢价可能改变分数）
+            grade_thresholds = {"A_强烈买入": 78, "B_买入": 65, "C_观察": 55, "D_谨慎": 42}
+            s = result["score"]
+            if s >= 78: result["grade"] = "A_强烈买入"
+            elif s >= 65: result["grade"] = "B_买入"
+            elif s >= 55: result["grade"] = "C_观察"
+            elif s >= 42: result["grade"] = "D_谨慎"
+            else: result["grade"] = "E_回避"
+
+            # v5.0: 行业轮动加成
+            industry_bonus = get_etf_industry_momentum(code, industry_rotation)
+            if industry_bonus != 0:
+                result["score"] = max(0, min(100, result["score"] + int(industry_bonus)))
+                result["industry_bonus"] = industry_bonus
+
+            result["is_watchlist"] = code in USER_WATCHLIST
+            result["is_holding"] = code in portfolio
+            result["premium_info"] = premium_info
+            scores.append(result)
 
     # 2b. 计算因子得分 - 个股
+    except Exception as e:
+        logger.error(f"评分计算失败: {e}\n{traceback.format_exc()}")
+        raise RuntimeError(f"评分计算失败: {e}") from e
+
     stock_data = all_data.get("stocks", {})
     stock_scores = []
     for code, sdata in stock_data.items():
@@ -507,18 +587,31 @@ def main():
         stock_scores.append(result)
 
     # 3. 大盘择时
-    print("[QUANT SYSTEM] Step 3/4: 大盘择时...", file=sys.stderr)
-    timing_engine = MarketTiming(
-        all_data.get("indices", {}),
-        all_data.get("north_bound", []),
-        all_data.get("total_volume", 0),
+    logger.info("Step 3/4: 大盘择时...")
+    try:
+        timing_engine = MarketTiming(
+            all_data.get("indices", {}),
+            all_data.get("north_bound", []),
+            all_data.get("total_volume", 0),
+            all_data.get("breadth", {}),
+            all_data.get("margin", {})
+        )
+        timing_result = timing_engine.position_advice()
+    except Exception as e:
+        logger.error(f"大盘择时失败: {e}\n{traceback.format_exc()}")
+        raise RuntimeError(f"大盘择时失败: {e}") from e
+
+    # v5.0: 市场情绪
+    nf_5d = timing_result.get("north_flow_5d", 0)
+    sentiment = compute_market_sentiment(
         all_data.get("breadth", {}),
-        all_data.get("margin", {})
+        all_data.get("total_volume", 0),
+        nf_5d
     )
-    timing_result = timing_engine.position_advice()
+    timing_result["sentiment"] = sentiment
 
     # 4. 生成决策
-    print("[QUANT SYSTEM] Step 4/4: 生成决策...", file=sys.stderr)
+    logger.info("Step 4/4: 生成决策...")
     portfolio = load_portfolio(portfolio_file)
     portfolio = update_portfolio_prices(portfolio, etf_data)
 
@@ -550,11 +643,11 @@ def main():
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(output, f, ensure_ascii=False, indent=2, default=str)
 
-    print(f"\n[QUANT SYSTEM] 报告已保存: {output_path}", file=sys.stderr)
+    logger.info(f"报告已保存: {output_path}")
 
     # ---- 回测 + 仪表盘（可选）----
     if "--backtest" in sys.argv:
-        print("\n[QUANT SYSTEM] === 回测模式 ===", file=sys.stderr)
+        logger.info("=== 回测模式 ===")
         try:
             from backtest_engine import prepare_backtest_data, run_backtest
             from dashboard import generate_from_backtest_result
@@ -566,7 +659,7 @@ def main():
             if bt_result:
                 # 生成仪表盘
                 dash_path = generate_from_backtest_result(bt_result)
-                print(f"[QUANT SYSTEM] 仪表盘: {dash_path}", file=sys.stderr)
+                logger.info(f"仪表盘: {dash_path}")
 
                 # 复制到部署目录
                 deploy_dir = os.path.join(OUTPUT_DIR, "deploy")
@@ -574,11 +667,9 @@ def main():
                 import shutil
                 deploy_path = os.path.join(deploy_dir, "index.html")
                 shutil.copy(dash_path, deploy_path)
-                print(f"[QUANT SYSTEM] 部署副本: {deploy_path}", file=sys.stderr)
+                logger.info(f"部署副本: {deploy_path}")
         except Exception as e:
-            print(f"[QUANT SYSTEM] 回测失败: {e}", file=sys.stderr)
-            import traceback
-            traceback.print_exc(file=sys.stderr)
+            logger.error(f"回测失败: {e}\n{traceback.format_exc()}")
 
     # ---- 邮件发送 ----
     email_pw = os.environ.get("QQMAIL_AUTH_CODE")
@@ -593,21 +684,41 @@ def main():
                 pass
 
     if email_pw:
-        print("[QUANT SYSTEM] 生成HTML报告并发送邮件...", file=sys.stderr)
-        html = generate_html_report(output)
-        send_email(html, email_pw)
+        logger.info("生成HTML报告并发送邮件...")
+        try:
+            html = generate_html_report(output)
+            send_email(html, email_pw)
+        except Exception as e:
+            logger.error(f"邮件发送失败: {e}\n{traceback.format_exc()}")
     else:
-        print("[QUANT SYSTEM] 未配置QQ邮箱授权码，跳过发送", file=sys.stderr)
+        logger.info("未配置QQ邮箱授权码，跳过发送")
 
-    # 周六自动复盘
-    if datetime.now().weekday() == 5:  # 周六
-        print("[QUANT SYSTEM] 周六自动复盘...", file=sys.stderr)
+    # 每月第一个周六自动复盘（与optimizer月度优化对齐）
+    if datetime.now().weekday() == 5 and datetime.now().day <= 7:  # 每月第一个周六
+        logger.info("月度自动复盘...")
         reviewer = WeeklyReview()
         review_report = reviewer.weekly_summary()
         review_path = os.path.join(OUTPUT_DIR, f"review_{TODAY}.txt")
         with open(review_path, 'w', encoding='utf-8') as f:
             f.write(review_report)
-        print(review_report, file=sys.stderr)
+        logger.info(f"月度复盘报告已保存: {review_path}")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logger.error(f"量化系统运行失败: {e}\n{traceback.format_exc()}")
+        # 即使崩溃也尝试通知
+        try:
+            email_pw = os.environ.get("QQMAIL_AUTH_CODE")
+            if not email_pw:
+                config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "email_config.json")
+                if os.path.exists(config_path):
+                    with open(config_path, 'r') as f:
+                        email_pw = json.load(f).get("QQMAIL_AUTH_CODE")
+            if email_pw:
+                from report_mailer import send_crash_report
+                send_crash_report(str(e), traceback.format_exc(), email_pw)
+        except:
+            logger.error(f"崩溃通知也失败了: {traceback.format_exc()}")
+        sys.exit(1)

@@ -5,9 +5,11 @@
 覆盖：行情/指数/宏观/资金/情绪/基本面/事件
 数据源：东方财富 API（主）+ 腾讯/新浪 API（备用）
 """
-import json, urllib.request, time, sys, re, os
+import json, urllib.request, time, sys, re, os, logging
 from datetime import datetime, timedelta
+import numpy as np
 
+logger = logging.getLogger(__name__)
 TODAY = datetime.now().strftime("%Y%m%d")
 MAX_RETRY = 3
 
@@ -29,7 +31,7 @@ INDEX_CODES = {
 def fetch_json(url, timeout=10):
     # GitHub Actions 在美国，东方财富API封禁美国IP → 直接走备用接口
     if _ON_GITHUB and "eastmoney.com" in url:
-        print(f"  [SKIP] GitHub环境跳过东方财富，直接走备用源", file=sys.stderr)
+        logger.info(f"  [SKIP] GitHub环境跳过东方财富，直接走备用源")
         return None
 
     for attempt in range(MAX_RETRY):
@@ -44,7 +46,7 @@ def fetch_json(url, timeout=10):
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 return json.loads(resp.read())
         except Exception as e:
-            print(f"  [API ERROR] 第{attempt+1}次尝试失败: {type(e).__name__}: {e}", file=sys.stderr)
+            logger.info(f"  [API ERROR] 第{attempt+1}次尝试失败: {type(e).__name__}: {e}")
             if attempt < MAX_RETRY - 1:
                 time.sleep(1.2)  # 逐只间隔1.2秒
     return None
@@ -266,6 +268,107 @@ def fetch_total_volume():
     if data and data.get("data"):
         return data["data"].get("f6", 0)/1e8  # 亿元
     return 0
+
+# ============================================================
+# 5b. 市场情绪综合指标 (v5.0)
+# ============================================================
+def compute_market_sentiment(breadth, total_volume, north_flow_5d=None):
+    """
+    从涨跌比/成交量/资金流计算综合情绪评分 (0-100)。
+    50=中性, >60=偏乐观, <40=偏恐慌。
+
+    输入:
+        breadth: {limit_up, limit_down, up_count, down_count}
+        total_volume: 全市场成交额(亿)
+        north_flow_5d: 北向5日累计(亿), 可选
+    返回: {
+        score: 0-100,
+        level: "贪婪"|"偏乐观"|"中性"|"偏恐慌"|"恐慌",
+        signals: {涨跌比, 量能, 涨停热度, ...}
+    }
+    """
+    score = 50  # 中性基准
+    signals = {}
+
+    # 1. 涨跌比 (权重: 30%)
+    up = breadth.get("up_count") or 0
+    down = breadth.get("down_count") or 1
+    if up + down > 0:
+        ratio = up / (up + down)
+        signals["涨跌比"] = round(ratio, 2)
+        # ratio: 0.3恐慌 → -15, 0.5中性 → 0, 0.7亢奋 → +10
+        adj = (ratio - 0.5) * 60
+        score += adj * 0.30
+
+    # 2. 成交活跃度 (权重: 25%)
+    signals["成交额(亿)"] = round(total_volume, 0) if total_volume else 0
+    if total_volume > 20000:
+        adj = 15  # 活跃
+    elif total_volume > 15000:
+        adj = 8
+    elif total_volume > 10000:
+        adj = 0
+    elif total_volume > 7000:
+        adj = -5
+    else:
+        adj = -12  # 极度缩量
+    score += adj * 0.25
+
+    # 3. 涨停热度 (权重: 20%)
+    lu = breadth.get("limit_up") or 0
+    ld = breadth.get("limit_down") or 0
+    signals["涨停家数"] = lu
+    signals["跌停家数"] = ld
+    if lu > 100:
+        adj = 18
+    elif lu > 60:
+        adj = 10
+    elif lu > 30:
+        adj = 3
+    else:
+        adj = -5
+    if ld > 50:
+        adj -= 15  # 恐慌
+    elif ld > 20:
+        adj -= 7
+    score += adj * 0.20
+
+    # 4. 北向资金 (权重: 15%)
+    if north_flow_5d is not None:
+        signals["北向5日(亿)"] = round(north_flow_5d, 1)
+        if north_flow_5d > 100:
+            adj = 15
+        elif north_flow_5d > 30:
+            adj = 8
+        elif north_flow_5d > -30:
+            adj = 0
+        elif north_flow_5d > -100:
+            adj = -8
+        else:
+            adj = -15
+    else:
+        adj = 0
+    score += adj * 0.15
+
+    # 5. 连板效应 (权重: 10%)
+    if lu > 5 and ld < 10:
+        score += 5 * 0.10
+
+    score = max(0, min(100, round(score)))
+
+    # 等级
+    if score >= 70:
+        level = "贪婪"
+    elif score >= 58:
+        level = "偏乐观"
+    elif score >= 42:
+        level = "中性"
+    elif score >= 30:
+        level = "偏恐慌"
+    else:
+        level = "恐慌"
+
+    return {"score": score, "level": level, "signals": signals}
 
 # ============================================================
 # 6. ETF 基本面与因子数据
@@ -631,7 +734,7 @@ def fetch_etf_fund_nav(code):
                 "name": data.get("Data", {}).get("FundName", "")
             }
     except Exception as e:
-        print(f"  [NAV ERROR] {code}: {e}", file=sys.stderr)
+        logger.info(f"  [NAV ERROR] {code}: {e}")
     return None
 
 def compute_etf_premium(code, current_price, nav_data=None):
@@ -709,7 +812,7 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
         stock_codes: 个股代码列表
         sequential: True=逐只拉取(防限流), False=快速模式
     """
-    print("[DATA ENGINE] 开始采集数据...", file=sys.stderr)
+    logger.info("[DATA ENGINE] 开始采集数据...")
 
     result = {
         "timestamp": datetime.now().isoformat(),
@@ -717,28 +820,28 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
     }
 
     # 指数数据
-    print("  -> 指数日线...", file=sys.stderr)
+    logger.info("  -> 指数日线...")
     result["indices"] = get_all_index_data(60)
 
     # 宏观数据
-    print("  -> 宏观数据...", file=sys.stderr)
+    logger.info("  -> 宏观数据...")
     result["bond_yield"] = fetch_bond_yield()
     result["shibor"] = fetch_shibor()
 
     # 资金数据
-    print("  -> 资金流向...", file=sys.stderr)
+    logger.info("  -> 资金流向...")
     result["north_bound"] = fetch_north_bound_flow(10)
     result["fund_flow"] = fetch_market_fund_flow()
     result["margin"] = fetch_margin_balance()
 
     # 情绪数据
-    print("  -> 市场情绪...", file=sys.stderr)
+    logger.info("  -> 市场情绪...")
     result["breadth"] = fetch_market_breadth()
     result["total_volume"] = fetch_total_volume()
     result["fear_index"] = calc_fear_index()
 
     # 机构资金追踪（新增）
-    print("  -> 机构资金追踪...", file=sys.stderr)
+    logger.info("  -> 机构资金追踪...")
     result["sector_flow"] = fetch_sector_fund_flow()
     result["dragon_tiger"] = fetch_dragon_tiger()
     result["etf_flow"] = fetch_etf_flow_top()
@@ -746,7 +849,7 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
 
     # ETF数据 - 逐只拉取
     all_etf_codes = list(dict.fromkeys((etf_codes or []) + USER_WATCHLIST))
-    print(f"  -> ETF数据 ({len(all_etf_codes)}只, {'逐只' if sequential else '快速'}模式)...", file=sys.stderr)
+    logger.info(f"  -> ETF数据 ({len(all_etf_codes)}只, {'逐只' if sequential else '快速'}模式)...")
     etf_data = {}
     fail_count = 0
 
@@ -769,19 +872,19 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
         if kline:
             etf_data[code] = {"name": name, "kline": kline, "realtime": realtime}
             if sequential:
-                print(f"    [{i+1}/{len(all_etf_codes)}] {code} {name} - OK ({len(kline)}d)", file=sys.stderr)
+                logger.info(f"    [{i+1}/{len(all_etf_codes)}] {code} {name} - OK ({len(kline)}d)")
         else:
             fail_count += 1
-            print(f"    [{i+1}/{len(all_etf_codes)}] {code} {name} - FAIL (3次重试后仍失败)", file=sys.stderr)
+            logger.info(f"    [{i+1}/{len(all_etf_codes)}] {code} {name} - FAIL (3次重试后仍失败)")
 
     result["etfs"] = etf_data
     if fail_count > 0:
-        print(f"  !! {fail_count}只ETF数据获取失败", file=sys.stderr)
+        logger.info(f"  !! {fail_count}只ETF数据获取失败")
 
     # 个股数据 - 逐只拉取
     if stock_codes:
         stock_codes_list = list(stock_codes)
-        print(f"  -> 个股数据 ({len(stock_codes_list)}只)...", file=sys.stderr)
+        logger.info(f"  -> 个股数据 ({len(stock_codes_list)}只)...")
         stock_data = {}
         for i, code in enumerate(stock_codes_list):
             if sequential and i > 0:
@@ -799,20 +902,20 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
 
             if kline:
                 stock_data[code] = {"name": name, "kline": kline, "realtime": realtime}
-                print(f"    [{i+1}/{len(stock_codes_list)}] {code} {name} - OK ({len(kline)}d)", file=sys.stderr)
+                logger.info(f"    [{i+1}/{len(stock_codes_list)}] {code} {name} - OK ({len(kline)}d)")
             else:
-                print(f"    [{i+1}/{len(stock_codes_list)}] {code} {name} - FAIL", file=sys.stderr)
+                logger.info(f"    [{i+1}/{len(stock_codes_list)}] {code} {name} - FAIL")
 
         result["stocks"] = stock_data
 
-    print("[DATA ENGINE] 采集完成", file=sys.stderr)
+    logger.info("[DATA ENGINE] 采集完成")
     return result
 
 # ============================================================
 # CLI
 # ============================================================
 if __name__ == "__main__":
-    import sys
+    import sys, logging
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     etfs = sys.argv[1:] if len(sys.argv) > 1 else list(KEY_ETFS.keys())[:10]
     data = collect_all_data(etfs)
