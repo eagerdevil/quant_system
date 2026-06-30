@@ -57,7 +57,8 @@ from quant_engine import (
     MarketTiming, TradeDecider,
     compute_atr_stop_loss, MARKET_REGIME,
     _apply_premium_penalty,
-    compute_industry_rotation_score, get_etf_industry_momentum
+    compute_industry_rotation_score, get_etf_industry_momentum,
+    OPTIMIZED_PARAMS
 )
 from report_mailer import generate_html_report, send_email, WeeklyReview
 from risk_engine import portfolio_risk_report, format_risk_section
@@ -549,12 +550,12 @@ def main():
                 result["premium_info_raw"] = {"warning": "QDII溢价数据缺失"}
 
             # 重新判定等级（因溢价可能改变分数）
-            grade_thresholds = {"A_强烈买入": 78, "B_买入": 65, "C_观察": 55, "D_谨慎": 42}
+            grade_thresholds = OPTIMIZED_PARAMS.get("grade_thresholds", {"A_强烈买入": 78, "B_买入": 65, "C_观察": 55, "D_谨慎": 42})
             s = result["score"]
-            if s >= 78: result["grade"] = "A_强烈买入"
-            elif s >= 65: result["grade"] = "B_买入"
-            elif s >= 55: result["grade"] = "C_观察"
-            elif s >= 42: result["grade"] = "D_谨慎"
+            if s >= grade_thresholds.get("A_强烈买入", 78): result["grade"] = "A_强烈买入"
+            elif s >= grade_thresholds.get("B_买入", 65): result["grade"] = "B_买入"
+            elif s >= grade_thresholds.get("C_观察", 55): result["grade"] = "C_观察"
+            elif s >= grade_thresholds.get("D_谨慎", 42): result["grade"] = "D_谨慎"
             else: result["grade"] = "E_回避"
 
             # v5.0: 行业轮动加成

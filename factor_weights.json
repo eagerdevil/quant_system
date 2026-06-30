@@ -3,7 +3,7 @@
     "version": 2,
     "last_optimized": "20260623",
     "ic_score": 0.05272,
-    "description": "因子权重配置文件 — 由optimizer.py每周日自动更新"
+    "description": "因子权重配置文件 — 由optimizer.py每月1号自动更新"
   },
   "factor_weights": {
     "F1_趋势强度": 2.23,
@@ -20,7 +20,8 @@
     "F12_多周期": 1.32,
     "F13_均线排列": 1.78,
     "F14_长期": 2.26,
-    "F15_夏普": 1.93
+    "F15_夏普": 1.93,
+    "F16_量价关系": 1.0
   },
   "grade_thresholds": {
     "A_强烈买入": 78,

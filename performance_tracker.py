@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-量化系统 v3.0 — 绩效追踪器
+量化系统 v7.1 — 绩效追踪器
 ==========================
 模块: 历史绩效分析
 功能: 权益曲线 / 胜率 / 盈亏比 / 最大回撤 / 月度汇总
@@ -8,8 +8,10 @@
 读取历史 report_*.json 文件，告诉你：这个系统帮你赚钱了吗？
 """
 
-import json, os, sys, io
+import json, os, sys, io, logging
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 TODAY = datetime.now().strftime("%Y%m%d")
 

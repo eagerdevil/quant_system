@@ -133,16 +133,38 @@ def fetch_shibor():
 # 4. 资金流向数据
 # ============================================================
 def fetch_north_bound_flow(days=5):
-    """获取北向资金净买入"""
+    """获取北向资金净买入（东方财富主 + Tencent备用）"""
     url = f"https://push2.eastmoney.com/api/qt/kamt.kline/get?fields1=f1,f3&fields2=f2,f3,f4,f6,f8,f10&klt=101&lmt={days}"
     data = fetch_json(url)
-    if not data or not data.get("data"):
-        return None
-    result = []
-    for k in data["data"]["klines"]:
-        parts = k.split(",")
-        result.append({"date": parts[0], "net_flow": float(parts[1])/1e8})  # 亿元
-    return result
+    if data and data.get("data"):
+        result = []
+        for k in data["data"]["klines"]:
+            parts = k.split(",")
+            result.append({"date": parts[0], "net_flow": float(parts[1])/1e8})  # 亿元
+        return result
+    # v7.0: Tencent备用（北向资金实时数据）
+    try:
+        t_url = "https://qt.gtimg.cn/q=ff_bk0479"
+        t_resp = _simple_get(t_url, timeout=10)
+        if t_resp:
+            t_text = t_resp.read().decode("gbk", errors="replace") if hasattr(t_resp, "read") else t_resp
+            # 提取北向净流入（格式: ~字段间用~分隔）
+            if "~" in t_text:
+                t_parts = t_text.split("~")
+                # 尝试找净流入字段（通常在位置4-6之间）
+                for idx in [5, 4, 6]:
+                    if idx < len(t_parts):
+                        try:
+                            flow = float(t_parts[idx]) / 1e8
+                            if abs(flow) < 1000:  # 合理范围
+                                logger.info(f"  [FALLBACK] 北向资金(Tencent): {flow:.1f}亿")
+                                today = datetime.now().strftime("%Y-%m-%d")
+                                return [{"date": today, "net_flow": flow}]
+                        except (ValueError, IndexError):
+                            continue
+    except Exception as e:
+        logger.info(f"  [FALLBACK] 北向资金备用源失败: {e}")
+    return None
 
 def fetch_market_fund_flow():
     """获取全市场主力资金流向"""
@@ -235,7 +257,7 @@ def fetch_north_bound_top():
 # 5. 市场情绪数据
 # ============================================================
 def fetch_market_breadth():
-    """获取涨跌停家数、炸板率等"""
+    """获取涨跌停家数、炸板率等（东方财富主 + 指数数据备用估算）"""
     # 涨停家数
     url_zt = f"https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=1&po=1&np=1&fltt=2&fid=f3&fs=m:110+t:3&fields=f12"
     zt_data = fetch_json(url_zt)
@@ -255,6 +277,29 @@ def fetch_market_breadth():
     down_data = fetch_json(url_down)
     down_count = down_data["data"]["total"] if (down_data and down_data.get("data")) else None
 
+    # v7.0: GitHub Actions备用 — 从指数涨跌推算涨跌比（近似）
+    if up_count is None or down_count is None:
+        try:
+            sh_data = fetch_index_daily("000001", 1)
+            sz_data = fetch_index_daily("399001", 1)
+            if sh_data and sz_data:
+                sh_change = (sh_data[0]["close"] / sh_data[0]["open"] - 1) if sh_data else 0
+                sz_change = (sz_data[0]["close"] / sz_data[0]["open"] - 1) if sz_data else 0
+                # 粗略估算：指数涨→多数上涨，指数跌→多数下跌
+                avg_change = (sh_change + sz_change) / 2
+                total_est = 5000  # A股总数约5000只
+                if avg_change > 0.005:
+                    up_ratio = 0.6 + avg_change * 5
+                elif avg_change < -0.005:
+                    up_ratio = max(0.2, 0.5 + avg_change * 5)
+                else:
+                    up_ratio = 0.5
+                up_count = up_count or int(total_est * up_ratio)
+                down_count = down_count or int(total_est * (1 - up_ratio))
+                logger.info(f"  [FALLBACK] 涨跌家数估算: 涨{up_count}/跌{down_count} (指数变化{avg_change*100:.1f}%)")
+        except Exception as e:
+            logger.info(f"  [FALLBACK] 涨跌家数备用源失败: {e}")
+
     return {
         "limit_up": limit_up, "limit_down": limit_down,
         "up_count": up_count, "down_count": down_count,
@@ -262,11 +307,43 @@ def fetch_market_breadth():
     }
 
 def fetch_total_volume():
-    """获取全市场成交额"""
+    """获取全市场成交额（东方财富主 + Sina备用）"""
     url = f"https://push2.eastmoney.com/api/qt/stock/get?secid=1.000001&fields=f6"
     data = fetch_json(url)
     if data and data.get("data"):
         return data["data"].get("f6", 0)/1e8  # 亿元
+    # v7.0: Sina备用（沪市+深市成交额之和）
+    try:
+        sh_url = "https://hq.sinajs.cn/list=s_sh000001"
+        sh_resp = _simple_get(sh_url, timeout=10)
+        if sh_resp:
+            sh_text = sh_resp.read().decode("gbk", errors="replace") if hasattr(sh_resp, "read") else sh_resp
+            sh_parts = sh_text.split(",")
+            if len(sh_parts) > 10:
+                sh_amount = float(sh_parts[10]) / 1e4  # 万→亿
+            else:
+                sh_amount = 0
+        else:
+            sh_amount = 0
+
+        sz_url = "https://hq.sinajs.cn/list=s_sz399001"
+        sz_resp = _simple_get(sz_url, timeout=10)
+        if sz_resp:
+            sz_text = sz_resp.read().decode("gbk", errors="replace") if hasattr(sz_resp, "read") else sz_resp
+            sz_parts = sz_text.split(",")
+            if len(sz_parts) > 10:
+                sz_amount = float(sz_parts[10]) / 1e4
+            else:
+                sz_amount = 0
+        else:
+            sz_amount = 0
+
+        total = sh_amount + sz_amount
+        if total > 0:
+            logger.info(f"  [FALLBACK] 全市场成交额(Sina): {total:.0f}亿")
+            return total
+    except Exception as e:
+        logger.info(f"  [FALLBACK] 成交额备用源失败: {e}")
     return 0
 
 # ============================================================
@@ -801,6 +878,47 @@ def calc_fear_index():
             return down / total * 100
     return 50
 
+
+def _estimate_margin_from_index(indices):
+    """
+    v7.1 CI fallback: 从沪深300指数近5日趋势估算融资余额变化
+    当东方财富API不可用时（如GitHub Actions CI环境），
+    用指数涨跌粗略推断融资趋势：
+    - 指数涨>2% → 融资大概率增加（投资者加杠杆追涨）
+    - 指数跌>2% → 融资大概率减少（去杠杆/止损）
+    - 否则 → 融资持平
+
+    返回: {"balance": 估计值(亿), "change": 估计变化(亿)} 或 None
+    """
+    if "000300" not in indices:
+        return None
+
+    data = indices["000300"].get("data", [])
+    if len(data) < 6:
+        return None
+
+    closes = [d["close"] for d in data]
+    current = closes[-1]
+    avg_5d_ago = sum(closes[-6:-1]) / 5
+
+    pct_change = (current - avg_5d_ago) / avg_5d_ago * 100
+
+    # A股融资余额通常在1.4-1.6万亿之间
+    base_balance = 15000  # 亿
+    if pct_change > 2.0:
+        change = base_balance * 0.008  # 约+120亿
+    elif pct_change > 1.0:
+        change = base_balance * 0.004  # 约+60亿
+    elif pct_change < -2.0:
+        change = -base_balance * 0.008  # 约-120亿
+    elif pct_change < -1.0:
+        change = -base_balance * 0.004  # 约-60亿
+    else:
+        change = 0
+
+    return {"balance": base_balance, "change": round(change, 1)}
+
+
 # ============================================================
 # 8. 综合数据采集
 # ============================================================
@@ -832,7 +950,14 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
     logger.info("  -> 资金流向...")
     result["north_bound"] = fetch_north_bound_flow(10)
     result["fund_flow"] = fetch_market_fund_flow()
-    result["margin"] = fetch_margin_balance()
+    margin_data = fetch_margin_balance()
+    if not margin_data or margin_data.get("balance", 0) == 0:
+        # v7.1 CI fallback: 从指数趋势估算融资变化
+        margin_data = _estimate_margin_from_index(result.get("indices", {}))
+        if margin_data:
+            logger.info("  [FALLBACK] 融资余额(指数估算): balance=%.0f亿 change=%+.1f亿",
+                       margin_data.get("balance", 0), margin_data.get("change", 0))
+    result["margin"] = margin_data
 
     # 情绪数据
     logger.info("  -> 市场情绪...")

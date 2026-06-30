@@ -1558,13 +1558,24 @@ class TradeDecider:
         self.timing = timing_result
         self.portfolio = portfolio or {}
 
-    def generate_plan(self, total_capital=4000, max_single=0.25, max_industry=0.40):
-        """生成明日操作计划"""
+    def generate_plan(self, total_capital=None, max_single=0.25, max_industry=0.40):
+        """生成明日操作计划
+        total_capital: 总资产，默认从portfolio动态计算（现金+持仓市值）"""
+        # v7.0: 从portfolio动态计算总资产
+        if total_capital is None:
+            cash = self.portfolio.get("_available_cash", 0)
+            invested = sum(
+                p.get("shares", 0) * p.get("current_price", p.get("cost", 0))
+                for p in self.portfolio.values() if isinstance(p, dict) and not str(p.get("shares", "")).startswith("_")
+            )
+            total_capital = cash + invested
+            if total_capital <= 0:
+                total_capital = 4000  # fallback
         target_pos = self.timing["base_position"]
         target_amount = total_capital * target_pos
         current_invested = sum(
             p.get("shares", 0) * p.get("current_price", p.get("cost", 0))
-            for p in self.portfolio.values() if isinstance(p, dict)
+            for p in self.portfolio.values() if isinstance(p, dict) and not str(p.get("shares", "")).startswith("_")
         )
 
         top_n = max(5, len(self.scores) // 2)
@@ -1586,8 +1597,59 @@ class TradeDecider:
             current_price = pos.get("current_price", cost)
             pnl_pct = (current_price / cost - 1) * 100 if cost > 0 else 0
 
+            premium_pct = score_data.get("premium_info", {}).get("premium_pct") or 0
+
+            # v7.0: 溢价独立卖出逻辑（溢价回归风险）
+            premium_sell = False
+            if premium_pct > 10:
+                sell_list.append({
+                    "code": code, "name": pos.get("name", code), "action": "SELL",
+                    "shares": pos["shares"], "price": current_price,
+                    "pnl_pct": round(pnl_pct, 1),
+                    "reason": f"溢价{premium_pct:.1f}%极度危险"
+                })
+                premium_sell = True
+            elif premium_pct > 7 and pnl_pct >= 0:
+                sell_list.append({
+                    "code": code, "name": pos.get("name", code), "action": "SELL",
+                    "shares": pos["shares"], "price": current_price,
+                    "pnl_pct": round(pnl_pct, 1),
+                    "reason": f"溢价{premium_pct:.1f}%高位+盈利锁定"
+                })
+                premium_sell = True
+            elif premium_pct > 5 and score_data["score"] < 55:
+                sell_list.append({
+                    "code": code, "name": pos.get("name", code), "action": "SELL",
+                    "shares": pos["shares"], "price": current_price,
+                    "pnl_pct": round(pnl_pct, 1),
+                    "reason": f"溢价{premium_pct:.1f}%+评分偏低"
+                })
+                premium_sell = True
+
+            if premium_sell:
+                pass  # 已加入卖出列表，跳过后续判断
+            # v7.0: 追踪止盈（从高点回撤>8%）
+            elif pnl_pct > 0:
+                r20d = score_data.get("returns", {}).get("r20d", 0)
+                r5d = score_data.get("returns", {}).get("r5d", 0)
+                # 若20日曾大涨但5日快速回撤，触发追踪止盈
+                if r20d > 12 and r5d < -5:
+                    sell_list.append({
+                        "code": code, "name": pos.get("name", code), "action": "SELL",
+                        "shares": pos["shares"], "price": current_price,
+                        "pnl_pct": round(pnl_pct, 1),
+                        "reason": f"追踪止盈(20日+{r20d:.1f}%→5日{r5d:.1f}%)"
+                    })
+            # v7.0: 接近止损+评分恶化 组合卖出
+            elif -8 < pnl_pct <= -5 and score_data["score"] < 55:
+                sell_list.append({
+                    "code": code, "name": pos.get("name", code), "action": "SELL",
+                    "shares": pos["shares"], "price": current_price,
+                    "pnl_pct": round(pnl_pct, 1),
+                    "reason": f"接近止损({pnl_pct:.1f}%)+评分偏低({score_data['score']})"
+                })
             # 止损触发
-            if pnl_pct <= -8:
+            elif pnl_pct <= -8:
                 sell_list.append({
                     "code": code, "name": pos.get("name", code), "action": "SELL",
                     "shares": pos["shares"], "price": current_price,
@@ -1604,7 +1666,8 @@ class TradeDecider:
                 hold_list.append({
                     "code": code, "name": pos.get("name", code),
                     "score": score_data["score"], "grade": score_data.get("grade", ""),
-                    "pnl_pct": round(pnl_pct, 1)
+                    "pnl_pct": round(pnl_pct, 1),
+                    "premium_pct": round(premium_pct, 2) if premium_pct > 3 else None
                 })
 
         # 买入建议

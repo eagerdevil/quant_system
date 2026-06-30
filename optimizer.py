@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-量化系统 v4.0 — 自进化参数优化引擎
+量化系统 v7.1 — 自进化参数优化引擎
 ===================================
 每月自动运行（或手动执行）
 - 回测历史数据，评估因子+阈值+溢价惩罚的预测能力
@@ -39,6 +39,9 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 WEIGHTS_FILE = os.path.join(SCRIPT_DIR, "factor_weights.json")
 EVOLUTION_LOG = os.path.join(SCRIPT_DIR, "evolution_log.json")
 
+# QDII ETF列表（这些ETF有跨境溢价，优化器模拟溢价惩罚时需要识别）
+QDII_ETFS = {"513100", "159659", "513500", "159941", "513050", "159866", "513300"}
+
 # ============================================================
 # 统计工具
 # ============================================================
@@ -72,8 +75,8 @@ def spearman_ic(x, y):
 
 def time_weighted_ic(weights, precomputed):
     """
-    v4.0: 时间加权IC
-    近期数据点权重更高（指数衰减，半衰期=60个交易日）
+    [legacy] v7.1起由evaluate_params()替代
+    近期数据点权重更高
     → 系统自动适应市场变化
     """
     scores = []
@@ -193,18 +196,80 @@ def perturb_params(base, scale=0.10):
 
 def compute_scores_with_params(params, precomputed):
     """
-    使用给定参数计算每个数据点的预测得分
-    这模拟了量化引擎在使用这些参数时的评分行为
+    v7.1: 使用全部参数计算最终得分（含溢价惩罚）
+    与quant_engine的get_etf_score()对齐
+    - factor_weights: 16因子权重 → 计算加权technical_score
+    - premium_steepness + premium_threshold: 对QDII ETF施加溢价惩罚
     """
     weights = params["factor_weights"]
-    pred_scores = []
+    steepness = params.get("premium_steepness", 0.07)
+    premium_threshold_val = params.get("premium_threshold", 2.5)
+
+    final_scores = []
     for pt in precomputed:
-        # 15因子加权得分（与quant_engine一致）
+        # Step 1: 16因子加权得分（与quant_engine score_factors + get_etf_score一致）
         ws = sum(pt['factors'][k] * weights.get(k, 1.0) for k in FACTOR_NAMES)
         max_w = sum(FACTOR_MAX[k] * weights.get(k, 1.0) for k in FACTOR_NAMES)
-        technical_score = ws / max_w * 100 if max_w > 0 else sum(pt['factors'].values())
-        pred_scores.append(technical_score)
-    return pred_scores
+        score = ws / max_w * 100 if max_w > 0 else sum(pt['factors'].values())
+
+        # Step 2: 溢价惩罚 — 仅对QDII ETF，模拟quant_engine._apply_premium_penalty()
+        code = pt.get('code', '')
+        if code in QDII_ETFS:
+            # 使用3%作为QDII ETF的默认溢价（A股QDII ETF历史中位水平）
+            # 在3%溢价下，penalty取决于premium_threshold和steepness两个参数
+            premium_pct = 3.0
+            if premium_pct >= premium_threshold_val:
+                excess = premium_pct - premium_threshold_val
+                if premium_pct <= 5.0:
+                    multiplier = 1.0 - excess * steepness
+                elif premium_pct <= 8.0:
+                    base_loss = (5.0 - premium_threshold_val) * steepness
+                    multiplier = max(0.50, 1.0 - base_loss - (premium_pct - 5.0) * steepness * 1.3)
+                else:
+                    base_loss = (5.0 - premium_threshold_val) * steepness + 3.0 * steepness * 1.3
+                    multiplier = max(0.45, 1.0 - base_loss - (premium_pct - 8.0) * steepness * 1.6)
+                score = round(score * multiplier)
+
+        final_scores.append(score)
+    return final_scores
+
+
+def evaluate_params(params, precomputed):
+    """
+    v7.1: 完整参数评估函数
+    使用全部可IC评估的参数（因子权重+溢价参数）计算IC
+    替代旧版time_weighted_ic(weights, precomputed)的单维度评估
+    """
+    scores = compute_scores_with_params(params, precomputed)
+    rets = [pt['forward_return'] for pt in precomputed]
+
+    # 时间加权：近期数据权重更高（半衰期=60交易日）
+    n = len(precomputed)
+    half_life = 60
+    decay = math.log(2) / half_life
+    time_weights = [math.exp(-decay * (n - 1 - i)) for i in range(n)]
+
+    total_w = sum(time_weights)
+    if total_w < 1e-10 or n < 10:
+        return spearman_ic(scores, rets)
+
+    # 加权重采样
+    n_eff = min(n, 500)
+    step = total_w / n_eff
+    sampled_scores = []
+    sampled_rets = []
+    cumsum = 0.0
+    j = 0
+    for i in range(n_eff):
+        target = (i + 0.5) * step
+        while j < n - 1 and cumsum + time_weights[j] < target:
+            cumsum += time_weights[j]
+            j += 1
+        idx = min(j, n - 1)
+        sampled_scores.append(scores[idx])
+        sampled_rets.append(rets[idx])
+
+    return spearman_ic(sampled_scores, sampled_rets)
 
 
 # ============================================================
@@ -235,14 +300,14 @@ def collect_backtest_data(etf_list, max_days=250, min_days=65):
         n = len(kline)
 
         etf_points = 0
-        for t in range(60, n - 6):
+        for t in range(60, n - 16):
             try:
                 ind = compute_indicators(
                     closes[:t + 1], highs[:t + 1],
                     lows[:t + 1], volumes[:t + 1]
                 )
                 factors = score_factors(ind)
-                forward_ret = closes[t + 5] / closes[t] - 1.0
+                forward_ret = closes[t + 15] / closes[t] - 1.0  # v7.1: 15日forward
 
                 if abs(forward_ret) > 0.50:
                     continue
@@ -377,10 +442,10 @@ def main():
     n_local = 15 if fast_mode else 35
 
     logger.info("=" * 60)
-    logger.info(f"  [量化系统 v4.0] 自进化参数优化引擎")
+    logger.info(f"  [量化系统 v7.1] 自进化参数优化引擎")
     logger.info(f"  [时间] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info(f"  [模式] {'预览(不保存)' if dry_run else ('快速' if fast_mode else '标准')}")
-    logger.info(f"  [搜索范围] 15因子权重 + 4等级阈值 + 溢价惩罚曲线 + ADX阈值")
+    logger.info(f"  [搜索范围] 16因子权重 + 溢价惩罚曲线(IC评估) + 等级阈值 + ADX(随机搜索)")
     logger.info("=" * 60)
 
     # Load current config
@@ -416,14 +481,14 @@ def main():
         "premium_threshold": 2.5,
         "adx_trend_threshold": 22
     }
-    baseline_ic = time_weighted_ic(baseline_params["factor_weights"], precomputed)
-    current_ic = time_weighted_ic(current_params["factor_weights"], precomputed)
+    baseline_ic = evaluate_params(baseline_params, precomputed)
+    current_ic = evaluate_params(current_params, precomputed)
     logger.info(f"  等权基线 IC: {baseline_ic:.5f}")
     logger.info(f"  当前权重 IC: {current_ic:.5f}")
     logger.info(f"  (使用时间加权: 近期数据权重更高，半衰期=60交易日)")
 
     # ================================================================
-    # Phase 3: 随机搜索（v4.0: 搜索完整参数空间）
+    # Phase 3: 随机搜索（v7.1: evaluate_params评估因子+溢价参数）
     # ================================================================
     logger.info(f"\n  [Phase 3/4] 随机搜索 ({n_random}次迭代)...")
 
@@ -435,7 +500,7 @@ def main():
     milestone = max(10, n_random // 5)
     for i in range(n_random):
         params = random_params()
-        ic = time_weighted_ic(params["factor_weights"], precomputed)
+        ic = evaluate_params(params, precomputed)
         if ic > best_ic:
             best_ic = ic
             best_params = params
@@ -455,7 +520,7 @@ def main():
     for i in range(n_local):
         for scale in [0.08, 0.20]:
             p = perturb_params(best_params, scale=scale)
-            ic = time_weighted_ic(p["factor_weights"], precomputed)
+            ic = evaluate_params(p, precomputed)
             if ic > refine_best_ic:
                 refine_best_ic = ic
                 refine_best_params = p
