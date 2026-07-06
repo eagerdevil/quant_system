@@ -101,11 +101,13 @@ def compute_performance_metrics(equity_curve):
     total_days = daily_wins + daily_losses
     win_rate = daily_wins / total_days * 100 if total_days > 0 else 0
 
-    # 盈亏比
-    avg_win = sum(assets[i] - assets[i-1] for i in range(1, len(assets))
-                  if assets[i] > assets[i-1]) / daily_wins if daily_wins > 0 else 0
-    avg_loss = sum(assets[i-1] - assets[i] for i in range(1, len(assets))
-                   if assets[i] < assets[i-1]) / daily_losses if daily_losses > 0 else 0
+    # 盈亏比 — numpy diff + 布尔索引 一次完成
+    arr = np.array(assets, dtype=np.float64)
+    diffs = np.diff(arr)
+    win_diffs = diffs[diffs > 0]
+    loss_diffs = -diffs[diffs < 0]
+    avg_win = float(np.mean(win_diffs)) if len(win_diffs) > 0 else 0.0
+    avg_loss = float(np.mean(loss_diffs)) if len(loss_diffs) > 0 else 0.0
     profit_factor = avg_win / avg_loss if avg_loss > 0 else float('inf')
 
     # 现金纪律
@@ -136,11 +138,18 @@ def compute_performance_metrics(equity_curve):
 
 def compute_score_accuracy(reports):
     """
-    分析评分系统准确性：
-    检查历史报告中每个ETF的评分变化趋势 vs 实际价格走势
+    v7.2: 重构信号准确性分析 — 使用预测性评估（非同日相关性）
+
+    旧方法（已废弃）: 同日评分变化 vs 同日价格变化 → 相关性而非预测力
+    新方法: T日评分变化 → T+1日价格变化 → 真实预测力评估
+
+    同时报告:
+    - 方向准确率: 评分升降 → 次日涨跌 的一致性
+    - 信号质量: 大幅度评分变化(>5分)的预测准确率
+    - 旧指标(参考): 同日相关性（用于对比）
     """
-    if len(reports) < 3:
-        return {"error": "至少需要3天数据"}
+    if len(reports) < 4:
+        return {"error": "至少需要4天数据（3个预测样本）"}
 
     # 按ETF代码聚合
     etf_tracks = {}
@@ -157,24 +166,50 @@ def compute_score_accuracy(reports):
                 "price": s.get("price", 0)
             })
 
-    # 分析评分变化与价格变化的一致性
     results = {}
     for code, track in etf_tracks.items():
-        if len(track) < 3:
+        if len(track) < 4:
             continue
 
-        score_changes = 0
-        correct_signals = 0
+        # === 新方法: 预测性评估 ===
+        pred_signals = 0      # 总预测次数
+        pred_correct = 0      # 方向正确次数
+        strong_signals = 0    # 强信号次数 (score变化>5分)
+        strong_correct = 0    # 强信号正确次数
+
+        for i in range(1, len(track) - 1):
+            # T-1 → T 评分变化（信号）
+            ds = track[i]["score"] - track[i-1]["score"]
+            # T → T+1 价格变化（结果）
+            dp_next = track[i+1]["price"] - track[i]["price"]
+
+            if ds != 0 and dp_next != 0:
+                pred_signals += 1
+                # 评分升 → 次日涨, 评分降 → 次日跌 = 正确预测
+                if (ds > 0 and dp_next > 0) or (ds < 0 and dp_next < 0):
+                    pred_correct += 1
+
+                # 强信号（评分变化超过5分）
+                if abs(ds) > 5:
+                    strong_signals += 1
+                    if (ds > 0 and dp_next > 0) or (ds < 0 and dp_next < 0):
+                        strong_correct += 1
+
+        pred_accuracy = pred_correct / pred_signals * 100 if pred_signals > 0 else 0
+        strong_accuracy = strong_correct / strong_signals * 100 if strong_signals > 0 else 0
+
+        # === 旧方法: 同日相关性（仅供对比） ===
+        same_day_signals = 0
+        same_day_correct = 0
         for i in range(1, len(track)):
             ds = track[i]["score"] - track[i-1]["score"]
             dp = track[i]["price"] - track[i-1]["price"]
             if ds != 0 and dp != 0:
-                score_changes += 1
-                # 评分升+价格升 = 正确，评分降+价格降 = 正确
+                same_day_signals += 1
                 if (ds > 0 and dp > 0) or (ds < 0 and dp < 0):
-                    correct_signals += 1
+                    same_day_correct += 1
+        same_day_accuracy = same_day_correct / same_day_signals * 100 if same_day_signals > 0 else 0
 
-        accuracy = correct_signals / score_changes * 100 if score_changes > 0 else 0
         # 找ETF名称
         name = code
         for r in reports:
@@ -185,12 +220,27 @@ def compute_score_accuracy(reports):
             if name != code:
                 break
 
+        # 判定有效性: 预测准确率>55%为有效, <45%为反向, 中间为随机
+        if pred_signals < 5:
+            effectiveness = "样本不足"
+        elif pred_accuracy >= 58:
+            effectiveness = "✅ 有效预测"
+        elif pred_accuracy >= 52:
+            effectiveness = "🟡 弱预测力"
+        elif pred_accuracy >= 45:
+            effectiveness = "⚪ 接近随机"
+        else:
+            effectiveness = "❌ 可能反向"
+
         results[code] = {
             "name": name,
             "data_points": len(track),
-            "score_changes": score_changes,
-            "correct_signals": correct_signals,
-            "accuracy": round(accuracy, 1),
+            "pred_signals": pred_signals,
+            "pred_accuracy": round(pred_accuracy, 1),
+            "strong_signals": strong_signals,
+            "strong_accuracy": round(strong_accuracy, 1),
+            "same_day_accuracy": round(same_day_accuracy, 1),  # 旧指标(对比用)
+            "effectiveness": effectiveness,
             "latest_score": track[-1]["score"],
             "score_trend": "上升" if len(track) >= 3 and track[-1]["score"] > track[-3]["score"]
                           else "下降" if len(track) >= 3 and track[-1]["score"] < track[-3]["score"]
@@ -232,15 +282,18 @@ def generate_performance_summary(report_dir=None):
     if metrics['cash_violation_pct'] > 50:
         lines.append(f"     ⚠️ 超过半数交易日现金低于700元！这是账户最大风险来源")
 
-    # 信号准确性
+    # 信号准确性 (v7.2: 预测性评估)
     if accuracy and "error" not in accuracy:
-        lines.append(f"\n  🎯 信号准确性:")
+        lines.append(f"\n  🎯 信号预测力 (T日评分变化→T+1日涨跌):")
         for code, acc in accuracy.items():
-            acc_emoji = "✅" if acc["accuracy"] >= 60 else "⚠️" if acc["accuracy"] >= 40 else "❌"
+            eff = acc.get("effectiveness", "?")
+            strong_str = f" | 强信号:{acc['strong_accuracy']:.0f}%" if acc.get("strong_signals", 0) >= 3 else ""
+            old_str = f" | 同日相关:{acc['same_day_accuracy']:.0f}%"
             lines.append(
-                f"     {acc_emoji} {acc['name']}({code}): "
-                f"准确率{acc['accuracy']:.0f}% ({acc['correct_signals']}/{acc['score_changes']}) "
-                f"| 最新{acc['latest_score']}分 | 趋势:{acc['score_trend']}"
+                f"     {eff} {acc['name']}({code}): "
+                f"预测{acc['pred_accuracy']:.0f}% ({acc['pred_signals']}次)"
+                f"{strong_str}{old_str}"
+                f" | 最新{acc['latest_score']}分 | 趋势:{acc['score_trend']}"
             )
 
     # 权益曲线（简化的ASCII）

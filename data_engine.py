@@ -10,8 +10,35 @@ from datetime import datetime, timedelta
 import numpy as np
 
 logger = logging.getLogger(__name__)
-TODAY = datetime.now().strftime("%Y%m%d")
+TODAY = datetime.now().strftime("%Y%m%d")  # 保持向后兼容
+
+def get_today():
+    """返回当前日期字符串 YYYYMMDD（每次调用实时计算）"""
+    return datetime.now().strftime("%Y%m%d")
 MAX_RETRY = 3
+
+# K线字段索引（东方财富 push2his API 返回格式: date,open,close,high,low,volume,amount[,...]）
+_K_DATE, _K_OPEN, _K_CLOSE, _K_HIGH, _K_LOW, _K_VOL, _K_AMT = range(7)
+
+
+def _parse_kline(k_str):
+    """安全解析单根K线字符串，返回 {date, open, close, high, low, volume, amount}"""
+    parts = k_str.split(",")
+    if len(parts) < 7:
+        return None
+    try:
+        return {
+            "date": parts[_K_DATE],
+            "open": float(parts[_K_OPEN]),
+            "close": float(parts[_K_CLOSE]),
+            "high": float(parts[_K_HIGH]),
+            "low": float(parts[_K_LOW]),
+            "volume": float(parts[_K_VOL]),
+            "amount": float(parts[_K_AMT]) if len(parts) > _K_AMT else 0.0,
+        }
+    except (ValueError, IndexError):
+        return None
+
 
 # GitHub Actions 环境检测（东方财富API屏蔽美国IP，GitHub Actions Runner在美国）
 _ON_GITHUB = os.environ.get("GITHUB_ACTIONS") == "true" or os.environ.get("CI") == "true"
@@ -60,12 +87,9 @@ def fetch_index_daily(code, days=120):
         klines = data["data"]["klines"]
         result = []
         for k in klines:
-            parts = k.split(",")
-            result.append({
-                "date": parts[0], "open": float(parts[1]), "close": float(parts[2]),
-                "high": float(parts[3]), "low": float(parts[4]), "volume": float(parts[5]),
-                "amount": float(parts[6])
-            })
+            parsed = _parse_kline(k)
+            if parsed:
+                result.append(parsed)
         return result
     # 备用: 腾讯API
     return _fetch_sina_index(code, days)
@@ -226,7 +250,8 @@ def fetch_sector_fund_flow():
 
 def fetch_dragon_tiger():
     """获取龙虎榜机构净买入汇总"""
-    url = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=10&po=1&np=1&fltt=2&fid=f184&fs=m:0+t:5  # v7.1: 同上&fields=f12,f14,f184,f186"
+    # v7.1: m:0=全部A股, t:5=龙虎榜, fields=股票代码+名称+机构净买+总净买
+    url = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=10&po=1&np=1&fltt=2&fid=f184&fs=m:0+t:5&fields=f12,f14,f184,f186"
     data = fetch_json(url)
     if not data or not data.get("data"):
         return None
@@ -273,22 +298,23 @@ def fetch_north_bound_top():
 # ============================================================
 def fetch_market_breadth():
     """获取涨跌停家数、炸板率等（东方财富主 + 指数数据备用估算）"""
-    # 涨停家数
-    url_zt = f"https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=1&po=1&np=1&fltt=2&fid=f3&fs=m:0+t:3  # v7.1: m:0=全部A股, m:110过滤出错仅返回19只&fields=f12"
+    # v7.1: m:0=全部A股, t:3=涨停, t:4=跌停, t:1=上涨, t:0=下跌
+    # 使用pz=1只取total字段（不需要具体股票列表）
+    url_zt = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=1&po=1&np=1&fltt=2&fid=f3&fs=m:0+t:3&fields=f12"
     zt_data = fetch_json(url_zt)
     limit_up = zt_data["data"]["total"] if (zt_data and zt_data.get("data")) else None
 
     # 跌停家数
-    url_dt = f"https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=1&po=1&np=1&fltt=2&fid=f3&fs=m:0+t:4  # v7.1: 同上&fields=f12"
+    url_dt = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=1&po=1&np=1&fltt=2&fid=f3&fs=m:0+t:4&fields=f12"
     dt_data = fetch_json(url_dt)
     limit_down = dt_data["data"]["total"] if (dt_data and dt_data.get("data")) else None
 
     # 上涨/下跌家数
-    url_up = f"https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=1&po=1&np=1&fltt=2&fid=f3&fs=m:0+t:1  # v7.1: 同上&fields=f12"
+    url_up = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=1&po=1&np=1&fltt=2&fid=f3&fs=m:0+t:1&fields=f12"
     up_data = fetch_json(url_up)
     up_count = up_data["data"]["total"] if (up_data and up_data.get("data")) else None
 
-    url_down = f"https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=1&po=1&np=1&fltt=2&fid=f3&fs=m:0+t:0  # v7.1: 同上&fields=f12"
+    url_down = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=1&po=1&np=1&fltt=2&fid=f3&fs=m:0+t:0&fields=f12"
     down_data = fetch_json(url_down)
     down_count = down_data["data"]["total"] if (down_data and down_data.get("data")) else None
 
@@ -499,26 +525,51 @@ KEY_ETFS = {
     # === 用户重点关注 ===
     "562500": "机器人ETF华夏",       # 用户指定
     "512760": "芯片ETF国泰",         # 用户指定
-    "518850": "黄金ETF华夏",         # 用户持仓
-    "159326": "电网设备ETF华夏",     # 用户指定
-    "159227": "航空航天ETF华夏",     # 用户指定（之前交易过）
+    "518850": "黄金ETF华夏",         # 用户持仓（已清仓）
+    "159326": "电网设备ETF华夏",     # 用户持仓
+    "159227": "航空航天ETF华夏",     # 用户指定
     "515070": "人工智能ETF华夏",     # 用户指定
-    "159183": "新能源车ETF招商",     # 用户持仓
-    "159659": "纳斯达克100ETF招商",  # 用户指定
+    "159183": "新能源车ETF招商",     # 用户已清仓
+    "159659": "纳斯达克100ETF招商",  # 用户持仓
+    "510300": "沪深300ETF华泰柏瑞",  # 用户持仓
 
     # === 宽基指数 ===
-    "510300": "沪深300ETF", "510500": "中证500ETF", "159915": "创业板ETF",
+    "510500": "中证500ETF", "159915": "创业板ETF",
     "588000": "科创50ETF", "512100": "中证1000ETF",
+    "588050": "科创50ETF易方达", "159845": "中证1000ETF华夏",
 
-    # === 行业/主题 ===
-    "512880": "证券ETF", "159995": "芯片ETF华夏", "588200": "科创芯片ETF",
+    # === 行业/主题 — 科技 ===
+    "159995": "芯片ETF华夏", "588200": "科创芯片ETF",
     "159819": "AIETF易方达", "159516": "半导体设备ETF",
+    "159732": "消费电子ETF", "515880": "通信ETF",
+    "560800": "数字经济ETF",
+
+    # === 行业/主题 — 金融周期 ===
+    "512880": "证券ETF", "512800": "银行ETF",
+    "512400": "有色ETF", "516780": "稀土ETF",
+    "515220": "煤炭ETF", "516950": "基建ETF",
+    "512200": "房地产ETF",
+
+    # === 行业/主题 — 消费医药 ===
+    "512170": "医疗ETF", "159992": "创新药ETF",
+    "159647": "中药ETF", "512690": "酒ETF",
+    "159928": "消费ETF", "159996": "家电ETF",
+    "159865": "养殖ETF",
+
+    # === 行业/主题 — 制造能源 ===
     "512670": "国防ETF", "512810": "军工ETF",
-    "512400": "有色ETF", "512170": "医疗ETF", "159992": "创新药ETF",
-    "512890": "红利低波ETF", "159928": "消费ETF", "159865": "养殖ETF",
-    "159611": "电力ETF", "512200": "房地产ETF", "159869": "游戏ETF",
+    "515790": "光伏ETF", "159857": "光伏ETF广发",
+    "516160": "新能源ETF", "159611": "电力ETF",
     "159870": "化工ETF", "516020": "化工ETF华宝",
+    "159869": "游戏ETF", "159790": "碳中和ETF",
+
+    # === 策略/风格 ===
+    "512890": "红利低波ETF", "510880": "红利ETF",
+
+    # === 跨境/QDII ===
     "513100": "纳指ETF国泰", "513500": "标普500ETF",
+    "513180": "恒生科技ETF", "513130": "恒生互联网ETF",
+    "513050": "中概互联ETF", "513520": "日经ETF",
 
     # === 补充 ===
     "159320": "电网设备ETF广发", "560390": "电网设备ETF易方达",
@@ -587,19 +638,17 @@ def _simple_get(url, timeout=10):
     except Exception:
         return None
 
-def _code_to_sina_prefix(code):
-    """ETF/股票代码 -> 新浪行情前缀 (shXXXXXX / szXXXXXX)"""
-    if code.startswith(("5", "6", "58")):
-        return f"sh{code}"
-    else:
-        return f"sz{code}"
+def _code_to_market_prefix(code):
+    """ETF/股票代码 -> 行情前缀 (shXXXXXX / szXXXXXX)
 
-def _code_to_tencent_prefix(code):
-    """ETF/股票代码 -> 腾讯行情前缀 (shXXXXXX / szXXXXXX)"""
-    if code.startswith(("5", "6", "58")):
-        return f"sh{code}"
-    else:
-        return f"sz{code}"
+    5xxxxx/6xxxxx/58xxxx → 沪市(sh)，其余 → 深市(sz)
+    适用于新浪、腾讯等API。
+    """
+    return f"sh{code}" if code.startswith(("5", "6", "58")) else f"sz{code}"
+
+# 向后兼容别名（新浪和腾讯用同样的前缀规则）
+_code_to_sina_prefix = _code_to_market_prefix
+_code_to_tencent_prefix = _code_to_market_prefix
 
 def _fetch_tencent_kline(code, days=250):
     """从腾讯API获取日K线（备用）"""
@@ -733,12 +782,9 @@ def fetch_etf_kline(code, days=250):
     if data and data.get("data"):
         result = []
         for k in data["data"]["klines"]:
-            parts = k.split(",")
-            result.append({
-                "date": parts[0], "open": float(parts[1]), "close": float(parts[2]),
-                "high": float(parts[3]), "low": float(parts[4]), "volume": float(parts[5]),
-                "amount": float(parts[6])
-            })
+            parsed = _parse_kline(k)
+            if parsed:
+                result.append(parsed)
         return result
     # 备用: 腾讯API
     return _fetch_tencent_kline(code, days)
@@ -756,12 +802,9 @@ def fetch_stock_kline(code, days=250):
     if data and data.get("data"):
         result = []
         for k in data["data"]["klines"]:
-            parts = k.split(",")
-            result.append({
-                "date": parts[0], "open": float(parts[1]), "close": float(parts[2]),
-                "high": float(parts[3]), "low": float(parts[4]), "volume": float(parts[5]),
-                "amount": float(parts[6])
-            })
+            parsed = _parse_kline(k)
+            if parsed:
+                result.append(parsed)
         return result
     # 备用: 腾讯API
     return _fetch_tencent_kline(code, days)
@@ -803,19 +846,27 @@ def fetch_etf_realtime(code):
     data = fetch_json(url)
     if data and data.get("data"):
         d = data["data"]
-        # 解析IOPV（实时估值，f169；部分QDII ETF返回无效值如-61）
+        # 东方财富API：ETF价格统一以厘(1/1000元)返回，始终/1000
+        # 判断依据：f60(昨收) > 50 → 厘单位（A股ETF最高不超过10元/份，50是安全阈值）
+        _raw_prev = d.get("f60", 0)
+        _scale = 1000.0 if abs(_raw_prev) > 50 else 1.0
+
+        # IOPV（实时估值，f169；部分QDII ETF返回无效值如-61）
         raw_iopv = d.get("f169", 0)
-        iopv = None
-        if raw_iopv and raw_iopv > 0:
-            iopv = raw_iopv / 1000 if raw_iopv > 100 else raw_iopv
+        iopv = raw_iopv / _scale if (raw_iopv and raw_iopv > 0) else None
+
+        # 涨跌幅（f170）：>1 → 基点单位(×100)，≤1 → 已为百分比
+        raw_chg = d.get("f170", 0)
+        change_pct = raw_chg / 100.0 if abs(raw_chg) > 1 else raw_chg
+
         return {
-            "price": d.get("f43", 0)/1000 if d.get("f43", 0) > 100 else d.get("f43", 0),
-            "high": d.get("f44", 0)/1000 if d.get("f44", 0) > 100 else d.get("f44", 0),
-            "low": d.get("f45", 0)/1000 if d.get("f45", 0) > 100 else d.get("f45", 0),
-            "open": d.get("f46", 0)/1000 if d.get("f46", 0) > 100 else d.get("f46", 0),
+            "price": d.get("f43", 0) / _scale,
+            "high": d.get("f44", 0) / _scale,
+            "low": d.get("f45", 0) / _scale,
+            "open": d.get("f46", 0) / _scale,
             "volume": d.get("f47", 0), "amount": d.get("f48", 0),
-            "change_pct": d.get("f170", 0)/100 if abs(d.get("f170", 0)) > 1 else d.get("f170", 0),
-            "prev_close": d.get("f60", 0)/1000 if d.get("f60", 0) > 100 else d.get("f60", 0),
+            "change_pct": change_pct,
+            "prev_close": d.get("f60", 0) / _scale,
             "name": d.get("f58", ""), "code": d.get("f57", ""),
             "iopv": iopv  # 实时估值（QDII ETF可能为None）
         }
@@ -829,9 +880,14 @@ def fetch_etf_realtime(code):
 # QDII ETF列表（跨境ETF，存在溢价风险）
 # 以15、16、51、52、56开头且跟踪海外指数的ETF
 QDII_ETF_CODES = {
-    "159659", "513100", "513500",  # 纳斯达克ETF招商、纳指ETF国泰、标普500ETF
-    "159660", "513050", "513060",  # 纳指相关
-    "513520", "513880", "513220",  # 日经、恒生科技等
+    # 纳斯达克/标普
+    "159659", "513100", "513500",
+    # 恒生/中概
+    "513180", "513130", "513050",
+    # 日经
+    "513520",
+    # 其他跨境（历史）
+    "159660", "513060", "513880", "513220",
 }
 
 def fetch_etf_fund_nav(code):

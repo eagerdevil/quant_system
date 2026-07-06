@@ -31,7 +31,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_engine import fetch_etf_kline, KEY_ETFS, USER_WATCHLIST
 from quant_engine import (
     compute_indicators, score_factors,
-    FACTOR_NAMES, FACTOR_MAX, DEFAULT_WEIGHTS
+    FACTOR_NAMES, FACTOR_MAX, DEFAULT_WEIGHTS,
+    spearman_ic  # v7.3: 统一实现，替代本文件重复代码
 )
 
 TODAY = datetime.now().strftime("%Y%m%d")
@@ -43,80 +44,13 @@ EVOLUTION_LOG = os.path.join(SCRIPT_DIR, "evolution_log.json")
 QDII_ETFS = {"513100", "159659", "513500", "159941", "513050", "159866", "513300"}
 
 # ============================================================
+# ============================================================
 # 统计工具
 # ============================================================
-def spearman_ic(x, y):
-    """Spearman 秩相关系数"""
-    n = len(x)
-    if n < 10: return 0.0
-    def rank_values(vals):
-        indexed = sorted(enumerate(vals), key=lambda p: p[1])
-        ranks = [0.0] * n
-        i = 0
-        while i < n:
-            j = i
-            while j + 1 < n and indexed[j + 1][1] == indexed[i][1]:
-                j += 1
-            avg_rank = (i + j) / 2.0 + 1
-            for k in range(i, j + 1):
-                ranks[indexed[k][0]] = avg_rank
-            i = j + 1
-        return ranks
-    x_ranks = rank_values(x)
-    y_ranks = rank_values(y)
-    mean_xr = sum(x_ranks) / n
-    mean_yr = sum(y_ranks) / n
-    cov = sum((x_ranks[i] - mean_xr) * (y_ranks[i] - mean_yr) for i in range(n))
-    std_x = math.sqrt(sum((r - mean_xr) ** 2 for r in x_ranks))
-    std_y = math.sqrt(sum((r - mean_yr) ** 2 for r in y_ranks))
-    if std_x < 1e-10 or std_y < 1e-10: return 0.0
-    return cov / (std_x * std_y)
+# spearman_ic 统一实现在 quant_engine.py，此处通过 import 使用
 
 
-def time_weighted_ic(weights, precomputed):
-    """
-    [legacy] v7.1起由evaluate_params()替代
-    近期数据点权重更高
-    → 系统自动适应市场变化
-    """
-    scores = []
-    rets = []
-    time_weights = []
-
-    n = len(precomputed)
-    half_life = 60  # 交易日
-    decay = math.log(2) / half_life
-
-    for i, pt in enumerate(precomputed):
-        ws = sum(pt['factors'][k] * weights.get(k, 1.0) for k in FACTOR_NAMES)
-        scores.append(ws)
-        rets.append(pt['forward_return'])
-        # 越新的数据权重越高（i越大 = 越近期）
-        time_weights.append(math.exp(-decay * (n - 1 - i)))
-
-    if not scores: return 0.0
-
-    # 加权Spearman: 用time_weights作为采样权重
-    total_w = sum(time_weights)
-    if total_w < 1e-10: return spearman_ic(scores, rets)
-
-    # 重采样：权重高的数据点被多次计入
-    # 使用加权后排序
-    n_eff = min(n, 500)
-    cumsum = 0
-    step = total_w / n_eff
-    sampled_scores = []
-    sampled_rets = []
-    j = 0
-    for i in range(n_eff):
-        target = (i + 0.5) * step
-        while j < n - 1 and cumsum + time_weights[j] < target:
-            cumsum += time_weights[j]
-            j += 1
-        sampled_scores.append(scores[min(j, n-1)])
-        sampled_rets.append(rets[min(j, n-1)])
-
-    return spearman_ic(sampled_scores, sampled_rets)
+# time_weighted_ic 已删除 (v7.1起由 evaluate_params() 替代，v7.3清理)
 
 
 # ============================================================
@@ -140,7 +74,7 @@ def random_params():
         "grade_thresholds": _random_thresholds(),
         "premium_steepness": round(random.uniform(0.04, 0.10), 3),
         "premium_threshold": round(random.uniform(1.0, 3.5), 1),
-        "adx_trend_threshold": random.randint(18, 28)
+        "adx_trend_threshold": round(random.uniform(18.0, 28.0), 1)
     }
 
 
@@ -238,7 +172,6 @@ def evaluate_params(params, precomputed):
     """
     v7.1: 完整参数评估函数
     使用全部可IC评估的参数（因子权重+溢价参数）计算IC
-    替代旧版time_weighted_ic(weights, precomputed)的单维度评估
     """
     scores = compute_scores_with_params(params, precomputed)
     rets = [pt['forward_return'] for pt in precomputed]
@@ -456,7 +389,7 @@ def main():
     logger.info(f"  上次优化IC: {old_ic}")
 
     # ================================================================
-    # Phase 1: 采集数据
+    # Phase 1: 采集数据 + 训练/测试集切分（v7.2: 样本外验证）
     # ================================================================
     logger.info(f"\n  [Phase 1/4] 采集历史数据...")
     all_etfs = list(dict.fromkeys(list(KEY_ETFS.keys()) + USER_WATCHLIST))
@@ -469,10 +402,25 @@ def main():
         logger.info(f"\n  [ERROR] 回测数据点不足({len(precomputed)}个)。退出。")
         sys.exit(1)
 
+    # v7.2: 按时间切分训练/测试集（时序数据不可随机打乱）
+    # 训练集: 前70%时间 → 优化参数
+    # 测试集: 后30%时间 → 验证过拟合
+    split_idx = int(len(precomputed) * 0.70)
+    train_data = precomputed[:split_idx]
+    test_data = precomputed[split_idx:]
+    train_dates = (train_data[0].get('date', '?'), train_data[-1].get('date', '?'))
+    test_dates = (test_data[0].get('date', '?'), test_data[-1].get('date', '?'))
+    logger.info(f"  [样本外验证] 训练集: {len(train_data)}点 ({train_dates[0]}~{train_dates[1]})")
+    logger.info(f"  [样本外验证] 测试集: {len(test_data)}点 ({test_dates[0]}~{test_dates[1]})")
+    if len(test_data) < 50:
+        logger.info(f"\n  [WARNING] 测试集数据点不足({len(test_data)}个)，回退全量优化")
+        train_data = precomputed
+        test_data = []
+
     # ================================================================
-    # Phase 2: 基线测试
+    # Phase 2: 基线测试（在训练集上计算IC）
     # ================================================================
-    logger.info(f"\n  [Phase 2/4] 基线测试...")
+    logger.info(f"\n  [Phase 2/4] 基线测试 (训练集)...")
 
     baseline_params = {
         "factor_weights": dict(DEFAULT_WEIGHTS),
@@ -481,81 +429,107 @@ def main():
         "premium_threshold": 2.5,
         "adx_trend_threshold": 22
     }
-    baseline_ic = evaluate_params(baseline_params, precomputed)
-    current_ic = evaluate_params(current_params, precomputed)
-    logger.info(f"  等权基线 IC: {baseline_ic:.5f}")
-    logger.info(f"  当前权重 IC: {current_ic:.5f}")
+    baseline_ic_train = evaluate_params(baseline_params, train_data)
+    current_ic_train = evaluate_params(current_params, train_data)
+    logger.info(f"  等权基线 IC (训练): {baseline_ic_train:.5f}")
+    logger.info(f"  当前权重 IC (训练): {current_ic_train:.5f}")
     logger.info(f"  (使用时间加权: 近期数据权重更高，半衰期=60交易日)")
 
     # ================================================================
-    # Phase 3: 随机搜索（v7.1: evaluate_params评估因子+溢价参数）
+    # Phase 3: 随机搜索（仅在训练集上优化）
     # ================================================================
-    logger.info(f"\n  [Phase 3/4] 随机搜索 ({n_random}次迭代)...")
+    logger.info(f"\n  [Phase 3/4] 随机搜索 ({n_random}次迭代, 仅在训练集)...")
 
     best_params = dict(current_params)
-    best_ic = current_ic
+    best_ic_train = current_ic_train
 
     random.seed(int(TODAY) % 10000)
 
     milestone = max(10, n_random // 5)
     for i in range(n_random):
         params = random_params()
-        ic = evaluate_params(params, precomputed)
-        if ic > best_ic:
-            best_ic = ic
+        ic = evaluate_params(params, train_data)
+        if ic > best_ic_train:
+            best_ic_train = ic
             best_params = params
         if (i + 1) % milestone == 0:
-            logger.info(f"    [{i+1}/{n_random}] 最佳IC: {best_ic:.5f}")
+            logger.info(f"    [{i+1}/{n_random}] 最佳IC(训练): {best_ic_train:.5f}")
 
-    logger.info(f"  随机搜索完成，最佳IC: {best_ic:.5f}")
+    logger.info(f"  随机搜索完成，最佳IC(训练): {best_ic_train:.5f}")
 
     # ================================================================
-    # Phase 4: 局部精化
+    # Phase 4: 局部精化（仅在训练集上）
     # ================================================================
-    logger.info(f"\n  [Phase 4/4] 局部精化 ({n_local}次扰动)...")
+    logger.info(f"\n  [Phase 4/4] 局部精化 ({n_local}次扰动, 仅在训练集)...")
 
-    refine_best_ic = best_ic
+    refine_best_ic_train = best_ic_train
     refine_best_params = best_params
 
     for i in range(n_local):
         for scale in [0.08, 0.20]:
             p = perturb_params(best_params, scale=scale)
-            ic = evaluate_params(p, precomputed)
-            if ic > refine_best_ic:
-                refine_best_ic = ic
+            ic = evaluate_params(p, train_data)
+            if ic > refine_best_ic_train:
+                refine_best_ic_train = ic
                 refine_best_params = p
 
-    logger.info(f"  精化完成，最终IC: {refine_best_ic:.5f}")
+    logger.info(f"  精化完成，最佳IC(训练): {refine_best_ic_train:.5f}")
 
     # ================================================================
-    # 决策：是否更新
+    # v7.2: 样本外验证 — 在测试集上评估最优参数
     # ================================================================
-    ic_improvement = refine_best_ic - current_ic
+    if test_data:
+        refine_best_ic_test = evaluate_params(refine_best_params, test_data)
+        current_ic_test = evaluate_params(current_params, test_data)
+        baseline_ic_test = evaluate_params(baseline_params, test_data)
+        logger.info(f"\n  [样本外验证] 测试集IC:")
+        logger.info(f"  等权基线 IC (测试): {baseline_ic_test:.5f}")
+        logger.info(f"  当前参数 IC (测试): {current_ic_test:.5f}")
+        logger.info(f"  最优参数 IC (测试): {refine_best_ic_test:.5f}")
+    else:
+        refine_best_ic_test = refine_best_ic_train
+        current_ic_test = current_ic_train
+        baseline_ic_test = baseline_ic_train
+        logger.info(f"\n  [样本外验证] 跳过（测试集不足50点）")
+
+    # ================================================================
+    # 决策：是否更新（v7.2: 综合训练+测试IC判断）
+    # ================================================================
+    # 使用训练集IC作为主决策指标，测试集IC作为过拟合检测
+    ic_improvement_train = refine_best_ic_train - current_ic_train
+    ic_improvement_test = refine_best_ic_test - current_ic_test
 
     logger.info(f"\n  {'─' * 50}")
-    logger.info(f"  [优化结果]")
-    logger.info(f"  基线IC (等权):    {baseline_ic:.5f}")
-    logger.info(f"  当前参数IC:       {current_ic:.5f}")
-    logger.info(f"  最优参数IC:       {refine_best_ic:.5f}")
-    logger.info(f"  IC提升:           {ic_improvement:+.5f}")
+    logger.info(f"  [优化结果] (v7.2 样本外验证)")
+    logger.info(f"  基线IC:    训练={baseline_ic_train:.5f}  测试={baseline_ic_test:.5f}")
+    logger.info(f"  当前参数IC: 训练={current_ic_train:.5f}  测试={current_ic_test:.5f}")
+    logger.info(f"  最优参数IC: 训练={refine_best_ic_train:.5f}  测试={refine_best_ic_test:.5f}")
+    logger.info(f"  IC提升:    训练={ic_improvement_train:+.5f}  测试={ic_improvement_test:+.5f}")
 
     should_update = False
     final_params = dict(current_params)
-    final_ic = current_ic
+    final_ic = current_ic_train
     reason = ""
 
-    if refine_best_ic > current_ic + 0.002:
+    # v7.2: 过拟合检测
+    overfitting = (refine_best_ic_train > current_ic_train + 0.003
+                   and refine_best_ic_test < current_ic_test - 0.002)
+
+    if overfitting:
+        reason = (f"⚠️ 过拟合警告! 训练IC大幅提升({ic_improvement_train:+.5f})"
+                  f"但测试IC下降({ic_improvement_test:+.5f})，拒绝更新")
+    elif refine_best_ic_train > current_ic_train + 0.003:
         should_update = True
         final_params = refine_best_params
-        final_ic = refine_best_ic
-        reason = f"IC显著提升 {ic_improvement:+.5f}"
-    elif refine_best_ic < -0.01 and current_ic < -0.01:
+        final_ic = refine_best_ic_train
+        reason = (f"IC显著提升 训练{ic_improvement_train:+.5f} 测试{ic_improvement_test:+.5f} ✓")
+    elif refine_best_ic_train < -0.01 and current_ic_train < -0.01:
         should_update = True
         final_params = baseline_params
-        final_ic = baseline_ic
+        final_ic = baseline_ic_train
         reason = "IC持续为负，回退等权基线"
-    elif abs(ic_improvement) <= 0.002:
-        reason = f"IC变化不显著({ic_improvement:+.5f})，保持现有参数"
+    elif abs(ic_improvement_train) <= 0.003:
+        reason = f"IC变化不显著(训练{ic_improvement_train:+.5f})，保持现有参数"
     else:
         reason = "现有参数已是最优"
 
@@ -593,16 +567,25 @@ def main():
     # ================================================================
     # 保存 + 进化日志
     # ================================================================
+    # v7.2: OOS (out-of-sample) IC fields added
+    oos_available = len(test_data) >= 50
     evolution_record = {
         "date": TODAY,
         "timestamp": datetime.now().isoformat(),
         "version": old_config.get("meta", {}).get("version", 0) + 1,
-        "baseline_ic": round(baseline_ic, 5),
-        "current_ic": round(current_ic, 5),
-        "best_ic": round(refine_best_ic, 5),
-        "ic_change": round(ic_improvement, 5),
+        "baseline_ic": round(baseline_ic_train, 5),
+        "current_ic": round(current_ic_train, 5),
+        "best_ic": round(refine_best_ic_train, 5),
+        "baseline_ic_oos": round(baseline_ic_test, 5) if oos_available else None,
+        "current_ic_oos": round(current_ic_test, 5) if oos_available else None,
+        "best_ic_oos": round(refine_best_ic_test, 5) if oos_available else None,
+        "ic_change": round(ic_improvement_train, 5),
+        "ic_change_oos": round(ic_improvement_test, 5) if oos_available else None,
+        "overfitting_detected": overfitting,
         "updated": should_update,
         "reason": reason,
+        "train_points": len(train_data),
+        "test_points": len(test_data),
         "param_changes": {
             "weights_changed": sum(
                 1 for k in FACTOR_NAMES
@@ -645,14 +628,20 @@ def main():
         logger.info(f"\n  [进化趋势] 最近{min(5, len(runs))}次优化IC趋势: {ic_trend}")
         logger.info(f"  累计优化次数: {log['summary']['total_optimizations']}")
 
-    # 输出JSON结果
+    # 输出JSON结果 (v7.2: 含样本外指标)
     result = {
         "date": TODAY,
-        "baseline_ic": round(baseline_ic, 5),
-        "current_ic": round(current_ic, 5),
-        "best_ic": round(refine_best_ic, 5),
+        "baseline_ic_train": round(baseline_ic_train, 5),
+        "current_ic_train": round(current_ic_train, 5),
+        "best_ic_train": round(refine_best_ic_train, 5),
+        "baseline_ic_test": round(baseline_ic_test, 5) if oos_available else None,
+        "current_ic_test": round(current_ic_test, 5) if oos_available else None,
+        "best_ic_test": round(refine_best_ic_test, 5) if oos_available else None,
+        "overfitting": overfitting,
         "updated": should_update,
         "reason": reason,
+        "train_points": len(train_data),
+        "test_points": len(test_data),
         "etf_count": stats['etf_count'],
         "point_count": len(precomputed),
         "evolution_log_entries": len(runs)

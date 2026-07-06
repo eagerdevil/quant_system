@@ -3,6 +3,7 @@
     "version": 2,
     "last_optimized": "20260623",
     "ic_score": 0.05272,
+    "optimization_reason": "",
     "description": "因子权重配置文件 — 由optimizer.py每月1号自动更新"
   },
   "factor_weights": {
@@ -28,5 +29,9 @@
     "B_买入": 65,
     "C_观察": 55,
     "D_谨慎": 42
-  }
+  },
+  "premium_steepness": 0.07,
+  "premium_threshold": 2.5,
+  "adx_trend_threshold": 22.0,
+  "factor_health": {}
 }

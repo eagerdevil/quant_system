@@ -4,7 +4,6 @@
 ====================
 将回测结果转换为交互式HTML仪表盘。
 
-logger = logging.getLogger(__name__)
 数据源: backtest_engine.py 输出的 JSON
 输出: 单文件HTML, 使用 Chart.js CDN (零依赖)
 
@@ -13,7 +12,9 @@ logger = logging.getLogger(__name__)
   python dashboard.py --input backtest_xxx.json
   python dashboard.py --output quant_dashboard.html
 """
-import json, sys, os, io
+import json, sys, os, io, logging
+
+logger = logging.getLogger(__name__)
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')

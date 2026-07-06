@@ -5,7 +5,7 @@
 整合: 数据采集 → 因子计算 → 择时判断 → 决策生成 → 输出报告
 用法: python daily_runner.py [--portfolio portfolio.json]
 """
-import json, sys, os, io, urllib.request, logging, traceback
+import json, sys, os, io, shutil, urllib.request, logging, traceback
 from datetime import datetime
 
 # Fix Windows encoding (only when running as script)
@@ -38,8 +38,8 @@ for old_log in _glob.glob(os.path.join(LOG_DIR, "daily_*.log")):
         from datetime import datetime as _dt
         if (_dt.now() - _dt.strptime(log_date, "%Y%m%d")).days > 7:
             os.remove(old_log)
-    except:
-        pass
+    except (ValueError, KeyError, OSError):
+        pass  # 日志文件名格式异常或删除失败，跳过
 
 # 确保能找到模块
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -58,10 +58,13 @@ from quant_engine import (
     compute_atr_stop_loss, MARKET_REGIME,
     _apply_premium_penalty,
     compute_industry_rotation_score, get_etf_industry_momentum,
+    classify_market_regime,
+    compute_factor_ic_ranking, format_factor_ic_section,
     OPTIMIZED_PARAMS
 )
-from report_mailer import generate_html_report, send_email, WeeklyReview
-from risk_engine import portfolio_risk_report, format_risk_section
+from report_mailer import generate_html_report, send_email, MonthlyReview
+from risk_engine import (portfolio_risk_report, format_risk_section,
+                         stress_test_portfolio, format_stress_test_section)
 from performance_tracker import generate_performance_summary
 
 TODAY = datetime.now().strftime("%Y%m%d")
@@ -168,8 +171,105 @@ def compute_portfolio_summary(portfolio, scores):
         "cash_ratio": round(available_cash / total_assets * 100, 1) if total_assets > 0 else 0,
     }
 
-def analyze_watchlist_etf(s, timing, portfolio):
-    """对单只关注ETF生成买入/观望/回避建议"""
+# ============================================================
+# v7.3: 行业暴露分析
+# ============================================================
+# 导入 ETF→行业映射
+from quant_engine import ETF_INDUSTRY_MAP as _INDUSTRY_MAP
+
+def compute_industry_exposure(portfolio, port_summary):
+    """
+    将持仓映射到申万一级行业，聚合行业权重。
+
+    返回: {
+        "industries": [{name, weight_pct, bar, etfs}],  # 按权重大→小排序
+        "cash_pct": float,
+        "max_single_industry": {name, weight_pct} | None,
+        "diversification_note": str
+    }
+    """
+    industry_weights = {}  # {行业名: {"weight":累计%, "etfs": [etf名称]}}
+    total_assets = port_summary.get("total_assets", 1)
+
+    for h in port_summary.get("holdings", []):
+        code = h["code"]
+        weight = h.get("weight", 0)
+        name = h.get("name", code)
+        industries = _INDUSTRY_MAP.get(code, ["综合"])
+
+        weight_per_ind = weight / len(industries) if industries else weight
+        for ind in industries:
+            if ind not in industry_weights:
+                industry_weights[ind] = {"weight": 0, "etfs": []}
+            industry_weights[ind]["weight"] += weight_per_ind
+            industry_weights[ind]["etfs"].append(name)
+
+    # 排序
+    sorted_inds = sorted(industry_weights.items(), key=lambda x: x[1]["weight"], reverse=True)
+
+    result = []
+    for ind_name, data in sorted_inds:
+        w = data["weight"]
+        bar_len = int(w / 5)  # 每5%一个方块
+        bar = "█" * bar_len
+        result.append({
+            "name": ind_name,
+            "weight_pct": round(w, 1),
+            "bar": bar,
+            "etfs": list(set(data["etfs"]))  # 去重
+        })
+
+    cash_pct = port_summary.get("cash_ratio", 0)
+    max_ind = result[0] if result else None
+
+    # 集中度评估
+    if max_ind and max_ind["weight_pct"] > 40:
+        note = f"⚠️ {max_ind['name']}行业占比{max_ind['weight_pct']:.0f}%，过于集中"
+    elif max_ind and max_ind["weight_pct"] > 25:
+        note = f"⚡ {max_ind['name']}行业占比{max_ind['weight_pct']:.0f}%，注意集中度"
+    elif len(result) >= 3:
+        note = "✅ 行业分布较分散"
+    else:
+        note = "行业覆盖偏少，可通过增持不同行业ETF改善"
+
+    return {
+        "industries": result,
+        "cash_pct": round(cash_pct, 1),
+        "max_single_industry": max_ind,
+        "diversification_note": note
+    }
+
+
+def format_industry_exposure_section(exposure):
+    """格式化行业暴露为文本板块"""
+    lines = []
+    lines.append(f"\n  {'─'*60}")
+    lines.append(f"  [行业暴露热力图] v7.3")
+    lines.append(f"  {'─'*60}")
+    lines.append(f"  {'行业':<12s} {'权重':>6s}  {'分布'}")
+    lines.append(f"  {'─'*12} {'─'*6}  {'─'*40}")
+
+    for ind in exposure["industries"]:
+        etf_list = ", ".join(ind["etfs"][:3])
+        if len(ind["etfs"]) > 3:
+            etf_list += f" +{len(ind['etfs'])-3}"
+        lines.append(f"  {ind['name']:<12s} {ind['weight_pct']:>5.1f}%  {ind['bar']} ({etf_list})")
+
+    # 现金占比
+    cash_pct = exposure["cash_pct"]
+    cash_bar = "░" * int(cash_pct / 5)
+    lines.append(f"  {'现金':<12s} {cash_pct:>5.1f}%  {cash_bar}")
+
+    lines.append(f"\n  {exposure['diversification_note']}")
+    return "\n".join(lines)
+
+
+def analyze_watchlist_etf(s, timing, portfolio, kline_data=None):
+    """对单只关注ETF生成买入/观望/回避建议
+
+    v7.2: kline_data 可选，传入后使用ATR动态止损替代固定-5%/-8%
+           kline_data = {"closes": [...], "highs": [...], "lows": [...]}
+    """
     code = s["code"]
     name = s["name"]
     score = s["score"]
@@ -247,8 +347,23 @@ def analyze_watchlist_etf(s, timing, portfolio):
             holding_advice = f"浮盈{pnl:.1f}%，继续持有观察"
 
     buy_price = s["price"]
-    stop_loss = round(buy_price * 0.95, 3)
-    take_profit = round(buy_price * 1.08, 3)
+    # v7.2: ATR动态止损 — 用kline数据计算（有数据时），否则回退固定值
+    if kline_data and kline_data.get("closes") and len(kline_data["closes"]) >= 15:
+        atr_stop = compute_atr_stop_loss(
+            kline_data["closes"], kline_data.get("highs", kline_data["closes"]),
+            kline_data.get("lows", kline_data["closes"]), buy_price,
+            atr_period=14, atr_mult=2.5
+        )
+        stop_loss = atr_stop["stop_price"]
+        stop_pct = atr_stop["stop_pct"]
+        stop_method = atr_stop["method"]
+        # 止盈与止损对称：ATR倍数一致但方向相反
+        take_profit = round(buy_price * (1 + abs(stop_pct) / 100 * 1.5), 3)
+    else:
+        stop_loss = round(buy_price * 0.95, 3)
+        stop_pct = -5.0
+        stop_method = "固定止损(无K线)"
+        take_profit = round(buy_price * 1.08, 3)
 
     return {
         "code": code, "name": name, "action": action,
@@ -256,6 +371,7 @@ def analyze_watchlist_etf(s, timing, portfolio):
         "reasons_buy": reasons_buy, "reasons_avoid": reasons_avoid,
         "is_holding": is_holding, "holding_advice": holding_advice,
         "stop_loss": stop_loss, "take_profit": take_profit,
+        "stop_pct": stop_pct, "stop_method": stop_method,
         "rsi": ind["rsi"], "consecutive_up": ind["consecutive_up"],
         "r5d": ret["r5d"], "r20d": ret["r20d"]
     }
@@ -371,7 +487,17 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
             lines.append(f"  {pos['name']}({code}): 数据缺失，无法评分")
             continue
 
-        analysis = analyze_watchlist_etf(score_data, timing, portfolio)
+        # v7.2: 提取K线数据用于ATR动态止损
+        kd = None
+        if all_data:
+            etf_info = all_data.get("etfs", {}).get(code, {})
+            kline = etf_info.get("kline", [])
+            if len(kline) >= 15:
+                kd = {"closes": [k["close"] for k in kline],
+                      "highs": [k["high"] for k in kline],
+                      "lows": [k["low"] for k in kline]}
+
+        analysis = analyze_watchlist_etf(score_data, timing, portfolio, kline_data=kd)
         action_label = {"BUY":"[加仓]","SELL":"[卖出]","REDUCE":"[减仓]","WATCH":"[持有观察]","HOLD":"[持有]","AVOID":"[回避]"}.get(analysis["action"], "[?]")
 
         lines.append(f"  {action_label} {pos['name']}({code}) | 评分{analysis['score']}分 | 现价{analysis['price']:.3f}")
@@ -382,7 +508,9 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
             lines.append(f"    ⚡ 溢价{p_info['premium_pct']:.1f}% → 技术分{tech_score}扣至{analysis['score']}分")
         elif p_info.get("premium_pct") is not None and p_info["premium_pct"] < -1:
             lines.append(f"    💚 折价{abs(p_info['premium_pct']):.1f}%，低于净值买入")
-        lines.append(f"    止损线:{analysis['stop_loss']:.3f}(-5%) | 止盈线:{analysis['take_profit']:.3f}(+8%)")
+        stop_pct_h = analysis.get("stop_pct", -5)
+        stop_method_h = analysis.get("stop_method", "固定")
+        lines.append(f"    止损线:{analysis['stop_loss']:.3f}({stop_pct_h:+.1f}% {stop_method_h}) | 止盈线:{analysis['take_profit']:.3f}")
         if analysis.get("holding_advice"):
             lines.append(f"    {analysis['holding_advice']}")
         for r in analysis.get("reasons_avoid", []):
@@ -394,6 +522,20 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
         risk_report = portfolio_risk_report(portfolio, etf_data_map, scores)
         lines.append(format_risk_section(risk_report))
 
+    # ===== 行业暴露热力图（v7.3 新增）=====
+    if port_summary and port_summary.get("holdings"):
+        exposure = compute_industry_exposure(portfolio, port_summary)
+        lines.append(format_industry_exposure_section(exposure))
+
+        # v7.3: 压力测试（依赖行业暴露数据）
+        stress = stress_test_portfolio(portfolio, port_summary)
+        lines.append(format_stress_test_section(stress))
+
+    # ===== 因子IC跟踪（v7.3 新增）=====
+    if etf_data_map:
+        ic_results = compute_factor_ic_ranking(etf_data_map)
+        lines.append(format_factor_ic_section(ic_results))
+
     # ===== 关注ETF逐只分析 =====
     lines.append(f"\n  {'─'*60}")
     lines.append(f"  [五] 关注ETF逐只分析")
@@ -401,7 +543,17 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
 
     watchlist = [s for s in scores if s.get("is_watchlist") and s["code"] not in portfolio]
     for s in watchlist:
-        analysis = analyze_watchlist_etf(s, timing, portfolio)
+        # v7.2: 提取K线数据用于ATR动态止损
+        kd_w = None
+        if all_data:
+            etf_info = all_data.get("etfs", {}).get(s["code"], {})
+            kline_w = etf_info.get("kline", [])
+            if len(kline_w) >= 15:
+                kd_w = {"closes": [k["close"] for k in kline_w],
+                        "highs": [k["high"] for k in kline_w],
+                        "lows": [k["low"] for k in kline_w]}
+
+        analysis = analyze_watchlist_etf(s, timing, portfolio, kline_data=kd_w)
         action_label = {"BUY":"[可买入]","SELL":"[卖出]","REDUCE":"[减仓]","WATCH":"[观望]","HOLD":"[持有]","AVOID":"[回避]"}.get(analysis["action"], "[?]")
 
         lines.append(f"  {action_label} {s['name']}({s['code']}) | 评分{s['score']}分 | 现价{s['price']:.4f}")
@@ -411,7 +563,9 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
         for r in analysis.get("reasons_avoid", []):
             lines.append(f"    [-] {r}")
         if analysis["action"] == "BUY":
-            lines.append(f"    建议买入价:{analysis['price']:.4f} | 止损:{analysis['stop_loss']:.4f}(-5%) | 止盈:{analysis['take_profit']:.4f}(+8%)")
+            stop_pct = analysis.get("stop_pct", -5)
+            stop_method = analysis.get("stop_method", "固定")
+            lines.append(f"    建议买入价:{analysis['price']:.4f} | 止损:{analysis['stop_loss']:.4f}({stop_pct:+.1f}% {stop_method}) | 止盈:{analysis['take_profit']:.4f}")
 
     # ===== 个股评分 =====
     if stock_scores:
@@ -419,7 +573,17 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
         lines.append(f"  [六] 个股评分")
         lines.append(f"  {'─'*60}")
         for s in stock_scores:
-            analysis = analyze_watchlist_etf(s, timing, portfolio)
+            # v7.2: 提取K线用于ATR止损（个股）
+            kd_s = None
+            if all_data:
+                st_info = all_data.get("stocks", {}).get(s["code"], {})
+                kline_s = st_info.get("kline", [])
+                if len(kline_s) >= 15:
+                    kd_s = {"closes": [k["close"] for k in kline_s],
+                            "highs": [k["high"] for k in kline_s],
+                            "lows": [k["low"] for k in kline_s]}
+
+            analysis = analyze_watchlist_etf(s, timing, portfolio, kline_data=kd_s)
             action_label = {"BUY":"[可买入]","WATCH":"[观望]","AVOID":"[回避]"}.get(analysis["action"], "[?]")
             lines.append(f"  {action_label} {s['name']}({s['code']}) | {s['score']}分 | 现价{s['price']:.2f}")
             lines.append(f"    RSI:{s['indicators']['rsi']:.0f} | 20日:{s['returns']['r20d']:+.1f}% | 60日:{s['returns']['r60d']:+.1f}%")
@@ -512,7 +676,19 @@ def main():
         logger.error(f"数据采集失败: {e}\n{traceback.format_exc()}")
         raise RuntimeError(f"数据采集失败，量化分析无法继续: {e}") from e
 
-    # 2. 计算因子得分 - ETFs (v5.0: 横截面比较)
+    # 1b. 预判市场状态（v7.2: 用于自适应因子权重）
+    pre_regime = "CHOPPY"
+    indices_data = all_data.get("indices", {})
+    if "000300" in indices_data:
+        hs300_data = indices_data["000300"].get("data", [])
+        if len(hs300_data) >= 60:
+            hs_closes = [d["close"] for d in hs300_data]
+            hs_highs = [d.get("high", d["close"] * 1.005) for d in hs300_data]
+            hs_lows = [d.get("low", d["close"] * 0.995) for d in hs300_data]
+            pre_regime = classify_market_regime(hs_closes, hs_highs, hs_lows)["regime"]
+            logger.info(f"市场状态预判: {pre_regime} → 自适应权重生效")
+
+    # 2. 计算因子得分 - ETFs (v5.0: 横截面比较 + v7.2: regime自适应)
     logger.info("Step 2/4: 计算因子(含截面比较)...")
     try:
         etf_data = all_data.get("etfs", {})
@@ -522,8 +698,8 @@ def main():
         industry_data = fetch_sw_industry_returns(days=60)
         industry_rotation = compute_industry_rotation_score(industry_data, n_days=20)
 
-        # v5.0: 批量评分 + 横截面比较
-        batch_scores = score_all_etfs_cross_sectional(etf_data)
+        # v5.0: 批量评分 + 横截面比较 + v7.2: regime自适应权重
+        batch_scores = score_all_etfs_cross_sectional(etf_data, regime=pre_regime)
 
         scores = []
         for result in batch_scores:
@@ -665,7 +841,6 @@ def main():
                 # 复制到部署目录
                 deploy_dir = os.path.join(OUTPUT_DIR, "deploy")
                 os.makedirs(deploy_dir, exist_ok=True)
-                import shutil
                 deploy_path = os.path.join(deploy_dir, "index.html")
                 shutil.copy(dash_path, deploy_path)
                 logger.info(f"部署副本: {deploy_path}")
@@ -697,8 +872,8 @@ def main():
     # 每月第一个周六自动复盘（与optimizer月度优化对齐）
     if datetime.now().weekday() == 5 and datetime.now().day <= 7:  # 每月第一个周六
         logger.info("月度自动复盘...")
-        reviewer = WeeklyReview()
-        review_report = reviewer.weekly_summary()
+        reviewer = MonthlyReview()
+        review_report = reviewer.monthly_summary()
         review_path = os.path.join(OUTPUT_DIR, f"review_{TODAY}.txt")
         with open(review_path, 'w', encoding='utf-8') as f:
             f.write(review_report)

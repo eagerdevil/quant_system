@@ -196,7 +196,8 @@ def main():
     if should_run:
         print(f"\n  → 触发优化！运行 optimizer.py")
         # 输出标记供 workflow 读取
-        logger.info("::set-output name=should_optimize::true")
+        with open(os.environ.get("GITHUB_OUTPUT", "/dev/null"), "a") as f:
+            f.write("should_optimize=true\n")
         sys.exit(0)
     else:
         print(f"\n  → 跳过优化（条件不满足）")

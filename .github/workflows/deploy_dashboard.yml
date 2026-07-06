@@ -1,16 +1,17 @@
 name: 部署仪表盘到GitHub Pages
 
-# 手动触发 — 本地跑完回测后，将仪表盘推送到简历主页
 on:
   workflow_dispatch:
-  # 也可以每天跑完量化分析后自动部署
-  # schedule:
-  #   - cron: '30 9 * * 1-5'
+
+# 防止并发部署冲突
+concurrency:
+  group: deploy-dashboard
+  cancel-in-progress: false
 
 jobs:
   deploy-dashboard:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
 
     steps:
       - name: 检出量化系统代码
@@ -18,23 +19,44 @@ jobs:
         with:
           path: quant-system
 
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装依赖
+        run: pip install -r quant-system/quant_system/requirements.txt
+
+      - name: 部署目录检查+创建
+        id: check
+        run: |
+          DEPLOY_DIR="quant-system/quant_system/deploy"
+          if [ ! -f "$DEPLOY_DIR/index.html" ]; then
+            echo "deploy/ 目录为空，尝试从最新回测数据生成仪表盘..."
+            cd quant-system/quant_system
+            python dashboard.py 2>/dev/null || true
+            mkdir -p deploy
+            if [ -f quant_dashboard.html ]; then
+              cp quant_dashboard.html deploy/index.html
+              echo "exists=true" >> $GITHUB_OUTPUT
+            elif [ -f dashboard_*.html ]; then
+              cp dashboard_*.html deploy/index.html
+              echo "exists=true" >> $GITHUB_OUTPUT
+            else
+              echo "exists=false" >> $GITHUB_OUTPUT
+              echo "警告: 无回测数据，无法生成仪表盘。请先本地运行 daily_runner.py --backtest"
+            fi
+          else
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "仪表盘文件已存在"
+          fi
+
       - name: 检出GitHub Pages仓库
         uses: actions/checkout@v4
         with:
           repository: eagerdevil/eagerdevil.github.io
           token: ${{ secrets.PAGES_DEPLOY_TOKEN }}
           path: pages-repo
-
-      - name: 检查仪表盘文件
-        id: check
-        run: |
-          if [ -f quant-system/quant_system/deploy/index.html ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "仪表盘文件存在，准备部署"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "警告: 仪表盘文件不存在，请先本地运行 python daily_runner.py --backtest"
-          fi
 
       - name: 部署仪表盘到Pages
         if: steps.check.outputs.exists == 'true'

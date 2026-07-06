@@ -24,7 +24,33 @@ from quant_engine import (
 )
 
 TODAY = datetime.now().strftime("%Y%m%d")
-COMMISSION = SYSTEM_CONFIG['commission_rate']
+COMMISSION_RATE = SYSTEM_CONFIG['commission_rate']  # 万5 (0.0005)
+MIN_COMMISSION = 5.0       # A股最低佣金5元/笔
+SLIPPAGE_BPS = 1.0         # 滑点1bp (0.01%)，ETF流动性好取低值
+STAMP_DUTY_SELL = 0.0      # ETF免印花税（个股为0.05%）
+
+def trade_cost(shares, price, is_buy=True):
+    """计算真实交易成本（含最低佣金+滑点）
+
+    A股ETF交易成本:
+    - 佣金: 万2.5(双向), 最低5元/笔
+    - 印花税: 0 (ETF免)
+    - 滑点: 约1bp
+
+    返回: (成交金额, 费用)
+    """
+    trade_amount = shares * price
+    # 佣金: max(万2.5, 5元)
+    commission = max(MIN_COMMISSION, trade_amount * COMMISSION_RATE)
+    # 滑点: 买卖各1bp
+    slippage = trade_amount * SLIPPAGE_BPS / 10000
+    cost = commission + slippage
+    # 买入: 实际花费 = 成交金额 + 费用
+    # 卖出: 实际到账 = 成交金额 - 费用
+    if is_buy:
+        return trade_amount + cost, cost
+    else:
+        return trade_amount - cost, cost
 
 # v5.0: cache
 CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "backtest_cache")
@@ -63,8 +89,10 @@ SINGLE_WEIGHT = SYSTEM_CONFIG['max_single_weight']
 # 数据准备 (v5.0: API缓存)
 # ============================================================
 def _cache_key(start_date, end_date, pool_keys):
-    codes = "-".join(sorted(pool_keys)[:10])
-    return f"{start_date}_{end_date or 'now'}_{codes}"
+    # 用全部代码的排序+hash避免碰撞（旧版只取前10个 → 不同子集可能碰撞）
+    codes_str = "-".join(sorted(pool_keys))
+    codes_hash = abs(hash(codes_str)) % 10**8
+    return f"{start_date}_{end_date or 'now'}_{len(pool_keys)}etf_{codes_hash}"
 
 def _load_cache(cache_key):
     cache_file = os.path.join(CACHE_DIR, f"{cache_key}.json")
@@ -199,6 +227,9 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
             initial_bench = bench_map[d]
             break
 
+    if initial_bench is None:
+        initial_bench = initial_capital  # 无基准数据时回退
+
     logger.info(f"[回测] 开始: {equity_days[0]} ~ {equity_days[-1]} ({len(equity_days)}天)")
     logger.info(f"[回测] 初始资金: ¥{initial_capital:,.0f}")
 
@@ -242,7 +273,7 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
 
         # 简化大盘择时
         hs300_etf = valid_etfs.get("510300")
-        market_bullish = True
+        market_bullish = 1.0  # 默认满仓（无指数数据时）
         if hs300_etf:
             hs300_closes = [k["close"] for k in hs300_etf["klines"]]
             all_dates = [k["date"] for k in hs300_etf["klines"]]
@@ -267,12 +298,55 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
         etf_scores.sort(key=lambda x: x["score"], reverse=True)
         top_codes = set(s["code"] for s in etf_scores[:MAX_HOLDINGS])
 
-        # 卖出
+        # === 止损检查（v7.2新增）===
+        # 在所有卖出逻辑之前，先检查止损条件
+        for code in list(holdings.keys()):
+            pos = holdings[code]
+            current_price = next((s["price"] for s in etf_scores if s["code"] == code), pos.get("price", pos["cost"]))
+            pnl_pct = (current_price / pos["cost"] - 1) * 100
+            # 更新持仓中的最高价（用于追踪止盈）
+            high_water = pos.get("high_water", pos["cost"])
+            if current_price > high_water:
+                pos["high_water"] = current_price
+                high_water = current_price
+            pullback_from_high = (current_price / high_water - 1) * 100  # 从高点回撤
+
+            should_stop = False
+            stop_reason = ""
+
+            # 条件1: 硬止损 -8%
+            if pnl_pct <= -8.0:
+                should_stop = True
+                stop_reason = f"硬止损触发 (浮亏{pnl_pct:.1f}% ≤ -8%)"
+            # 条件2: 追踪止盈 - 从高点回撤>6%且曾经浮盈>10%
+            elif pnl_pct > 10 and pullback_from_high <= -6.0:
+                should_stop = True
+                stop_reason = f"追踪止盈 (高点+{(high_water/pos['cost']-1)*100:.1f}%→回撤{pullback_from_high:.1f}%)"
+            # 条件3: 评分E级+亏损中
+            elif pnl_pct < 0:
+                score_data = next((s for s in etf_scores if s["code"] == code), None)
+                if score_data and score_data["score"] < 42:
+                    should_stop = True
+                    stop_reason = f"评分E级({score_data['score']}分)+浮亏{pnl_pct:.1f}%"
+
+            if should_stop:
+                sell_amount, sell_fee = trade_cost(pos["shares"], current_price, is_buy=False)
+                cash += sell_amount
+                trades_log.append({
+                    "date": today, "code": code, "name": pos["name"],
+                    "action": "STOP_LOSS", "price": current_price,
+                    "shares": pos["shares"], "amount": round(sell_amount, 2),
+                    "pnl_pct": round(pnl_pct, 1),
+                    "reason": stop_reason
+                })
+                del holdings[code]
+
+        # 卖出（评分排名下滑）
         for code in list(holdings.keys()):
             if code not in top_codes:
                 pos = holdings[code]
                 sell_price = next((s["price"] for s in etf_scores if s["code"] == code), pos["cost"])
-                sell_amount = pos["shares"] * sell_price * (1 - COMMISSION)
+                sell_amount, sell_fee = trade_cost(pos["shares"], sell_price, is_buy=False)
                 cash += sell_amount
                 pnl_pct = (sell_price / pos["cost"] - 1) * 100
                 trades_log.append({
@@ -306,19 +380,19 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
                 shares = int(budget / price / 100) * 100
                 if shares < 100:
                     continue
-                cost = shares * price * (1 + COMMISSION)
-                if cost > cash:
-                    affordable = int(cash / (price * (1 + COMMISSION)) / 100) * 100
+                cost_with_fee, fee = trade_cost(shares, price, is_buy=True)
+                if cost_with_fee > cash:
+                    affordable = int(cash / (price * (1 + COMMISSION_RATE) + price * SLIPPAGE_BPS / 10000) / 100) * 100
                     if affordable < 100:
                         continue
                     shares = affordable
-                    cost = shares * price * (1 + COMMISSION)
-                cash -= cost
+                    cost_with_fee, fee = trade_cost(shares, price, is_buy=True)
+                cash -= cost_with_fee
                 holdings[candidate["code"]] = {"shares": shares, "cost": price, "name": candidate["name"], "price": price}
                 trades_log.append({
                     "date": today, "code": candidate["code"], "name": candidate["name"],
                     "action": "BUY", "price": price, "shares": shares,
-                    "amount": round(cost, 2),
+                    "amount": round(cost_with_fee, 2),
                     "reason": f"评分{candidate['score']}分 排名TOP{MAX_HOLDINGS}"
                 })
 
@@ -354,7 +428,10 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
         "equity_curve": equity_curve, "trades": trades_log, "metrics": metrics,
         "config": {
             "start_date": equity_days[0], "end_date": equity_days[-1],
-            "initial_capital": initial_capital, "commission": COMMISSION,
+            "initial_capital": initial_capital,
+            "commission_rate": COMMISSION_RATE,
+            "min_commission": MIN_COMMISSION,
+            "slippage_bps": SLIPPAGE_BPS,
             "pool_size": len(valid_etfs), "trading_days": len(equity_days),
         }
     }

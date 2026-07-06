@@ -1,5 +1,5 @@
-import sys, traceback, numpy as np
-sys.path.insert(0, r"E:\Claudecode\quant\quant_system")
+import sys, traceback, os, numpy as np
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 all_pass = True
 
@@ -81,7 +81,7 @@ test("risk_engine compute", test_risk_compute)
 
 # 10. optimizer spearman_ic (rank_values is internal nested function)
 def test_rankdata():
-    from optimizer import spearman_ic, time_weighted_ic
+    from optimizer import spearman_ic
     # Test spearman: perfect positive correlation
     x = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
     y = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]

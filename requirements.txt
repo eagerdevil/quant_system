@@ -1,7 +1,7 @@
 # 量化系统依赖
 pandas>=2.0.0
 numpy>=1.24.0
-# 可选依赖
-# scipy>=1.10.0  # 如需scipy.stats.rankdata（当前用纯numpy代替）
+# 可选依赖（代码中有 fallback，缺失不影响核心功能）
+# scipy>=1.10.0  # 如需scipy.stats.rankdata（当前用纯numpy替代）
 # akshare>=1.14.0
-# requests>=2.31.0
+requests>=2.31.0   # data_engine.py _get_session() 中作为可选HTTP库（缺失则回退urllib）

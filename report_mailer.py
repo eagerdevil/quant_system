@@ -17,12 +17,34 @@ logger = logging.getLogger(__name__)
 # ============================================================
 # 配置
 # ============================================================
+
+def _load_smtp_user():
+    """从环境变量→配置文件→默认值 读取QQ邮箱地址"""
+    # 优先级1: 环境变量
+    user = os.environ.get("QQMAIL_USER")
+    if user:
+        return user
+    # 优先级2: email_config.json
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "email_config.json")
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        user = config.get("QQMAIL_USER")
+        if user:
+            return user
+    except (FileNotFoundError, json.JSONDecodeError, KeyError):
+        pass
+    # 优先级3: 默认值（向后兼容）
+    logger.warning("QQMAIL_USER 未配置，使用默认邮箱")
+    return "1239617073@qq.com"
+
 SMTP_CONFIG = {
     "host": "smtp.qq.com",
     "port": 465,
-    "user": "1239617073@qq.com",
     "sender_name": "A股量化决策系统"
 }
+# user 延迟加载（避免模块导入时文件I/O）
+SMTP_CONFIG["user"] = _load_smtp_user()
 
 REPORT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -469,7 +491,7 @@ def send_wechat(report_data, token):
 # ============================================================
 # 每月复盘 + 自适应参数优化
 # ============================================================
-class WeeklyReview:
+class MonthlyReview:  # 每月第一个周六运行，原命名WeeklyReview有歧义
     """每月复盘引擎 —— 追踪因子表现，自适应调整权重"""
 
     def __init__(self):
@@ -486,9 +508,11 @@ class WeeklyReview:
         self.review_history = []
 
     def load_history(self):
-        """加载历史报告，计算因子IC"""
+        """加载历史报告，计算因子IC（最多扫描500个文件防止IO爆炸）"""
         reports = []
-        for fname in sorted(os.listdir(REPORT_DIR)):
+        fnames = sorted(os.listdir(REPORT_DIR))
+        # 只取最近500个报告文件（~2年数据），避免无限扫描
+        for fname in fnames[-500:]:
             if fname.startswith("report_") and fname.endswith(".json"):
                 try:
                     with open(os.path.join(REPORT_DIR, fname), 'r', encoding='utf-8') as f:
@@ -557,7 +581,7 @@ class WeeklyReview:
         """获取当前自适应权重"""
         return self.current_weights
 
-    def weekly_summary(self):
+    def monthly_summary(self):  # 原函数名weekly_summary，实际每月运行
         """生成月度复盘报告"""
         self.load_history()
         self.adapt_weights()
@@ -615,8 +639,8 @@ if __name__ == "__main__":
 
     if len(sys.argv) >= 2 and sys.argv[1] == "--review":
         # 月度复盘模式
-        reviewer = WeeklyReview()
-        print(reviewer.weekly_summary())
+        reviewer = MonthlyReview()
+        print(reviewer.monthly_summary())
     elif len(sys.argv) >= 2 and sys.argv[1] == "--send":
         # 发送邮件模式
         password = sys.argv[2] if len(sys.argv) >= 3 else None

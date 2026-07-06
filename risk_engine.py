@@ -401,6 +401,212 @@ def format_risk_section(report):
     return "\n".join(lines)
 
 
+# ============================================================
+# v7.3: 历史压力测试场景
+# ============================================================
+
+# 定义5个历史极端行情场景（申万一级行业冲击因子）
+STRESS_SCENARIOS = [
+    {
+        "name": "2015股灾 (2015.06-08)",
+        "description": "A股泡沫破裂，上证从5178跌至2850，三波股灾",
+        "broad_market_shock": -0.35,
+        "industry_shocks": {
+            "计算机": -0.55, "传媒": -0.52, "电子": -0.48,
+            "国防军工": -0.50, "机械设备": -0.45, "电气设备": -0.42,
+            "非银金融": -0.40, "银行": -0.20, "食品饮料": -0.25,
+            "医药生物": -0.30, "有色金属": -0.30, "公用事业": -0.18,
+        },
+        "gold_return": 0.05,   # 黄金避险上涨
+        "bond_return": 0.03,
+    },
+    {
+        "name": "2016熔断 (2016.01)",
+        "description": "熔断机制引发恐慌，全月暴跌25%",
+        "broad_market_shock": -0.25,
+        "industry_shocks": {
+            "计算机": -0.35, "电子": -0.33, "传媒": -0.35,
+            "非银金融": -0.30, "银行": -0.08, "食品饮料": -0.15,
+        },
+        "gold_return": 0.02,
+        "bond_return": 0.01,
+    },
+    {
+        "name": "2020疫情冲击 (2020.02.03)",
+        "description": "春节后首日，全市场暴跌，3200+跌停",
+        "broad_market_shock": -0.08,
+        "industry_shocks": {
+            "休闲服务": -0.12, "交通运输": -0.10, "传媒": -0.10,
+            "房地产": -0.10, "汽车": -0.10, "医药生物": 0.05,  # 医药逆势涨
+        },
+        "gold_return": 0.01,
+        "bond_return": 0.02,
+    },
+    {
+        "name": "2024量化踩踏 (2024.01-02)",
+        "description": "雪球敲入+DMA爆仓，小盘股流动性危机",
+        "broad_market_shock": -0.12,
+        "industry_shocks": {
+            "综合": -0.25, "机械设备": -0.22, "计算机": -0.20,
+            "电子": -0.18, "电气设备": -0.18, "传媒": -0.22,
+            "银行": -0.02, "公用事业": -0.03, "食品饮料": -0.05,
+        },
+        "gold_return": 0.04,
+        "bond_return": 0.03,
+    },
+    {
+        "name": "2026.06近期暴跌",
+        "description": "6/26上证-2.14%深证-3.04%，全市场无差别杀跌",
+        "broad_market_shock": -0.06,
+        "industry_shocks": {
+            "电气设备": -0.07, "汽车": -0.08, "电子": -0.07,
+            "有色金属": -0.06, "医药生物": -0.05, "国防军工": -0.06,
+        },
+        "gold_return": 0.01,
+        "bond_return": 0.01,
+    },
+]
+
+# v7.3: 从权威来源导入ETF→行业映射（单一数据源，避免发散）
+try:
+    from quant_engine import ETF_INDUSTRY_MAP as _ETF_INDUSTRY
+except ImportError:
+    _ETF_INDUSTRY = {}  # 导入失败时回退空映射
+
+
+def stress_test_portfolio(portfolio, port_summary=None):
+    """
+    v7.3: 历史压力测试 — 将当前持仓放入5个历史极端行情中模拟。
+
+    返回: {
+        "scenarios": [{name, description, total_loss, loss_pct, per_holding, verdict}],
+        "worst_scenario": {name, loss_pct},
+        "average_loss_pct": float,
+        "advice": str
+    }
+    """
+    total_assets = port_summary.get("total_assets", 4000) if port_summary else 4000
+    holdings = port_summary.get("holdings", []) if port_summary else []
+
+    # 构建持仓快照: {code: {weight_pct, name}}
+    snapshot = {}
+    for h in holdings:
+        code = h.get("code", "")
+        if code and h.get("weight", 0) > 0:
+            snapshot[code] = {"weight": h["weight"], "name": h.get("name", code)}
+
+    if not snapshot:
+        # 从portfolio原始数据构建
+        for code, pos in portfolio.items():
+            if code.startswith("_") or not isinstance(pos, dict):
+                continue
+            price = pos.get("current_price", pos.get("cost", 0))
+            shares = pos.get("shares", 0)
+            value = shares * price
+            snapshot[code] = {
+                "weight": round(value / total_assets * 100, 1) if total_assets > 0 else 0,
+                "name": pos.get("name", code)
+            }
+
+    results = []
+    total_losses = []
+
+    for scenario in STRESS_SCENARIOS:
+        total_shock = 0.0
+        per_holding = []
+
+        for code, info in snapshot.items():
+            industries = _ETF_INDUSTRY.get(code, ["综合"])
+            # 取该ETF所有行业的平均冲击
+            shocks = []
+            for ind in industries:
+                s = scenario["industry_shocks"].get(ind, scenario["broad_market_shock"])
+                shocks.append(s)
+            avg_shock = sum(shocks) / len(shocks) if shocks else scenario["broad_market_shock"]
+
+            # 黄金ETF特殊处理
+            if code == "518850":
+                avg_shock = scenario["gold_return"]
+            # QDII ETF (15xxxx/513xxx): 冲击减半（跟踪海外市场）
+            if code.startswith(("159659", "513", "15966")):
+                avg_shock = avg_shock * 0.4
+
+            holding_loss = info["weight"] * avg_shock
+            total_shock += holding_loss
+            per_holding.append({
+                "code": code, "name": info["name"],
+                "weight": info["weight"],
+                "shock_pct": round(avg_shock * 100, 1),
+                "loss_contribution": round(holding_loss, 2)
+            })
+
+        loss_pct = round(total_shock, 2)
+        loss_amount = round(total_assets * total_shock / 100, 2)
+        total_losses.append(loss_pct)
+
+        # 判定等级
+        if loss_pct > -3:
+            verdict = "✅ 抗压良好"
+        elif loss_pct > -7:
+            verdict = "🟡 中度冲击"
+        elif loss_pct > -12:
+            verdict = "🟠 显著损失"
+        else:
+            verdict = "🔴 严重冲击"
+
+        results.append({
+            "name": scenario["name"],
+            "description": scenario["description"],
+            "loss_pct": loss_pct,
+            "loss_amount": loss_amount,
+            "per_holding": per_holding,
+            "verdict": verdict
+        })
+
+    worst = min(results, key=lambda r: r["loss_pct"]) if results else None
+    avg_loss = round(sum(total_losses) / len(total_losses), 2) if total_losses else 0
+
+    if avg_loss > -4:
+        advice = "✅ 组合抗压能力强，5个极端场景平均损失可控"
+    elif avg_loss > -8:
+        advice = "🟡 中度脆弱，建议增加现金或防御性ETF（红利低波/公用事业）比例"
+    elif avg_loss > -12:
+        advice = "⚠️ 较脆弱，极端行情可能损失超过10%，强烈建议增加现金比例"
+    else:
+        advice = "🔴 高度脆弱，当前组合在历史上多次极端行情中都会遭受重创"
+
+    return {
+        "scenarios": results,
+        "worst_scenario": {"name": worst["name"], "loss_pct": worst["loss_pct"]} if worst else None,
+        "average_loss_pct": avg_loss,
+        "advice": advice
+    }
+
+
+def format_stress_test_section(stress_result):
+    """格式化压力测试为文本板块"""
+    lines = []
+    lines.append(f"\n  {'─'*60}")
+    lines.append(f"  [历史压力测试] v7.3 — 5个极端场景回放")
+    lines.append(f"  {'─'*60}")
+
+    for sc in stress_result["scenarios"]:
+        bar_len = max(1, int(abs(sc["loss_pct"]) * 2))
+        bar = "█" * bar_len
+        lines.append(f"  {sc['verdict']} {sc['name']}: {sc['loss_pct']:+.1f}% ({sc['loss_amount']:+.0f}元) {bar}")
+        lines.append(f"     {sc['description']}")
+        # 贡献最大的持仓
+        ph = sorted(sc["per_holding"], key=lambda x: x["loss_contribution"])[:3]
+        ph_str = " | ".join(f"{p['name']}({p['shock_pct']:+.1f}%)" for p in ph if p["loss_contribution"] < -0.5)
+        if ph_str:
+            lines.append(f"     最大冲击: {ph_str}")
+
+    lines.append(f"\n  平均损失: {stress_result['average_loss_pct']:+.1f}% | "
+                f"最差场景: {stress_result['worst_scenario']['name']} ({stress_result['worst_scenario']['loss_pct']:+.1f}%)")
+    lines.append(f"  {stress_result['advice']}")
+    return "\n".join(lines)
+
+
 if __name__ == "__main__":
     logger.info("Risk Engine v6.0 — Ready")
     logger.info("  compute_correlation_matrix()")

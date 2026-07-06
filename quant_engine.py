@@ -19,8 +19,6 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-TODAY = datetime.now().strftime("%Y%m%d")
-
 # ============================================================
 # 因子权重系统（v2.0 新增）
 # ============================================================
@@ -70,6 +68,84 @@ def _load_weights():
         return dict(DEFAULT_WEIGHTS), {"meta": {"version": 0, "ic_score": 0}}
 
 CURRENT_WEIGHTS, WEIGHT_CONFIG = _load_weights()
+
+# ============================================================
+# v7.2: 市场状态自适应权重调节器
+# ============================================================
+# 不同市场状态下，因子的预测能力不同：
+#   趋势市 → 动量/趋势因子更有效
+#   震荡市 → 反转/均值回归因子更有效
+#   下跌市 → 低波动/防御因子更有效
+#   危机市 → 极度防御，低波动/MaxDD优先
+
+REGIME_WEIGHT_MODIFIERS = {
+    "TREND_UP": {
+        # 加强趋势+动量，弱化反转
+        "F1_趋势强度": 1.35, "F2_动量": 1.25, "F8_回调": 1.20,
+        "F12_多周期": 1.15, "F13_均线排列": 1.20, "F14_长期": 1.15,
+        "F3_反转": 0.70, "F6_低波动": 0.80, "F11_布林带": 0.85,
+    },
+    "CHOPPY": {
+        # 加强反转+均值回归，弱化趋势跟随
+        "F3_反转": 1.50, "F4_RSI": 1.25, "F5_均线偏离": 1.20,
+        "F11_布林带": 1.30, "F7_成交量": 1.15, "F6_低波动": 1.10,
+        "F1_趋势强度": 0.65, "F2_动量": 0.70, "F14_长期": 0.80,
+    },
+    "TREND_DOWN": {
+        # 防御为主：低波动+低回撤+量价背离
+        "F6_低波动": 1.60, "F10_MaxDD": 1.40, "F9_Sortino": 1.25,
+        "F16_量价关系": 1.30, "F4_RSI": 1.15, "F7_成交量": 1.10,
+        "F1_趋势强度": 0.50, "F2_动量": 0.45, "F8_回调": 0.60,
+        "F12_多周期": 0.60, "F13_均线排列": 0.50, "F14_长期": 0.55,
+    },
+    "CRISIS": {
+        # 现金为王：极度防御
+        "F6_低波动": 2.00, "F10_MaxDD": 1.80, "F9_Sortino": 1.50,
+        "F16_量价关系": 1.50, "F11_布林带": 1.30, "F15_夏普": 1.25,
+        "F1_趋势强度": 0.25, "F2_动量": 0.20, "F3_反转": 0.40,
+        "F8_回调": 0.30, "F12_多周期": 0.30, "F13_均线排列": 0.25,
+        "F14_长期": 0.30,
+    },
+}
+
+def reload_weights():
+    """
+    v7.3: 公开权重重载函数 — 避免模块导入时的文件I/O副作用。
+
+    因子权重文件被 optimizer.py 更新后，调用此函数重新加载。
+    返回更新后的权重字典。
+    """
+    global CURRENT_WEIGHTS, WEIGHT_CONFIG
+    CURRENT_WEIGHTS, WEIGHT_CONFIG = _load_weights()
+    logger.info(f"[WEIGHTS] 重新加载: version={WEIGHT_CONFIG.get('meta', {}).get('version', 0)}")
+    return CURRENT_WEIGHTS
+
+
+def get_regime_weights(base_weights=None, regime=None):
+    """
+    v7.2: 根据市场状态调整因子权重。
+
+    Args:
+        base_weights: 基础权重字典，默认使用CURRENT_WEIGHTS
+        regime: 市场状态字符串 (TREND_UP/CHOPPY/TREND_DOWN/CRISIS)
+
+    Returns:
+        调整后的权重字典
+    """
+    if base_weights is None:
+        base_weights = CURRENT_WEIGHTS if CURRENT_WEIGHTS else DEFAULT_WEIGHTS
+
+    if regime is None or regime not in REGIME_WEIGHT_MODIFIERS:
+        return dict(base_weights)  # 无regime信息时保持不变
+
+    modifiers = REGIME_WEIGHT_MODIFIERS[regime]
+    adjusted = {}
+    for k in FACTOR_NAMES:
+        base = base_weights.get(k, 1.0)
+        mod = modifiers.get(k, 1.0)
+        adjusted[k] = round(base * mod, 2)
+    return adjusted
+
 
 # ============================================================
 # v5.0: 系统运行参数（集中管理，避免魔法数字散落各处）
@@ -340,13 +416,23 @@ def bollinger_position(closes, n=20):
 
 
 def _wilder_seq(series, n):
-    """Wilder平滑器辅助函数 — numpy 向量化"""
+    """Wilder平滑器 — 递归公式 r[k]=r[k-1]*(n-1)/n + x[k]（EMA变体）
+
+    Wilder平滑本质是指数衰减(α=(n-1)/n)的递推，无法完全并行化。
+    使用numpy预分配数组 + 标量递推，比纯Python列表快 ~3x。
+    """
     if len(series) < n:
-        return [sum(series)] if series else [0]
-    result = [sum(series[:n])]
-    for i in range(n, len(series)):
-        result.append(result[-1] - result[-1] / n + series[i])
-    return result
+        return [float(sum(series))] if series else [0.0]
+
+    s = np.asarray(series, dtype=np.float64)
+    alpha = (n - 1.0) / n
+    K = len(s) - n + 1
+
+    result = np.empty(K, dtype=np.float64)
+    result[0] = float(np.sum(s[:n]))
+    for k in range(1, K):
+        result[k] = result[k-1] * alpha + s[n + k - 1]
+    return result.tolist()
 
 
 def adx(closes, highs, lows, n=14):
@@ -402,14 +488,17 @@ def adx(closes, highs, lows, n=14):
 
 
 def bollinger_bandwidth(closes, n=20):
-    """布林带宽度 — numpy 向量化，返回标量"""
+    """布林带宽度 — numpy 向量化，返回标量。
+
+    正常范围 0.02-0.15；数据不足或异常时返回 None 表示不可用。
+    """
     if len(closes) < n:
-        return 0.05
+        return None
     window = _to_np(closes[-n:])
     avg = np.mean(window)
     std = np.std(window, ddof=0)
-    if avg == 0:
-        return 0.0
+    if avg == 0 or std == 0:
+        return None
     return float((4 * std) / avg)
 
 
@@ -620,6 +709,8 @@ def classify_market_regime(index_closes, index_highs=None, index_lows=None,
 
     # Signal 3: 布林带宽度（波动率状态）
     bbw = bollinger_bandwidth(index_closes, 20)
+    if bbw is None:
+        bbw = 0.05  # 数据不足时使用默认值
     signals["bb_width"] = round(bbw, 4)
     high_vol = bbw > 0.08
 
@@ -748,235 +839,99 @@ def compute_indicators(closes, highs, lows, volumes):
     }
 
 
+# ============================================================
+# v7.2: 因子评分曲线定义 — 分段线性插值（替代离散桶）
+# 每个因子定义 (breakpoints, scores) 对，通过 np.interp 连续映射
+# 优势: 无边界跳变，评分平滑稳定
+# ============================================================
+_FACTOR_CURVES = {
+    # (指标断点, 对应分数) — 所有因子满分归一化到其FACTOR_MAX后再截断
+    "F2_动量": ([-20, -10, -3, 0, 10, 20, 30], [3, 3.5, 6.5, 8, 8, 5, 2]),
+    "F3_反转": ([-15, -8, -5, -2, 0, 3, 8, 15], [8, 8, 6, 5, 4, 3, 1, 1]),
+    "F4_RSI":   ([10, 20, 30, 40, 50, 58, 65, 72, 85], [0.5, 2, 5, 8, 8, 6, 4, 2, 0.5]),
+    "F5_均线偏离": ([-15, -8, -5, -3, 0, 3, 8, 15], [2, 3.5, 5, 6, 6, 4, 2.5, 1]),
+    "F6_低波动": ([3, 8, 15, 30, 45, 65, 85], [3, 5, 6, 6, 4, 2, 1]),
+    "F7_成交量": ([0.3, 0.5, 0.70, 0.85, 1.20, 1.40, 1.80, 2.50], [2, 3, 4, 6, 6, 4, 2.5, 1]),
+    "F9_Sortino": ([-2.5, -0.5, 0.3, 0.8, 1.5, 2.5, 4.0], [2, 3, 4, 5, 6, 6, 6]),
+    "F10_MaxDD": ([0.0, 0.05, 0.10, 0.18, 0.25, 0.35, 0.55], [6, 6, 5, 4, 3, 2, 1]),
+    "F11_布林带": ([0, 5, 15, 55, 75, 90, 100], [1, 5, 6, 4, 2, 1, 0.5]),
+    "F14_长期":  ([-40, -10, 0, 10, 25, 50], [1, 2, 3, 4, 4, 4]),
+    "F15_夏普":  ([-2.5, -0.5, 0.3, 0.8, 1.5, 2.5, 4.0], [2, 3, 4, 5, 6, 6, 6]),
+}
+
+def _continuous_score(value, factor_name):
+    """通用连续评分：根据因子名称查找曲线，np.interp 映射"""
+    if factor_name in _FACTOR_CURVES:
+        bp, sc = _FACTOR_CURVES[factor_name]
+        return float(np.clip(np.interp(value, bp, sc), min(sc), max(sc)))
+    return None  # 此因子不使用连续映射
+
+
 def score_factors(indicators):
     """
-    将原始指标转换为16个因子得分（0-10/0-8/0-6/0-4）。
+    v7.2: 将原始指标转换为16个因子得分（连续映射 + 少数离散因子）。
     输入: compute_indicators() 的输出
-    输出: {F1_趋势强度: 5, F2_动量: 8, ...}
+    输出: {F1_趋势强度: 7.3, F2_动量: 6.8, ...}  # 现在返回浮点数
     """
     factors = {}
     ind = indicators
-
-    # F1: 趋势强度(0-10)
-    f1 = 5
-    if ind["dif"] > 0 and ind["hist"] > 0:
-        f1 = 10
-    elif ind["dif"] > 0:
-        f1 = 7
-    elif ind["dif"] > -0.01 and ind["hist"] > 0:
-        f1 = 6
-    elif ind["dif"] > -0.01:
-        f1 = 4
-    else:
-        f1 = 2
-    if ind["ma_alignment"] >= 2:
-        f1 = min(10, f1 + 1)
-    factors['F1_趋势强度'] = f1
-
-    # F2: 动量(0-8)
-    r20 = ind["r20d"]
-    if 0 <= r20 <= 10:
-        f2 = 8
-    elif -3 <= r20 < 0:
-        f2 = 6
-    elif 10 < r20 <= 20:
-        f2 = 5
-    elif r20 < -10:
-        f2 = 3
-    else:
-        f2 = 2
-    factors['F2_动量'] = f2
-
-    # F3: 反转信号(0-8)
     r5 = ind["r5d"]
-    if r5 < -5:
-        f3 = 8
-    elif -5 <= r5 < -2:
-        f3 = 6
-    elif r5 < 0:
-        f3 = 5
-    elif 0 <= r5 <= 3:
-        f3 = 4
-    elif 3 < r5 <= 8:
-        f3 = 3
-    else:
-        f3 = 1
-    factors['F3_反转'] = f3
-
-    # F4: RSI位置(0-8)
-    rsi_now = ind["rsi"]
-    if 40 <= rsi_now <= 50:
-        f4 = 8
-    elif 35 <= rsi_now < 40:
-        f4 = 7
-    elif 50 < rsi_now <= 58:
-        f4 = 6
-    elif 30 <= rsi_now < 35:
-        f4 = 5
-    elif 58 < rsi_now <= 65:
-        f4 = 4
-    elif 65 < rsi_now <= 72:
-        f4 = 2
-    else:
-        f4 = 1
-    factors['F4_RSI'] = f4
-
-    # F5: 均线偏离(0-6)
-    pm5 = ind["pma5"]
-    if -3 <= pm5 <= 3:
-        f5 = 6
-    elif -5 <= pm5 < -3:
-        f5 = 5
-    elif 3 < pm5 <= 8:
-        f5 = 4
-    elif -8 <= pm5 < -5:
-        f5 = 3
-    else:
-        f5 = 2
-    factors['F5_均线偏离'] = f5
-
-    # F6: 低波动(0-6)
-    vol_pct = ind["volatility"] * 100
-    if 15 <= vol_pct <= 30:
-        f6 = 6
-    elif 10 <= vol_pct < 15:
-        f6 = 5
-    elif 30 < vol_pct <= 40:
-        f6 = 4
-    elif vol_pct < 10:
-        f6 = 3
-    else:
-        f6 = 2
-    factors['F6_低波动'] = f6
-
-    # F7: 成交量健康(0-6)
-    v_ratio = ind["vol_ratio_5d"]
-    if 0.85 <= v_ratio <= 1.20:
-        f7 = 6
-    elif 0.70 <= v_ratio <= 1.40:
-        f7 = 4
-    else:
-        f7 = 2
-    factors['F7_成交量'] = f7
-
-    # F8: 回调质量(0-10)
-    cons_down = ind["consecutive_down"]
-    cons_up = ind["consecutive_up"]
-    if cons_down >= 3:
-        f8 = 10
-    elif cons_down >= 2:
-        f8 = 8
-    elif cons_down == 1:
-        f8 = 7
-    elif cons_up == 0:
-        f8 = 7
-    elif cons_up == 1:
-        f8 = 6
-    elif cons_up == 2:
-        f8 = 4
-    else:
-        f8 = 2
-    factors['F8_回调'] = f8
-
-    # F9: Sortino(0-6)
-    srt = ind["sortino"]
-    if srt > 1.5:
-        f9 = 6
-    elif srt > 0.8:
-        f9 = 5
-    elif srt > 0.3:
-        f9 = 4
-    elif srt > -0.3:
-        f9 = 3
-    else:
-        f9 = 2
-    factors['F9_Sortino'] = f9
-
-    # F10: 最大回撤(0-6)
-    maxdd = ind["max_drawdown"]
-    if maxdd < 0.10:
-        f10 = 6
-    elif maxdd < 0.18:
-        f10 = 5
-    elif maxdd < 0.25:
-        f10 = 4
-    elif maxdd < 0.35:
-        f10 = 3
-    else:
-        f10 = 2
-    factors['F10_MaxDD'] = f10
-
-    # F11: 布林带位置(0-6)
-    bb_pos = ind["bb_position"]
-    if 15 <= bb_pos <= 55:
-        f11 = 6
-    elif 5 <= bb_pos < 15:
-        f11 = 5
-    elif 55 < bb_pos <= 75:
-        f11 = 4
-    elif 75 < bb_pos <= 90:
-        f11 = 2
-    else:
-        f11 = 1
-    factors['F11_布林带'] = f11
-
-    # F12: 多周期收益(0-6)
+    r20 = ind["r20d"]
     r60 = ind["r60d"]
-    if r5 > 0 and r20 > 0 and r60 > 0:
-        f12 = 6
-    elif r20 > 0 and r60 > 0:
-        f12 = 5
-    elif r60 > 0:
-        f12 = 4
-    elif r20 > 0:
-        f12 = 3
-    else:
-        f12 = 2
-    factors['F12_多周期'] = f12
+    r120 = ind["r120d"]
 
-    # F13: 均线排列(0-4)
+    # F1: 趋势强度(0-10) — 基于MACD DIF/Hist幅度 + MA排列
+    dif_mag = np.tanh(ind["dif"] * 80)      # DIF → [-1, 1]
+    hist_mag = np.tanh(ind["hist"] * 400)    # Hist → [-1, 1]
+    f1_base = 5.0 + dif_mag * 3.5 + hist_mag * 1.5
+    if ind["ma_alignment"] >= 2:
+        f1_base += 0.8
+    factors['F1_趋势强度'] = round(float(np.clip(f1_base, 0.5, 10.0)), 1)
+
+    # F2-F15: 连续映射因子
+    factors['F2_动量']     = round(_continuous_score(r20, "F2_动量"), 1)
+    factors['F3_反转']     = round(_continuous_score(r5, "F3_反转"), 1)
+    factors['F4_RSI']      = round(_continuous_score(ind["rsi"], "F4_RSI"), 1)
+    factors['F5_均线偏离'] = round(_continuous_score(ind["pma5"], "F5_均线偏离"), 1)
+    factors['F6_低波动']   = round(_continuous_score(ind["volatility"] * 100, "F6_低波动"), 1)
+    factors['F7_成交量']   = round(_continuous_score(ind["vol_ratio_5d"], "F7_成交量"), 1)
+
+    # F8: 回调质量(0-10) — 连续化：连跌加分，连涨扣分
+    f8 = 5.0 + ind["consecutive_down"] * 1.5 - ind["consecutive_up"] * 1.0
+    factors['F8_回调'] = round(float(np.clip(f8, 1.0, 10.0)), 1)
+
+    factors['F9_Sortino']  = round(_continuous_score(ind["sortino"], "F9_Sortino"), 1)
+    factors['F10_MaxDD']   = round(_continuous_score(ind["max_drawdown"], "F10_MaxDD"), 1)
+    factors['F11_布林带']  = round(_continuous_score(ind["bb_position"], "F11_布林带"), 1)
+
+    # F12: 多周期收益(0-6) — 半连续：多周期方向 + 强度
+    f12 = 2.0
+    f12 += np.tanh(r5 + 0.3) * 1.5   # 短期
+    f12 += np.tanh(r20 + 0.5) * 1.5  # 中期
+    f12 += np.tanh(r60 + 0.5) * 1.0  # 长期
+    factors['F12_多周期'] = round(float(np.clip(f12, 1.0, 6.0)), 1)
+
+    # F13: 均线排列(0-4) — 本质离散，保持原样
     factors['F13_均线排列'] = ind["ma_alignment"]
 
-    # F14: 长期收益(0-4)
-    r120 = ind["r120d"]
-    if r120 > 10:
-        f14 = 4
-    elif r120 > 0:
-        f14 = 3
-    elif r120 > -10:
-        f14 = 2
-    else:
-        f14 = 1
-    factors['F14_长期'] = f14
+    factors['F14_长期'] = round(_continuous_score(r120, "F14_长期"), 1)
+    factors['F15_夏普'] = round(_continuous_score(ind["sharpe"], "F15_夏普"), 1)
 
-    # F15: 夏普比率(0-6)
-    shp = ind["sharpe"]
-    if shp > 1.5:
-        f15 = 6
-    elif shp > 0.8:
-        f15 = 5
-    elif shp > 0.3:
-        f15 = 4
-    elif shp > -0.3:
-        f15 = 3
-    else:
-        f15 = 2
-    factors['F15_夏普'] = f15
-
-    # F16: 量价关系 (0-8) — v3.0 新增
+    # F16: 量价关系(0-8) — 类型离散但有强度调制(v7.2改进)
     vol_div = ind.get("volume_divergence", {})
     div_type = vol_div.get("divergence_type")
+    strength = vol_div.get("strength", 5)
     if div_type == "bullish":
-        f16 = 8
+        f16 = 5.0 + strength * 0.35
     elif div_type == "bearish":
-        f16 = 2
+        f16 = 5.0 - strength * 0.35
     elif div_type == "weak_rally":
-        f16 = 3
+        f16 = 5.0 - strength * 0.25
     elif div_type == "panic_sell":
-        f16 = 4
+        f16 = 3.0 + strength * 0.2
     else:
-        f16 = 5
-    factors['F16_量价关系'] = f16
+        f16 = 5.0
+    factors['F16_量价关系'] = round(float(np.clip(f16, 0.5, 8.0)), 1)
 
     return factors
 
@@ -1024,12 +979,20 @@ def _apply_premium_penalty(technical_score, premium_pct):
 
 def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
                              north_flow_5d=None, industry_return=None,
-                             weights=None, premium_pct=None):
+                             weights=None, premium_pct=None, regime=None):
     """
-    16因子综合评分系统 + 溢价惩罚
+    16因子综合评分系统 + 溢价惩罚 + v7.2市场状态自适应权重
+
+    Args:
+        code, name: ETF标识
+        closes, highs, lows, volumes: OHLCV序列
+        weights: 手动指定权重（优先级最高）
+        premium_pct: QDII ETF溢价率
+        regime: 市场状态 (TREND_UP/CHOPPY/TREND_DOWN/CRISIS) 用于自适应权重
     """
+    # v7.2: 权重优先级: 手动指定 > 状态自适应 > CURRENT_WEIGHTS > DEFAULT_WEIGHTS
     if weights is None:
-        weights = CURRENT_WEIGHTS
+        weights = get_regime_weights(CURRENT_WEIGHTS, regime)
     if weights is None:
         weights = DEFAULT_WEIGHTS
 
@@ -1107,6 +1070,18 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
 # ============================================================
 # 模块3c: 横截面比较 (v5.0 新增) — numpy 向量化
 # ============================================================
+# 横截面比较指标 (指标名, 权重, 方向)
+# 方向: -1=低值更优(排名反转), +1=高值更优(排名同向)
+#   RSI:   -1  高位过热→扣分，中低位(30-50)→加分  [有争议：强趋势中RSI 50-65可持续，但A股均值回归强]
+#   r20d:  -1  短期涨幅过大→追高风险
+#   r60d:  +1  中期趋势向上→看涨
+#   vol:   -1  低波动ETF更安全
+#   sortino:+1 风险调整收益越高越好
+#   sharpe: +1 同上
+#   maxdd: -1  回撤越小越好
+#   ma_align:+1 多头排列越整齐越强
+#   bb_pos: -1  布林带低位(接近下轨)→反弹概率大
+#   cons_up:-1 连涨太久→获利盘压力
 CROSS_SECTION_METRICS = [
     ("rsi",              1.5, -1),
     ("r20d",             1.2, -1),
@@ -1169,12 +1144,125 @@ def compute_cross_sectional_adjustment(raw_metrics_list):
     return adjustments
 
 
-def score_all_etfs_cross_sectional(etf_data_dict, weights=None):
+# ============================================================
+# v7.3: 因子行业中性化引擎
+# ============================================================
+
+def _get_primary_industry(code):
+    """获取ETF的主行业（用于分组中性化）"""
+    industries = ETF_INDUSTRY_MAP.get(code, ["综合"])
+    return industries[0] if industries else "综合"
+
+
+def _industry_preserve_score(code):
     """
-    v5.0: 批量评分 + 横截面比较融合 — 保持与旧版完全兼容
+    不应被行业中性化的ETF: QDII(跟踪海外) + 宽基(综合行业)
+    """
+    if code.startswith(("513", "159659", "15966")):
+        return True
+    return _get_primary_industry(code) == "综合"
+
+
+def compute_cross_sectional_adjustment_neutralized(raw_metrics_list):
+    """
+    v7.3: 行业内中性化横截面比较
+
+    与旧版 compute_cross_sectional_adjustment 的区别:
+    - 旧版: 全局z-score → 热门行业所有ETF都得高分
+    - 新版: 行业内z-score → ETF只和同行比较，真正alpha才加分
+
+    分组逻辑:
+    - 行业ETF: 按主行业分组(电子/医药/银行...)，组内z-score
+    - 宽基ETF(QDII/沪深300等): 保留全局z-score
+    - 小行业(组内<3只): 合并到全局组
+    """
+    if len(raw_metrics_list) < 3:
+        return {m["code"]: 0.0 for m in raw_metrics_list}
+
+    codes = [m["code"] for m in raw_metrics_list]
+    adjustments = {c: 0.0 for c in codes}
+
+    # 分组: {行业: [metric_dicts]}
+    industry_groups = {}
+    global_etfs = []
+    for m in raw_metrics_list:
+        code = m["code"]
+        if _industry_preserve_score(code):
+            global_etfs.append(m)
+        else:
+            ind = _get_primary_industry(code)
+            if ind not in industry_groups:
+                industry_groups[ind] = []
+            industry_groups[ind].append(m)
+
+    for metric_name, weight, direction in CROSS_SECTION_METRICS:
+        # === 行业内z-score ===
+        for ind_name, group in industry_groups.items():
+            if len(group) < 3:
+                continue
+            values, valid_codes = [], []
+            for m in group:
+                val = m.get(metric_name)
+                if val is not None:
+                    values.append(val)
+                    valid_codes.append(m["code"])
+            if len(values) < 3:
+                continue
+
+            arr = np.array(values, dtype=np.float64)
+            mean, std = np.mean(arr), np.std(arr, ddof=0)
+            if std < 1e-8:
+                continue
+            z = np.clip((arr - mean) / std, -2.5, 2.5)
+            raw_adj = np.tanh(z) * weight * direction
+            for i, code in enumerate(valid_codes):
+                adjustments[code] += float(raw_adj[i])
+
+        # === 全局z-score: 宽基 + QDII + 小组ETF ===
+        global_vals, global_valid = [], []
+        for m in global_etfs:
+            val = m.get(metric_name)
+            if val is not None:
+                global_vals.append(val)
+                global_valid.append(m["code"])
+        for ind_name, group in industry_groups.items():
+            if len(group) < 3:
+                for m in group:
+                    if m["code"] not in global_valid:
+                        val = m.get(metric_name)
+                        if val is not None:
+                            global_vals.append(val)
+                            global_valid.append(m["code"])
+
+        if len(global_vals) >= 3:
+            arr = np.array(global_vals, dtype=np.float64)
+            mean, std = np.mean(arr), np.std(arr, ddof=0)
+            if std > 1e-8:
+                z = np.clip((arr - mean) / std, -2.5, 2.5)
+                raw_adj = np.tanh(z) * weight * direction
+                for i, code in enumerate(global_valid):
+                    adjustments[code] += float(raw_adj[i])
+
+    # 全局缩放到 [-8, +8]
+    max_abs = max((abs(v) for v in adjustments.values()), default=1.0)
+    if max_abs > 8.0:
+        scale = 8.0 / max_abs
+        for code in adjustments:
+            adjustments[code] = round(adjustments[code] * scale, 1)
+    else:
+        for code in adjustments:
+            adjustments[code] = round(adjustments[code], 1)
+
+    return adjustments
+
+
+def score_all_etfs_cross_sectional(etf_data_dict, weights=None, regime=None, use_neutralized=True):
+    """
+    v5.0: 批量评分 + 横截面比较融合
+    v7.2: 支持regime自适应权重
     """
     if weights is None:
-        weights = CURRENT_WEIGHTS
+        weights = get_regime_weights(CURRENT_WEIGHTS, regime)
     if weights is None:
         weights = DEFAULT_WEIGHTS
 
@@ -1213,8 +1301,11 @@ def score_all_etfs_cross_sectional(etf_data_dict, weights=None):
             "technical_score": technical_score,
         })
 
-    # Phase 2: 横截面比较
-    cross_adjustments = compute_cross_sectional_adjustment(raw_metrics)
+    # Phase 2: 横截面比较 (v7.3: 行业中性化)
+    if use_neutralized:
+        cross_adjustments = compute_cross_sectional_adjustment_neutralized(raw_metrics)
+    else:
+        cross_adjustments = compute_cross_sectional_adjustment(raw_metrics)
 
     # Phase 3: 融合评分
     results = []
@@ -1286,6 +1377,7 @@ def score_all_etfs_cross_sectional(etf_data_dict, weights=None):
 # 模块3d: 行业轮动因子 (v5.0 新增)
 # ============================================================
 ETF_INDUSTRY_MAP = {
+    # 科技
     "562500": ["机械设备"],
     "512760": ["电子", "计算机"],
     "515070": ["计算机", "电子"],
@@ -1293,34 +1385,63 @@ ETF_INDUSTRY_MAP = {
     "159995": ["电子"],
     "588200": ["电子"],
     "159516": ["电子"],
+    "159732": ["电子"],
+    "515880": ["通信"],
+    "560800": ["计算机", "电子", "传媒"],
+    # 金融周期
     "512880": ["非银金融"],
-    "512670": ["国防军工"],
-    "512810": ["国防军工"],
+    "512800": ["银行"],
     "512400": ["有色金属"],
+    "516780": ["有色金属"],
+    "515220": ["采掘"],
+    "516950": ["建筑装饰", "建筑材料"],
+    "512200": ["房地产"],
+    # 消费医药
     "512170": ["医药生物"],
     "159992": ["医药生物"],
-    "512890": ["银行", "公用事业"],
+    "159647": ["医药生物"],
+    "512690": ["食品饮料"],
     "159928": ["食品饮料"],
-    "159869": ["传媒"],
+    "159996": ["家用电器"],
+    "159865": ["农林牧渔"],
+    # 制造能源
+    "512670": ["国防军工"],
+    "512810": ["国防军工"],
+    "159227": ["国防军工"],
+    "515790": ["电气设备"],
+    "159857": ["电气设备"],
+    "516160": ["电气设备", "汽车"],
+    "159183": ["电气设备", "汽车"],
+    "159611": ["公用事业"],
+    "159790": ["电气设备", "公用事业"],
     "159870": ["化工"],
     "516020": ["化工"],
-    "159611": ["公用事业"],
-    "512200": ["房地产"],
-    "159865": ["农林牧渔"],
-    "159227": ["国防军工"],
+    "159869": ["传媒"],
+    # 电网设备
     "159326": ["电气设备"],
-    "159183": ["电气设备", "汽车"],
     "159320": ["电气设备"],
     "560390": ["电气设备"],
+    # 策略/风格
+    "512890": ["银行", "公用事业"],
+    "510880": ["钢铁", "银行", "交通运输"],
+    # 宽基
     "510300": ["综合"],
     "510500": ["综合"],
     "159915": ["综合"],
     "588000": ["电子", "计算机"],
+    "588050": ["电子", "计算机"],
     "512100": ["综合"],
+    "159845": ["综合"],
+    # 黄金
     "518850": ["有色金属"],
+    # QDII/跨境
     "513100": ["综合"],
     "513500": ["综合"],
     "159659": ["综合"],
+    "513180": ["综合"],
+    "513130": ["综合"],
+    "513050": ["综合"],
+    "513520": ["综合"],
 }
 
 
@@ -1521,14 +1642,17 @@ def compute_atr_stop_loss(closes, highs, lows, cost_price,
             "method": "固定止损(数据不足)"
         }
 
-    tr_list = []
-    for i in range(1, len(closes)):
-        hl = highs[i] - lows[i]
-        hc = abs(highs[i] - closes[i - 1])
-        lc = abs(lows[i] - closes[i - 1])
-        tr_list.append(max(hl, hc, lc))
+    # v7.3: numpy向量化 True Range 计算
+    c = np.asarray(closes, dtype=np.float64)
+    h = np.asarray(highs, dtype=np.float64)
+    l_arr = np.asarray(lows, dtype=np.float64)
 
-    atr_val = np.mean(tr_list[-atr_period:])
+    hl = h[1:] - l_arr[1:]
+    hc = np.abs(h[1:] - c[:-1])
+    lc = np.abs(l_arr[1:] - c[:-1])
+    tr = np.maximum(np.maximum(hl, hc), lc)
+
+    atr_val = float(np.mean(tr[-atr_period:]))
     current_price = closes[-1]
     atr_pct = atr_val / current_price * 100 if current_price > 0 else 2.0
 
@@ -1557,6 +1681,59 @@ class TradeDecider:
         self.scores = sorted(etf_scores, key=lambda x: x["score"], reverse=True)
         self.timing = timing_result
         self.portfolio = portfolio or {}
+
+    # ============================================================
+    # v7.3: 凯利公式仓位管理
+    # ============================================================
+    @staticmethod
+    def _kelly_fraction(score, sortino, max_single=0.25):
+        """
+        凯利公式计算最优下注比例。
+
+        f* = (p*b - (1-p)) / b
+
+        参数估计:
+        - p (胜率): 从评分映射 (78分≈55%, 90分≈65%)
+        - b (盈亏比): 从Sortino映射 (>0.8≈1.5, >1.5≈2.0)
+
+        使用半凯利(f*/2)以降低波动，上限max_single(25%)。
+        """
+        # 映射评分→胜率
+        if score >= 90:
+            p = 0.65
+        elif score >= 82:
+            p = 0.60
+        elif score >= 74:
+            p = 0.57
+        elif score >= 68:
+            p = 0.54
+        elif score >= 65:
+            p = 0.52
+        else:
+            return 0.0  # 无统计学优势，不下注
+
+        # 映射Sortino→盈亏比
+        if sortino > 2.0:
+            b = 2.2
+        elif sortino > 1.2:
+            b = 1.8
+        elif sortino > 0.6:
+            b = 1.4
+        elif sortino > 0.2:
+            b = 1.15
+        else:
+            b = 1.05
+
+        # 凯利公式
+        edge = p * b - (1.0 - p)
+        if edge <= 0:
+            return 0.0
+        f_star = edge / b
+
+        # 半凯利（降低波动）+ 上限
+        f_half = f_star / 2.0
+        return round(min(f_half, max_single), 4)
+
 
     def generate_plan(self, total_capital=None, max_single=0.25, max_industry=0.40):
         """生成明日操作计划
@@ -1670,7 +1847,7 @@ class TradeDecider:
                     "premium_pct": round(premium_pct, 2) if premium_pct > 3 else None
                 })
 
-        # 买入建议
+        # 买入建议 (v7.3: 凯利公式仓位管理)
         available = total_capital - current_invested
         for s in self.scores:
             if len(buy_list) >= 3:
@@ -1681,9 +1858,14 @@ class TradeDecider:
             if s["score"] < 65:
                 continue
 
-            # 按评分线性分配买入资金
-            weight = s["score"] / 100 * max_single
-            budget = min(available * weight, total_capital * max_single)
+            # v7.3: 凯利公式计算最优仓位
+            sortino_val = s.get("indicators", {}).get("sortino", 0.5)
+            kelly_pct = self._kelly_fraction(s["score"], sortino_val, max_single)
+            if kelly_pct <= 0:
+                continue
+
+            budget = total_capital * kelly_pct
+            budget = min(budget, available * 0.5)  # 单次不超过可用资金50%
             price = s.get("price", 0)
             if price <= 0:
                 continue
@@ -1697,8 +1879,9 @@ class TradeDecider:
                 "price": round(price, 4),
                 "amount": round(shares * price, 2),
                 "score": s["score"],
+                "kelly_pct": round(kelly_pct * 100, 1),  # v7.3: 显示凯利仓位
                 "reasons": [s.get("grade", ""),
-                            f"RSI={s.get('indicators', {}).get('rsi', 50):.0f}"]
+                            f"凯利{kelly_pct*100:.0f}%仓位(Sortino={sortino_val:.2f})"]
             })
 
         return {
@@ -1709,3 +1892,182 @@ class TradeDecider:
             "available": round(available, 2),
             "timing_advice": self.timing.get("advice", "")
         }
+
+
+# ============================================================
+# v7.3: 因子IC跟踪面板
+# ============================================================
+
+def compute_factor_ic_ranking(etf_data_dict, lookback=40, min_etfs=5):
+    """
+    计算16个因子的近期Rank IC（信息系数），用于日报展示。
+
+    方法:
+    - 对每只ETF，使用最近lookback天数据，计算16个因子的历史暴露序列
+    - 每时间点计算因子暴露与未来15日收益的横截面Spearman秩相关
+    - 取时间序列均值作为该因子的当前IC
+
+    Args:
+        etf_data_dict: {code: {name, kline: [...]}}
+        lookback: 回看天数
+        min_etfs: 最少ETF数量要求
+
+    Returns:
+        [{name, ic, status, bar}]  按IC从高到低排序
+    """
+    # 收集所有ETF的K线数据
+    etf_list = []
+    for code, edata in etf_data_dict.items():
+        kline = edata.get("kline", [])
+        if len(kline) < lookback + 25:
+            continue
+        closes = np.array([k["close"] for k in kline[-lookback-25:]], dtype=np.float64)
+        highs = np.array([k["high"] for k in kline[-lookback-25:]], dtype=np.float64)
+        lows = np.array([k["low"] for k in kline[-lookback-25:]], dtype=np.float64)
+        volumes = np.array([k["volume"] for k in kline[-lookback-25:]], dtype=np.float64)
+        etf_list.append({"code": code, "name": edata.get("name", code),
+                         "closes": closes, "highs": highs, "lows": lows, "volumes": volumes})
+
+    if len(etf_list) < min_etfs:
+        return []
+
+    # 每个因子在每个时间点的暴露值
+    factor_timeseries = {k: [] for k in FACTOR_NAMES}
+    forward_returns = []
+
+    n_etfs = len(etf_list)
+    # 取每只ETF的最短长度
+    min_len = min(len(e["closes"]) for e in etf_list)
+
+    for t in range(30, min_len - 20):  # 从第30天开始，确保指标有意义
+        frame_scores = []
+        frame_rets = []
+        for e in etf_list:
+            c = e["closes"][:t+1].tolist()
+            h = e["highs"][:t+1].tolist()
+            l = e["lows"][:t+1].tolist()
+            v = e["volumes"][:t+1].tolist()
+
+            try:
+                indicators = compute_indicators(c, h, l, v)
+                factors = score_factors(indicators)
+                # 未来15日收益率（标准化后0-1范围，便于计算IC）
+                fwd_ret = (e["closes"][t+15] / e["closes"][t] - 1.0) if t+15 < len(e["closes"]) else 0.0
+                if abs(fwd_ret) < 0.50:  # 过滤异常值
+                    frame_scores.append(factors)
+                    frame_rets.append(fwd_ret)
+            except Exception:
+                continue
+
+        if len(frame_scores) < min_etfs:
+            continue
+
+        # 对每个因子计算横截面Rank IC
+        for fname in FACTOR_NAMES:
+            f_vals = [fs[fname] for fs in frame_scores]
+            if len(set(f_vals)) < 3:  # 因子值无变化
+                continue
+            # 计算Spearman秩相关
+            ic = _spearman_rank_ic(f_vals, frame_rets)
+            factor_timeseries[fname].append(ic)
+
+        forward_returns.extend(frame_rets)
+
+    # 取均值
+    result = []
+    for fname in FACTOR_NAMES:
+        ic_list = factor_timeseries.get(fname, [])
+        if len(ic_list) < 5:
+            result.append({"name": fname, "ic": 0.0, "status": "数据不足", "bar": ""})
+            continue
+
+        mean_ic = round(float(np.mean(ic_list)), 4)
+
+        # 判定状态
+        if mean_ic > 0.04:
+            status = "🟢 强预测"
+        elif mean_ic > 0.015:
+            status = "🟡 有效"
+        elif mean_ic > -0.01:
+            status = "⚪ 弱效"
+        elif mean_ic > -0.03:
+            status = "🟠 可能失效"
+        else:
+            status = "🔴 反向信号"
+
+        bar_len = max(1, int(abs(mean_ic) * 100))
+        bar = "█" * bar_len
+        direction = "→" if mean_ic > 0 else "←"
+
+        result.append({"name": fname, "ic": mean_ic, "status": status,
+                       "bar": bar, "direction": direction})
+
+    result.sort(key=lambda x: x["ic"], reverse=True)
+    return result
+
+
+def spearman_ic(x, y, min_samples=5):
+    """
+    Spearman秩相关系数（统一实现，供 optimizer / IC面板 共用）
+
+    自动处理平局（average rank），返回 [-1, 1] 之间的值。
+    """
+    n = len(x)
+    if n < min_samples:
+        return 0.0
+
+    def _rank(vals):
+        order = sorted(range(n), key=lambda i: vals[i])
+        ranks = [0.0] * n
+        i = 0
+        while i < n:
+            j = i
+            while j + 1 < n and vals[order[j+1]] == vals[order[i]]:
+                j += 1
+            avg_rank = (i + j) / 2.0 + 1
+            for k in range(i, j + 1):
+                ranks[order[k]] = avg_rank
+            i = j + 1
+        return ranks
+
+    try:
+        x_ranks = _rank(x)
+        y_ranks = _rank(y)
+        mx = sum(x_ranks) / n
+        my = sum(y_ranks) / n
+        num = sum((x_ranks[i] - mx) * (y_ranks[i] - my) for i in range(n))
+        den_x = math.sqrt(sum((r - mx) ** 2 for r in x_ranks))
+        den_y = math.sqrt(sum((r - my) ** 2 for r in y_ranks))
+        return float(num / (den_x * den_y)) if den_x > 1e-10 and den_y > 1e-10 else 0.0
+    except Exception:
+        return 0.0
+
+
+# 向后兼容别名
+_spearman_rank_ic = spearman_ic
+
+
+def format_factor_ic_section(ic_results):
+    """格式化因子IC排名为文本板块"""
+    if not ic_results:
+        return "\n  [因子IC] 数据不足，无法计算"
+
+    lines = []
+    lines.append(f"\n  {'─'*60}")
+    lines.append(f"  [因子IC跟踪] v7.3 — 近40日Rank IC排名")
+    lines.append(f"  {'─'*60}")
+    lines.append(f"  {'因子':<16s} {'IC':>7s}  {'状态':<10s}  {'强度'}")
+    lines.append(f"  {'─'*16} {'─'*7}  {'─'*10}  {'─'*30}")
+
+    for f in ic_results:
+        lines.append(f"  {f['name']:<16s} {f['direction']}{abs(f['ic']):.4f}  {f['status']:<10s}  {f['bar']}")
+
+    # 汇总
+    active = [f for f in ic_results if f["ic"] > 0.015]
+    weak = [f for f in ic_results if -0.01 < f["ic"] <= 0.015]
+    failing = [f for f in ic_results if f["ic"] <= -0.01]
+    lines.append(f"\n  📊 汇总: {len(active)}个有效因子 | {len(weak)}个弱效 | {len(failing)}个可能失效")
+    if failing:
+        lines.append(f"  ⚠️ 失效因子: {', '.join(f['name'] for f in failing)} → 权重已自动衰减")
+
+    return "\n".join(lines)

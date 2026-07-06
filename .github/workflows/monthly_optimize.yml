@@ -1,10 +1,14 @@
 name: 月度自适应参数优化 (条件触发)
 
-# v7.1: 条件触发式 — 由 cron-job.org 每月1号21:00触发
+# 由 cron-job.org 每月1号21:00触发
 # 先检查条件 → 满足才优化 → 自动提交
-# 可手动触发（无视条件）
 on:
   workflow_dispatch:
+
+# 防止并发运行导致 git push 冲突
+concurrency:
+  group: monthly-optimize
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -26,7 +30,7 @@ jobs:
           python-version: '3.12'
 
       - name: 安装依赖
-        run: pip install pandas numpy
+        run: pip install -r requirements.txt
 
       - name: 检查是否需要优化
         id: check
@@ -71,10 +75,15 @@ jobs:
           python-version: '3.12'
 
       - name: 安装依赖
-        run: pip install pandas numpy
+        run: pip install -r requirements.txt
 
-      - name: 拉取最新权重（合并可能的手动提交）
-        run: git pull origin main
+      - name: 拉取最新权重（仅快进，拒绝合并冲突）
+        run: |
+          git pull origin main --ff-only || {
+            echo "git pull --ff-only 失败，可能存在远程冲突。"
+            echo "请手动检查 factor_weights.json 的远程变更后再触发优化。"
+            exit 1
+          }
 
       - name: 运行参数优化
         env:
