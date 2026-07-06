@@ -595,6 +595,192 @@ def format_stress_test_section(stress_result):
         bar = "█" * bar_len
         lines.append(f"  {sc['verdict']} {sc['name']}: {sc['loss_pct']:+.1f}% ({sc['loss_amount']:+.0f}元) {bar}")
         lines.append(f"     {sc['description']}")
+        ph = sorted(sc["per_holding"], key=lambda x: x["loss_contribution"])[:3]
+        ph_str = " | ".join(f"{p['name']}({p['shock_pct']:+.1f}%)" for p in ph if p["loss_contribution"] < -0.5)
+        if ph_str:
+            lines.append(f"     最大冲击: {ph_str}")
+
+    lines.append(f"\n  平均损失: {stress_result['average_loss_pct']:+.1f}% | "
+                f"最差场景: {stress_result['worst_scenario']['name']} ({stress_result['worst_scenario']['loss_pct']:+.1f}%)")
+    lines.append(f"  {stress_result['advice']}")
+    return "\n".join(lines)
+
+
+# ============================================================
+# v8.0 P2-9: 蒙特卡洛压力测试
+# ============================================================
+def monte_carlo_simulation(etf_data, portfolio, n_simulations=1000,
+                            horizon_days=20, confidence_levels=(95, 99)):
+    """
+    蒙特卡洛模拟：从历史收益率中随机抽样，生成N条未来路径。
+
+    与硬编码历史场景不同，MC模拟能捕捉历史中未出现的组合冲击.
+    使用Bootstrap方法（有放回抽样）保持收益率之间的相关性结构。
+
+    Args:
+        etf_data: {code: {kline: [{close,...},...]}}
+        portfolio: {code: {shares, cost, current_price, name}, _available_cash: ...}
+        n_simulations: 模拟路径数 (默认1000)
+        horizon_days: 预测周期天数 (默认20个交易日≈1个月)
+        confidence_levels: VaR置信水平
+
+    Returns: {
+        "var_95": -82.5,       # 95%置信度下最差日损失(元)
+        "var_99": -145.3,      # 99%置信度下最差日损失(元)
+        "cvar_95": -105.2,     # 95%尾部期望损失
+        "max_loss": -210.5,    # 模拟中最差情况
+        "mean_return": 0.012,  # 平均收益
+        "prob_profit": 0.62,   # 盈利概率
+        "prob_loss_gt_5pct": 0.08,  # 损失>5%的概率
+        "paths_sample": [...], # 10条典型路径(用于可视化)
+        "n_simulations": 1000,
+        "horizon_days": 20
+    }
+    """
+    import numpy as np
+
+    holdings_list = []
+    for code, pos in portfolio.items():
+        if code.startswith("_"):
+            continue
+        if not isinstance(pos, dict) or "shares" not in pos:
+            continue
+        price = pos.get("current_price", pos.get("cost", 0))
+        if price <= 0:
+            continue
+        value = pos["shares"] * price
+        holdings_list.append({
+            "code": code, "name": pos.get("name", code),
+            "shares": pos["shares"], "price": price, "value": value
+        })
+
+    if not holdings_list:
+        return {"error": "无有效持仓", "n_simulations": n_simulations}
+
+    total_value = sum(h["value"] for h in holdings_list)
+    cash = portfolio.get("_available_cash", 0)
+    total_assets = total_value + cash
+
+    # 提取历史日收益率
+    etf_returns = {}
+    min_len = float("inf")
+    for h in holdings_list:
+        kline = etf_data.get(h["code"], {}).get("kline", [])
+        if len(kline) < 30:
+            continue
+        closes = np.array([k["close"] for k in kline], dtype=np.float64)
+        rets = np.diff(closes) / closes[:-1]
+        etf_returns[h["code"]] = rets
+        min_len = min(min_len, len(rets))
+
+    if not etf_returns:
+        return {"error": "K线数据不足", "n_simulations": n_simulations}
+
+    # 对齐到最短长度
+    min_len = min(min_len, min(len(r) for r in etf_returns.values()))
+    aligned_rets = {}
+    for code, rets in etf_returns.items():
+        aligned_rets[code] = rets[-min_len:]
+
+    codes = list(aligned_rets.keys())
+    weights = np.array([h["value"] / total_value if total_value > 0 else 0
+                        for h in holdings_list if h["code"] in codes])
+
+    # 构建联合收益率矩阵 (n_days × n_etfs)
+    ret_matrix = np.column_stack([aligned_rets[c] for c in codes])
+    n_days = len(ret_matrix)
+
+    # 蒙特卡洛模拟
+    np.random.seed(42)  # 可复现
+    sim_end_values = np.zeros(n_simulations)
+
+    # 保存10条典型路径
+    sample_paths = []
+    sample_indices = np.linspace(0, n_simulations - 1, min(10, n_simulations), dtype=int)
+
+    for sim in range(n_simulations):
+        # Bootstrap: 有放回地随机抽取 horizon_days 个交易日
+        boot_indices = np.random.randint(0, n_days, size=horizon_days)
+        # 累计收益
+        port_returns = np.sum(ret_matrix[boot_indices] * weights, axis=1)
+        cumulative = np.prod(1 + port_returns)
+        sim_end_values[sim] = total_value * cumulative
+
+        if sim in sample_indices:
+            path = [total_value]
+            for r in port_returns:
+                path.append(path[-1] * (1 + r))
+            sample_paths.append(path)
+
+    # 统计
+    sim_returns = (sim_end_values - total_value) / total_value
+
+    var_95 = float(np.percentile(sim_returns, 100 - confidence_levels[0])) * total_value
+    var_99 = float(np.percentile(sim_returns, 100 - confidence_levels[1])) * total_value
+
+    cvar_cutoff = np.percentile(sim_returns, 5)
+    tail_returns = sim_returns[sim_returns <= cvar_cutoff]
+    cvar_95 = float(np.mean(tail_returns)) * total_value if len(tail_returns) > 0 else var_95
+
+    max_loss = float(np.min(sim_returns)) * total_value
+    mean_return = float(np.mean(sim_returns))
+    prob_profit = float(np.mean(sim_returns > 0))
+    prob_loss_gt_5pct = float(np.mean(sim_returns < -0.05))
+
+    return {
+        "var_95": round(var_95, 2),
+        "var_99": round(var_99, 2),
+        "cvar_95": round(cvar_95, 2),
+        "max_loss": round(max_loss, 2),
+        "mean_return": round(mean_return, 4),
+        "prob_profit": round(prob_profit, 3),
+        "prob_loss_gt_5pct": round(prob_loss_gt_5pct, 3),
+        "paths_sample": sample_paths,
+        "var_95_pct": round(var_95 / total_assets * 100, 2) if total_assets > 0 else 0,
+        "var_99_pct": round(var_99 / total_assets * 100, 2) if total_assets > 0 else 0,
+        "n_simulations": n_simulations,
+        "horizon_days": horizon_days,
+        "total_assets": total_assets
+    }
+
+
+def format_monte_carlo_section(mc_result):
+    """格式化蒙特卡洛结果"""
+    if mc_result.get("error"):
+        return f"\n  [蒙特卡洛模拟] 跳过: {mc_result['error']}"
+
+    lines = []
+    lines.append(f"\n  {'─'*60}")
+    lines.append(f"  [蒙特卡洛压力测试] v8.0 — {mc_result['n_simulations']}条路径×{mc_result['horizon_days']}天")
+    lines.append(f"  {'─'*60}")
+    lines.append(f"  VaR(95%): {mc_result['var_95']:+.0f}元 ({mc_result['var_95_pct']:+.1f}%) | "
+                f"VaR(99%): {mc_result['var_99']:+.0f}元 ({mc_result['var_99_pct']:+.1f}%)")
+    lines.append(f"  CVaR(95%): {mc_result['cvar_95']:+.0f}元 | 最差: {mc_result['max_loss']:+.0f}元")
+    lines.append(f"  盈利概率: {mc_result['prob_profit']:.0%} | 损失>5%概率: {mc_result['prob_loss_gt_5pct']:.0%} | "
+                f"平均收益: {mc_result['mean_return']:+.2%}")
+
+    # 解读
+    if mc_result.get("var_95_pct", 0) > -5:
+        lines.append(f"  ✅ 风险可控: 95%概率下{mc_result['horizon_days']}天内损失不超过{abs(mc_result['var_95_pct']):.1f}%")
+    elif mc_result.get("var_95_pct", 0) > -10:
+        lines.append(f"  🟡 中度风险: 95%概率下损失不超过{abs(mc_result['var_95_pct']):.1f}%")
+    else:
+        lines.append(f"  ⚠️ 高风险: 95%概率下损失可能超过{abs(mc_result['var_95_pct']):.1f}%")
+
+    if mc_result["prob_loss_gt_5pct"] > 0.20:
+        lines.append(f"  ⚠️ 损失>5%的概率达{mc_result['prob_loss_gt_5pct']:.0%}，建议降低仓位")
+    return "\n".join(lines)
+    """格式化压力测试为文本板块"""
+    lines = []
+    lines.append(f"\n  {'─'*60}")
+    lines.append(f"  [历史压力测试] v7.3 — 5个极端场景回放")
+    lines.append(f"  {'─'*60}")
+
+    for sc in stress_result["scenarios"]:
+        bar_len = max(1, int(abs(sc["loss_pct"]) * 2))
+        bar = "█" * bar_len
+        lines.append(f"  {sc['verdict']} {sc['name']}: {sc['loss_pct']:+.1f}% ({sc['loss_amount']:+.0f}元) {bar}")
+        lines.append(f"     {sc['description']}")
         # 贡献最大的持仓
         ph = sorted(sc["per_holding"], key=lambda x: x["loss_contribution"])[:3]
         ph_str = " | ".join(f"{p['name']}({p['shock_pct']:+.1f}%)" for p in ph if p["loss_contribution"] < -0.5)

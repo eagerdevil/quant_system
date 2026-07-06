@@ -64,7 +64,8 @@ from quant_engine import (
 )
 from report_mailer import generate_html_report, send_email, MonthlyReview
 from risk_engine import (portfolio_risk_report, format_risk_section,
-                         stress_test_portfolio, format_stress_test_section)
+                         stress_test_portfolio, format_stress_test_section,
+                         monte_carlo_simulation, format_monte_carlo_section)
 from performance_tracker import generate_performance_summary
 
 TODAY = datetime.now().strftime("%Y%m%d")
@@ -530,6 +531,10 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
         # v7.3: 压力测试（依赖行业暴露数据）
         stress = stress_test_portfolio(portfolio, port_summary)
         lines.append(format_stress_test_section(stress))
+
+        # v8.0: 蒙特卡洛模拟
+        mc = monte_carlo_simulation(etf_data_map, portfolio, n_simulations=1000, horizon_days=20)
+        lines.append(format_monte_carlo_section(mc))
 
     # ===== 因子IC跟踪（v7.3 新增）=====
     if etf_data_map:

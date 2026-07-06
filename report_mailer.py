@@ -68,6 +68,107 @@ def load_latest_report():
     with open(path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
+def _generate_speedview(report_data):
+    """v8.0 P1-4: 30秒速览 — 邮件最顶部的精华摘要"""
+    timing = report_data.get("timing", {})
+    port = report_data.get("portfolio", {})
+    benchmark = report_data.get("benchmark", {})
+    scores = report_data.get("scores", [])
+
+    # 1. 市场状态
+    regime_name = timing.get("regime_name", "?")
+    bull_signals = timing.get("bull_signals", 0)
+    total_signals = timing.get("total_signals", 6)
+    pos_pct = int(timing.get("base_position", 0) * 100)
+
+    regime_colors = {
+        "趋势上涨": "#00ff88", "震荡整理": "#ffa502",
+        "趋势下跌": "#ff4757", "危机模式": "#ff0000"
+    }
+    regime_color = regime_colors.get(regime_name, "#ffa502")
+
+    # 2. 持仓快照
+    holdings = port.get("holdings", [])
+    holding_alerts = []
+    for h in holdings:
+        pnl = h.get("pnl_pct", 0)
+        daily = h.get("daily_pnl_pct", 0)
+        alerts = []
+        if pnl <= -7:
+            alerts.append(f"⚠️接近止损({pnl:.1f}%)")
+        if pnl <= -5:
+            alerts.append(f"⚠️亏损{pnl:.1f}%")
+        if daily >= 3:
+            alerts.append(f"🔥今日大涨{daily:+.1f}%")
+        elif daily <= -3:
+            alerts.append(f"📉今日大跌{daily:.1f}%")
+        if alerts:
+            holding_alerts.append({"name": h.get("name", "?"), "code": h.get("code", ""),
+                                   "pnl_pct": pnl, "daily_pnl_pct": daily,
+                                   "score": h.get("score", 0), "alerts": alerts})
+
+    # 3. 今日关注（买入机会）
+    buy_signals = []
+    buy_list = report_data.get("plan", {}).get("buy_list", [])
+    if buy_list:
+        best = buy_list[0]
+        buy_signals.append(f"买入机会: {best.get('name','?')} "
+                          f"({best.get('code','?')}) {best.get('shares',0)}股")
+    sell_list = report_data.get("plan", {}).get("sell_list", [])
+    if sell_list:
+        urgent = sell_list[0]
+        buy_signals.append(f"⚠️ 卖出信号: {urgent.get('name','?')} — {urgent.get('reason','?')}")
+
+    # 4. 构建HTML
+    total_assets = port.get("total_assets", 0)
+    daily_pnl = port.get("total_daily_pnl", 0)
+    daily_color = "#00ff88" if daily_pnl >= 0 else "#ff4757"
+    daily_icon = "📈" if daily_pnl >= 0 else "📉"
+
+    html = '<div class="card" style="border: 2px solid #e94560;"><h2>⚡ 30秒速览</h2>'
+
+    # 数字概览行
+    html += '<div class="summary-grid">'
+    html += f'<div class="summary-item"><div class="label">总资产</div><div class="big" style="color:#58a6ff">{total_assets:.0f}元</div></div>'
+    html += f'<div class="summary-item"><div class="label">今日盈亏</div><div class="big" style="color:{daily_color}">{daily_icon} {daily_pnl:+.0f}元</div></div>'
+    html += f'<div class="summary-item"><div class="label">市场状态</div><div class="big" style="color:{regime_color}">{regime_name}</div></div>'
+    html += '</div>'
+
+    # 持仓状态行
+    html += '<div style="margin-top:12px">'
+    html += f'<b>📊 仓位:</b> 建议{pos_pct}% | 信号{bull_signals}/{total_signals} | '
+    if benchmark and benchmark.get("beat_benchmark") is not None:
+        beat = benchmark.get("beat_benchmark", False)
+        excess = benchmark.get("excess_return", 0)
+        html += f'基准: {"✅跑赢" if beat else "❌跑输"}(超额{excess:+.1%})'
+    else:
+        html += '基准: -'
+    html += '</div>'
+
+    # 持仓告警
+    if holding_alerts:
+        for ha in holding_alerts:
+            alert_class = "summary-alert" if ha["pnl_pct"] < -5 else "summary-good"
+            html += f'<div class="{alert_class}">'
+            html += f'<b>{ha["name"]}</b>({ha["code"]}) | 评分{ha["score"]} | 累计{ha["pnl_pct"]:+.1f}% | 今日{ha["daily_pnl_pct"]:+.1f}%'
+            for a in ha["alerts"]:
+                html += f' | {a}'
+            html += '</div>'
+
+    # 今日关注
+    if buy_signals:
+        for bs in buy_signals:
+            if "卖出" in bs:
+                html += f'<div class="summary-alert">{bs}</div>'
+            else:
+                html += f'<div class="summary-good">{bs}</div>'
+    elif not holding_alerts:
+        html += '<div class="summary-good">✅ 今日无异常，持仓状态健康</div>'
+
+    html += '</div>'
+    return html
+
+
 def generate_html_report(report_data):
     """生成HTML格式的邮件报告 — 增强版"""
     if not report_data:
@@ -107,9 +208,18 @@ def generate_html_report(report_data):
     .position-bar {{ background: #0f3460; height: 20px; border-radius: 10px; overflow: hidden; margin: 10px 0; }}
     .position-fill {{ background: linear-gradient(90deg, #e94560, #ffa502, #00ff88); height: 100%; transition: width 0.5s; }}
     .limit {{ color: #ff4757; font-size: 12px; }}
+    .summary-grid {{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }}
+    .summary-item {{ background: #0f1117; border-radius: 8px; padding: 14px; text-align: center; }}
+    .summary-item .big {{ font-size: 24px; font-weight: 700; }}
+    .summary-item .label {{ font-size: 11px; color: #8b949e; margin-bottom: 4px; }}
+    .summary-alert {{ background: #2d1a1a; border-left: 3px solid #ff4757; padding: 8px 12px; margin-top: 10px; border-radius: 4px; font-size: 13px; }}
+    .summary-good {{ background: #1a2d1a; border-left: 3px solid #00ff88; padding: 8px 12px; margin-top: 10px; border-radius: 4px; font-size: 13px; }}
     </style></head><body>
 
     <div class="header"><h1>A股量化决策系统 - 每日报告</h1><p>{datetime.now().strftime('%Y年%m月%d日')} | 收盘后自动生成</p></div>
+
+    <!-- v8.0: 30秒速览 -->
+    {_generate_speedview(report_data)}
 
     <!-- 大盘择时 -->
     <div class="card"><h2>大盘择时</h2>

@@ -527,11 +527,243 @@ def _calc_metrics(equity_curve, initial_capital, trades):
     }
 
 
-if __name__ == "__main__":
-    # 简易测试
-    import sys, logging
-    start = sys.argv[2] if len(sys.argv) > 2 and sys.argv[1] == "--start" else DEFAULT_START
-    data = prepare_backtest_data(start)
+# ============================================================
+# v8.0 P2-10: 回测报告一键生成
+# ============================================================
+def generate_full_report(start_date=None, end_date=None, output_path=None):
+    """
+    运行完整回测并生成自包含HTML报告。
+
+    报告包含:
+    1. 权益曲线 (组合 vs 基准)
+    2. 年度收益表
+    3. 最大回撤区间图
+    4. 月度收益热力图数据
+    5. 交易记录
+    6. 绩效指标面板
+
+    Args:
+        start_date: 回测起始日期 (默认 2024-01-01)
+        end_date: 回测结束日期 (默认今天)
+        output_path: 输出HTML路径 (默认 backtest_report_{date}.html)
+
+    返回: output_path
+    """
+    import numpy as np
+
+    if start_date is None:
+        start_date = DEFAULT_START
+    if end_date is None:
+        end_date = datetime.now().strftime("%Y-%m-%d")
+    if output_path is None:
+        output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   f"backtest_report_{datetime.now().strftime('%Y%m%d')}.html")
+
+    logger.info(f"回测报告: {start_date} → {end_date}")
+
+    # 运行回测
+    data = prepare_backtest_data(start_date, end_date)
+    if data is None:
+        raise RuntimeError("回测数据准备失败")
+
     result = run_backtest(data)
-    if result:
-        print(json.dumps(result["metrics"], ensure_ascii=False, indent=2))
+    if result is None:
+        raise RuntimeError("回测执行失败")
+
+    metrics = result["metrics"]
+    equity = result["equity_curve"]
+    trades = result["trades"]
+    benchmark = result.get("benchmark_navs", [])
+
+    # ===== 计算报表数据 =====
+    # 年度收益
+    annual_returns = {}
+    for i in range(1, len(equity)):
+        prev = datetime.strptime(equity[i - 1]["date"], "%Y-%m-%d")
+        curr = datetime.strptime(equity[i]["date"], "%Y-%m-%d")
+        year = curr.year
+        if year not in annual_returns:
+            annual_returns[year] = equity[i]["nav"] / equity[i - 1]["nav"] - 1
+        else:
+            annual_returns[year] = (1 + annual_returns[year]) * (equity[i]["nav"] / equity[i - 1]["nav"]) - 1
+
+    # 月度收益
+    monthly_returns = {}
+    for i in range(1, len(equity)):
+        curr = datetime.strptime(equity[i]["date"], "%Y-%m-%d")
+        key = curr.strftime("%Y-%m")
+        if key not in monthly_returns:
+            monthly_returns[key] = equity[i]["nav"] / equity[i - 1]["nav"] - 1
+        else:
+            monthly_returns[key] = (1 + monthly_returns[key]) * (equity[i]["nav"] / equity[i - 1]["nav"]) - 1
+
+    # 权益曲线JSON (for Chart.js)
+    navs = [{"date": e["date"], "nav": round(e["nav"], 2)} for e in equity]
+    bench_navs = [{"date": e["date"], "nav": round(e["nav"], 2)} for e in benchmark] if benchmark else []
+
+    # 交易汇总
+    buy_count = len([t for t in trades if t["action"] == "BUY"])
+    sell_count = len([t for t in trades if t["action"] == "SELL"])
+
+    # ===== 生成HTML =====
+    html = f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>量化策略回测报告 | {start_date} → {end_date}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {{ --bg: #0f1117; --card: #1a1d27; --border: #2a2d3a; --text: #e1e4e8; --text2: #8b949e;
+    --green: #3fb950; --red: #f85149; --blue: #58a6ff; --gold: #d2991d; }}
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{ font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }}
+  .container {{ max-width: 1200px; margin: 0 auto; padding: 24px 20px; }}
+  h1 {{ font-size: 28px; font-weight: 700; background: linear-gradient(135deg, var(--blue), var(--purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+  .subtitle {{ color: var(--text2); font-size: 14px; margin-bottom: 28px; }}
+  .metrics {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }}
+  .metric {{ background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }}
+  .metric .label {{ font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }}
+  .metric .value {{ font-size: 24px; font-weight: 700; margin-top: 4px; }}
+  .pos {{ color: var(--green); }} .neg {{ color: var(--red); }} .neutral {{ color: var(--blue); }}
+  .chart-box {{ background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }}
+  .chart-box h2 {{ color: var(--blue); font-size: 16px; margin-bottom: 12px; }}
+  table {{ width: 100%; border-collapse: collapse; font-size: 13px; }}
+  th, td {{ padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }}
+  th {{ background: var(--border); color: var(--text2); font-weight: 600; }}
+  .footer {{ text-align: center; color: var(--text2); margin-top: 40px; font-size: 11px; }}
+</style></head><body><div class="container">
+<h1>📊 量化策略回测报告</h1>
+<div class="subtitle">回测区间: {start_date} → {end_date} | 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M')} | 初始资金: {metrics['initial_capital']:,.0f}元</div>
+
+<!-- 绩效指标 -->
+<div class="metrics">
+<div class="metric"><div class="label">累计收益</div><div class="value {'pos' if metrics['total_return_pct']>=0 else 'neg'}">{metrics['total_return_pct']:+.1f}%</div></div>
+<div class="metric"><div class="label">年化收益</div><div class="value {'pos' if metrics['annual_return_pct']>=0 else 'neg'}">{metrics['annual_return_pct']:+.1f}%</div></div>
+<div class="metric"><div class="label">夏普比率</div><div class="value neutral">{metrics['sharpe_ratio']:.2f}</div></div>
+<div class="metric"><div class="label">最大回撤</div><div class="value neg">{metrics['max_drawdown_pct']:.1f}%</div></div>
+<div class="metric"><div class="label">Calmar</div><div class="value neutral">{metrics['calmar_ratio']:.2f}</div></div>
+<div class="metric"><div class="label">胜率</div><div class="value {'pos' if metrics['trade_win_rate']>=50 else 'neg'}">{metrics['trade_win_rate']:.0f}%</div></div>
+<div class="metric"><div class="label">盈亏比</div><div class="value neutral">{metrics.get('profit_factor', 0):.2f}</div></div>
+<div class="metric"><div class="label">超额收益</div><div class="value {'pos' if metrics['excess_return_pct']>=0 else 'neg'}">{metrics['excess_return_pct']:+.1f}%</div></div>
+<div class="metric"><div class="label">总交易</div><div class="value neutral">{metrics['total_trades']}</div></div>
+<div class="metric"><div class="label">最终净值</div><div class="value neutral">{metrics['final_nav']:.0f}元</div></div>
+</div>
+
+<!-- 权益曲线 -->
+<div class="chart-box"><h2>权益曲线 (组合 vs 基准)</h2>
+<canvas id="equityChart" height="300"></canvas></div>
+
+<!-- 回撤 -->
+<div class="chart-box"><h2>回撤曲线</h2>
+<canvas id="drawdownChart" height="200"></canvas></div>
+"""
+
+    # 年度收益表
+    html += '<div class="chart-box"><h2>年度收益</h2><table><tr><th>年份</th><th>收益率</th></tr>'
+    for year in sorted(annual_returns.keys()):
+        ret = annual_returns[year] * 100
+        html += f'<tr><td>{year}</td><td class="{"pos" if ret>=0 else "neg"}">{ret:+.1f}%</td></tr>'
+    html += '</table></div>'
+
+    # 交易记录 (最近20条)
+    html += '<div class="chart-box"><h2>交易记录 (最近20笔)</h2><table>'
+    html += '<tr><th>日期</th><th>操作</th><th>代码</th><th>名称</th><th>价格</th><th>数量</th><th>金额</th></tr>'
+    for t in trades[-20:]:
+        act_color = "pos" if t["action"] == "BUY" else "neg"
+        html += f'<tr><td>{t["date"]}</td><td class="{act_color}">{t["action"]}</td><td>{t["code"]}</td><td>{t["name"]}</td><td>{t["price"]:.4f}</td><td>{t["shares"]}</td><td>{t["amount"]:.0f}</td></tr>'
+    html += '</table></div>'
+
+    # 权益曲线 JSON
+    navs_json = json.dumps(navs, ensure_ascii=False)
+    bench_json = json.dumps(bench_navs, ensure_ascii=False)
+
+    # 计算回撤序列
+    max_so_far = 0
+    dd_series = []
+    for e in navs:
+        max_so_far = max(max_so_far, e["nav"])
+        dd = (e["nav"] - max_so_far) / max_so_far * 100 if max_so_far > 0 else 0
+        dd_series.append({"date": e["date"], "dd": round(dd, 2)})
+    dd_json = json.dumps(dd_series, ensure_ascii=False)
+
+    html += f"""
+<div class="footer">
+  <p>🤖 量化策略回测报告 | 由 backtest_engine.py v8.0 自动生成</p>
+  <p>⚠️ 过去表现不代表未来收益 | 仅供学习参考，不构成投资建议</p>
+</div></div>
+
+<script>
+const navs = {navs_json};
+const bench = {bench_json};
+const dd = {dd_json};
+
+// 权益曲线
+new Chart(document.getElementById('equityChart'), {{
+  type: 'line',
+  data: {{
+    labels: navs.map(e => e.date.slice(5)),
+    datasets: [
+      {{ label: '策略组合', data: navs.map(e => e.nav), borderColor: '#58a6ff', backgroundColor: 'rgba(88,166,255,0.1)', fill: true, tension: 0.3, pointRadius: 0 }},
+      {'{'} label: '基准(沪深300)', data: bench.map(e => e.nav), borderColor: '#8b949e', borderDash: [5,5], tension: 0.3, pointRadius: 0 {'}' if bench else ''}
+    ].filter(Boolean)
+  }},
+  options: {{
+    responsive: true,
+    plugins: {{ legend: {{ labels: {{ color: '#e1e4e8' }} }} }},
+    scales: {{
+      x: {{ ticks: {{ color: '#8b949e', maxTicksLimit: 20 }} }},
+      y: {{ ticks: {{ color: '#8b949e', callback: v => v.toFixed(0) + '元' }} }}
+    }}
+  }}
+}});
+
+// 回撤曲线
+new Chart(document.getElementById('drawdownChart'), {{
+  type: 'line',
+  data: {{
+    labels: dd.map(e => e.date.slice(5)),
+    datasets: [{{ label: '回撤%', data: dd.map(e => e.dd), borderColor: '#f85149', backgroundColor: 'rgba(248,81,73,0.2)', fill: true, tension: 0.3, pointRadius: 0 }}]
+  }},
+  options: {{
+    responsive: true,
+    plugins: {{ legend: {{ labels: {{ color: '#e1e4e8' }} }} }},
+    scales: {{
+      x: {{ ticks: {{ color: '#8b949e', maxTicksLimit: 20 }} }},
+      y: {{ ticks: {{ color: '#8b949e', callback: v => v.toFixed(1) + '%' }}, max: 0 }}
+    }}
+  }}
+}});
+</script>
+</body></html>"""
+
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(html)
+
+    logger.info(f"回测报告已生成: {output_path}")
+    logger.info(f"  累计收益: {metrics['total_return_pct']:+.1f}%")
+    logger.info(f"  年化收益: {metrics['annual_return_pct']:+.1f}%")
+    logger.info(f"  夏普比率: {metrics['sharpe_ratio']:.2f}")
+    logger.info(f"  最大回撤: {metrics['max_drawdown_pct']:.1f}%")
+    logger.info(f"  超额收益: {metrics['excess_return_pct']:+.1f}%")
+
+    return output_path
+
+
+if __name__ == "__main__":
+    import sys, logging
+    if "--report" in sys.argv:
+        # v8.0: 一键回测报告
+        start = sys.argv[2] if len(sys.argv) > 2 and not sys.argv[1].startswith("--") else DEFAULT_START
+        output = sys.argv[3] if len(sys.argv) > 3 else None
+        path = generate_full_report(start_date=start, output_path=output)
+        print(f"Report generated: {path}")
+    else:
+        # 简易测试
+        start = sys.argv[2] if len(sys.argv) > 2 and sys.argv[1] == "--start" else DEFAULT_START
+        data = prepare_backtest_data(start)
+        result = run_backtest(data)
+        if result:
+            print(json.dumps(result["metrics"], ensure_ascii=False, indent=2))

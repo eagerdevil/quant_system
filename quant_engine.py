@@ -1734,6 +1734,50 @@ class TradeDecider:
         f_half = f_star / 2.0
         return round(min(f_half, max_single), 4)
 
+    # ============================================================
+    # v8.0 P2-8: 波动率加权仓位 (风险平价)
+    # ============================================================
+    @staticmethod
+    def _volatility_adjustments(candidates):
+        """
+        计算反波动率仓位权重 (Inverse Volatility / Risk Parity)。
+
+        逻辑: 低波动ETF应配更多仓位，高波动ETF应配更少。
+        w_i = (1/vol_i) / sum(1/vol_j)
+
+        Args:
+            candidates: [{code, indicators: {volatility: ...}}, ...]
+
+        Returns:
+            {code: vol_adjustment}, 其中 adjustment > 1 表示加仓, < 1 表示减仓
+        """
+        if len(candidates) <= 1:
+            return {c["code"]: 1.0 for c in candidates}
+
+        # 提取年化波动率（已经是小数形式，如0.25=25%）
+        vols = {}
+        for c in candidates:
+            vol = c.get("indicators", {}).get("volatility", 0.25)
+            # 约束在合理范围
+            vols[c["code"]] = max(0.08, min(0.60, vol))
+
+        # 反波动率权重
+        inv_vols = {code: 1.0 / v for code, v in vols.items()}
+        total_inv = sum(inv_vols.values())
+        raw_weights = {code: iv / total_inv for code, iv in inv_vols.items()}
+
+        # 标准化为调整因子: 1.0 = 平均，>1 = 低波动加仓，<1 = 高波动减仓
+        n = len(candidates)
+        adjustments = {}
+        for code in vols:
+            raw = raw_weights[code]
+            # 调整因子 = raw_weight / (1/n) = raw_weight * n
+            adj = raw * n
+            # 约束在0.5~1.8之间（不极端）
+            adjustments[code] = round(max(0.5, min(1.8, adj)), 3)
+
+        return adjustments
+
 
     def generate_plan(self, total_capital=None, max_single=0.25, max_industry=0.40):
         """生成明日操作计划
@@ -1847,24 +1891,39 @@ class TradeDecider:
                     "premium_pct": round(premium_pct, 2) if premium_pct > 3 else None
                 })
 
-        # 买入建议 (v7.3: 凯利公式仓位管理)
+        # 买入建议 (v8.0: 凯利公式 × 波动率加权)
         available = total_capital - current_invested
+
+        # v8.0: 先收集所有候选，计算波动率调整因子
+        buy_candidates = []
         for s in self.scores:
-            if len(buy_list) >= 3:
+            if len(buy_candidates) >= 6:  # 收集更多候选用于波动率比较
                 break
-            code = s["code"]
-            if code in self.portfolio:
+            if s["code"] in self.portfolio:
                 continue
             if s["score"] < 65:
                 continue
-
-            # v7.3: 凯利公式计算最优仓位
             sortino_val = s.get("indicators", {}).get("sortino", 0.5)
             kelly_pct = self._kelly_fraction(s["score"], sortino_val, max_single)
             if kelly_pct <= 0:
                 continue
+            buy_candidates.append({**s, "_kelly_pct": kelly_pct, "_sortino": sortino_val})
 
-            budget = total_capital * kelly_pct
+        # v8.0: 波动率调整因子
+        vol_adjs = self._volatility_adjustments(buy_candidates)
+
+        for s in buy_candidates:
+            if len(buy_list) >= 3:
+                break
+            code = s["code"]
+            kelly_pct = s["_kelly_pct"]
+            sortino_val = s["_sortino"]
+
+            # v8.0: 凯利 × 波动率调整 = 最终仓位
+            vol_adj = vol_adjs.get(code, 1.0)
+            final_pct = kelly_pct * vol_adj
+
+            budget = total_capital * final_pct
             budget = min(budget, available * 0.5)  # 单次不超过可用资金50%
             price = s.get("price", 0)
             if price <= 0:
@@ -1873,15 +1932,21 @@ class TradeDecider:
             if shares < 100:
                 continue
 
+            # 构建理由
+            reasons = [s.get("grade", "")]
+            vol_label = "低波动+" if vol_adj > 1.15 else ("高波动-" if vol_adj < 0.85 else "")
+            reasons.append(f"凯利{kelly_pct*100:.0f}%×{vol_label}波动率调整={final_pct*100:.1f}%仓位(Sortino={sortino_val:.2f})")
+
             buy_list.append({
                 "code": code, "name": s["name"],
                 "action": "BUY", "shares": shares,
                 "price": round(price, 4),
                 "amount": round(shares * price, 2),
                 "score": s["score"],
-                "kelly_pct": round(kelly_pct * 100, 1),  # v7.3: 显示凯利仓位
-                "reasons": [s.get("grade", ""),
-                            f"凯利{kelly_pct*100:.0f}%仓位(Sortino={sortino_val:.2f})"]
+                "kelly_pct": round(kelly_pct * 100, 1),
+                "vol_adjustment": round(vol_adj, 2),  # v8.0
+                "final_pct": round(final_pct * 100, 1),  # v8.0
+                "reasons": reasons
             })
 
         return {
