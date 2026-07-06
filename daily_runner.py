@@ -645,6 +645,93 @@ def is_rest_day():
     return False, "工作日"
 
 
+# ================================================================
+# v8.0: 基准对比 — 组合 vs 沪深300全收益
+# ================================================================
+def compute_benchmark_comparison(portfolio, index_data):
+    """
+    P0-2: 计算组合与沪深300全收益的对比。
+
+    思路:
+    1. 找到最早报告日期作为对比起点
+    2. 计算从起点到现在的组合累计收益
+    3. 计算同期沪深300全收益
+    4. 返回对比结果（超额收益、相对强弱）
+    """
+    start_date = None
+    portfolio_start_value = 0
+
+    from glob import glob as _glob
+    report_dir = os.path.dirname(os.path.abspath(__file__))
+    report_files = sorted(_glob(os.path.join(report_dir, "report_*.json")))
+    if report_files:
+        earliest = report_files[0]
+        fname = os.path.basename(earliest)
+        start_date = fname.replace("report_", "").replace(".json", "")
+        try:
+            with open(earliest, 'r', encoding='utf-8') as f:
+                old_report = json.load(f)
+            old_port = old_report.get("portfolio", {})
+            portfolio_start_value = old_port.get("total_assets", 0)
+        except (json.JSONDecodeError, KeyError):
+            portfolio_start_value = 0
+    else:
+        start_date = datetime.now().strftime("%Y%m%d")
+        portfolio_start_value = sum(
+            h.get("shares", 0) * h.get("cost", 0)
+            for k, h in portfolio.items()
+            if isinstance(h, dict) and "shares" in h and k != "_available_cash"
+        ) + portfolio.get("_available_cash", 0)
+
+    # 获取沪深300指数数据
+    benchmark_start = None
+    benchmark_end = None
+    benchmark_return = 0.0
+
+    if "000300" in index_data:
+        hs300_info = index_data["000300"]
+        hs300_data = hs300_info.get("data", [])
+        if len(hs300_data) >= 2:
+            start_idx = 0
+            for i, d in enumerate(hs300_data):
+                if d.get("date", "") >= start_date:
+                    start_idx = i
+                    break
+            benchmark_start = hs300_data[start_idx]["close"]
+            benchmark_end = hs300_data[-1]["close"]
+            if benchmark_start > 0:
+                benchmark_return = (benchmark_end / benchmark_start - 1.0)
+
+    return {
+        "start_date": start_date,
+        "portfolio_start_value": portfolio_start_value,
+        "benchmark_start": benchmark_start,
+        "benchmark_end": benchmark_end,
+        "benchmark_return": benchmark_return,
+        "benchmark_name": "沪深300 (000300)"
+    }
+
+
+# ================================================================
+# v8.0: 发送失败告警
+# ================================================================
+def send_failure_alert(error_msg, traceback_str):
+    """日报发送失败时发送简单告警邮件"""
+    try:
+        email_pw = os.environ.get("QQMAIL_AUTH_CODE")
+        if not email_pw:
+            config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "email_config.json")
+            if os.path.exists(config_path):
+                with open(config_path, 'r') as f:
+                    email_pw = json.load(f).get("QQMAIL_AUTH_CODE")
+        if email_pw:
+            from report_mailer import send_crash_report
+            send_crash_report(error_msg, traceback_str, email_pw)
+            logger.info("  [告警] 已发送失败通知邮件")
+    except Exception as e:
+        logger.error(f"  [告警] 发送失败通知也失败了: {e}")
+
+
 def main():
     # 休息日跳过
     is_rest, reason = is_rest_day()
@@ -798,6 +885,26 @@ def main():
     decider = TradeDecider(scores, timing_result, portfolio)
     plan = decider.generate_plan()
 
+    # v8.0: 基准对比
+    benchmark = compute_benchmark_comparison(portfolio, all_data.get("indices", {}))
+    if port_summary.get("total_assets", 0) > 0 and benchmark.get("portfolio_start_value", 0) > 0:
+        portfolio_return = port_summary["total_assets"] / benchmark["portfolio_start_value"] - 1.0
+        benchmark["portfolio_return"] = round(portfolio_return, 4)
+        benchmark["excess_return"] = round(portfolio_return - benchmark.get("benchmark_return", 0), 4)
+        benchmark["beat_benchmark"] = benchmark["excess_return"] > 0
+        # 生成对比消息
+        if benchmark["beat_benchmark"]:
+            benchmark["message"] = (
+                f"组合 {portfolio_return:+.2%} vs 沪深300 {benchmark['benchmark_return']:+.2%}，"
+                f"超额 {benchmark['excess_return']:+.2%} ✅ 跑赢基准"
+            )
+        else:
+            benchmark["message"] = (
+                f"组合 {portfolio_return:+.2%} vs 沪深300 {benchmark['benchmark_return']:+.2%}，"
+                f"落后 {benchmark['excess_return']:+.2%} ❌ 跑输基准"
+            )
+    logger.info(f"  [基准对比] {benchmark.get('message', '数据不足')}")
+
     # 输出报告
     # 机构资金流向
     inst_flow_section = format_institutional_flow(all_data)
@@ -814,7 +921,8 @@ def main():
         "scores": scores,
         "plan": plan,
         "portfolio": port_summary,
-        "report": report
+        "report": report,
+        "benchmark": benchmark  # v8.0: 基准对比
     }
     output_path = os.path.join(OUTPUT_DIR, f"report_{TODAY}.json")
     with open(output_path, 'w', encoding='utf-8') as f:

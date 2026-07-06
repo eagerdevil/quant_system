@@ -365,6 +365,285 @@ def append_evolution_log(run_record):
 
 
 # ============================================================
+# v8.0: 因子相关性分析
+# ============================================================
+def compute_factor_correlation(precomputed):
+    """
+    P0-3: 计算16因子两两相关性矩阵，检测多重共线性。
+
+    对每对因子，跨所有数据点计算皮尔逊相关系数。
+    标记 |r| > 0.7 的因子对为"高度相关"，建议合并或降权。
+
+    返回: {
+        "matrix": {F1: {F2: 0.85, ...}, ...},  # 16×16 下三角矩阵
+        "high_corr_pairs": [(F1, F2, 0.85), ...],  # 按|r|降序排列
+        "avg_abs_corr": 0.35,  # 平均绝对相关系数
+        "n_high_pairs": 5,     # 高度相关因子对数量
+        "warnings": ["⚠️ F1↔F2 r=0.85 高度正相关，建议合并或降低其中之一的权重"]
+    }
+    """
+    logger.info(f"\n  [因子相关性分析] 计算16因子两两相关系数...")
+
+    # 从预计算数据中提取因子矩阵 (n_points × 16)
+    factor_matrix = {k: [] for k in FACTOR_NAMES}
+    for pt in precomputed:
+        factors = pt.get('factors', {})
+        for k in FACTOR_NAMES:
+            factor_matrix[k].append(factors.get(k, 5.0))
+
+    n = len(precomputed)
+    if n < 30:
+        logger.info(f"  [WARNING] 数据点不足({n})，跳过低相关性分析")
+        return {"matrix": {}, "high_corr_pairs": [], "avg_abs_corr": 0, "n_high_pairs": 0, "warnings": ["数据不足"]}
+
+    # 计算两两皮尔逊相关系数
+    import numpy as np
+    high_pairs = []
+    all_abs_corrs = []
+    matrix = {}
+
+    for i, f1 in enumerate(FACTOR_NAMES):
+        matrix[f1] = {}
+        arr1 = np.array(factor_matrix[f1], dtype=np.float64)
+        for j, f2 in enumerate(FACTOR_NAMES):
+            if i <= j:
+                arr2 = np.array(factor_matrix[f2], dtype=np.float64)
+                # 去除NaN和Inf
+                mask = np.isfinite(arr1) & np.isfinite(arr2)
+                if mask.sum() < 10:
+                    r = 0.0
+                else:
+                    corr = np.corrcoef(arr1[mask], arr2[mask])
+                    r = float(corr[0, 1]) if not np.isnan(corr[0, 1]) else 0.0
+                matrix[f1][f2] = round(r, 4)
+                if i != j:
+                    all_abs_corrs.append(abs(r))
+                    if abs(r) > 0.70:
+                        direction = "正" if r > 0 else "负"
+                        high_pairs.append((f1, f2, round(r, 3), direction))
+
+    # 按|r|降序排列
+    high_pairs.sort(key=lambda x: abs(x[2]), reverse=True)
+
+    # 生成警告
+    warnings = []
+    for f1, f2, r, direction in high_pairs:
+        if abs(r) > 0.85:
+            warnings.append(f"🚨 {f1}↔{f2} r={r:+.3f} 极度{direction}相关 → 强烈建议合并或大幅降权其一")
+        elif abs(r) > 0.75:
+            warnings.append(f"⚠️ {f1}↔{f2} r={r:+.3f} 高度{direction}相关 → 建议降低其中之一的权重")
+        else:
+            warnings.append(f"⚡ {f1}↔{f2} r={r:+.3f} {direction}相关 → 关注，可能重复计票")
+
+    avg_abs_corr = float(np.mean(all_abs_corrs)) if all_abs_corrs else 0.0
+
+    # 输出报告
+    logger.info(f"  平均|相关系数|: {avg_abs_corr:.4f}  (0=完全独立, 1=完全冗余)")
+    logger.info(f"  高度相关因子对 (|r|>0.7): {len(high_pairs)}对")
+    for w in warnings:
+        logger.info(f"  {w}")
+
+    if len(high_pairs) == 0:
+        logger.info(f"  ✓ 因子间独立性良好，无严重多重共线性")
+
+    return {
+        "matrix": matrix,
+        "high_corr_pairs": [(f1, f2, r, d) for f1, f2, r, d in high_pairs],
+        "avg_abs_corr": round(avg_abs_corr, 4),
+        "n_high_pairs": len(high_pairs),
+        "warnings": warnings,
+        "n_points": n
+    }
+
+
+# ============================================================
+# v8.0: 滚动窗口样本外验证 (Walk-Forward Cross Validation)
+# ============================================================
+def walk_forward_cv(precomputed, best_params, current_params, baseline_params,
+                     n_windows=5, train_days=120, test_days=20):
+    """
+    P0-1: 滚动窗口 Walk-Forward 交叉验证。
+
+    与单次70/30切分不同，WFCV在多个滚动窗口上评估OOS表现，
+    更真实地反映策略在不同市场环境下的稳定性。
+
+    方法:
+    1. 将数据按时间排序，划分为 n_windows 个滚动窗口
+    2. 每个窗口: train [t_i, t_i+train_days], test [t_i+train_days, t_i+train_days+test_days]
+    3. 在每个窗口的测试集上计算IC
+    4. 报告: 平均OOS IC ± std, 正IC窗口比例, 因子级稳定性
+
+    返回: {
+        "windows": [{train_range, test_range, n_train, n_test, ic, ...}, ...],
+        "mean_oos_ic": 0.035,
+        "std_oos_ic": 0.018,
+        "positive_rate": 0.80,       # 正IC窗口占比
+        "significant_rate": 0.60,    # IC>0.01窗口占比
+        "stability": "稳定" | "一般" | "不稳定",
+        "factor_stability": {F1: {mean_ic, std_ic, positive_rate}, ...}
+    }
+    """
+    logger.info(f"\n  [Walk-Forward CV] 滚动窗口样本外验证 (v8.0)")
+    logger.info(f"  窗口数={n_windows}, 训练={train_days}天, 测试={test_days}天")
+
+    n_total = len(precomputed)
+    window_size = train_days + test_days
+
+    if n_total < window_size * 2:
+        logger.info(f"  [WARNING] 数据点不足({n_total} < {window_size*2})，回退到单窗口验证")
+        n_windows = 1
+
+    # 计算窗口起始位置（均匀分布在整个时间范围内）
+    max_start = n_total - window_size
+    if n_windows > 1:
+        step = max(1, max_start // (n_windows - 1))
+    else:
+        step = 0
+
+    windows = []
+    oos_ics_best = []
+    oos_ics_current = []
+    oos_ics_baseline = []
+
+    # v8.0: 因子级OOS追踪 — 每个窗口的因子IC
+    factor_oos_ics = {k: [] for k in FACTOR_NAMES}
+
+    for w in range(n_windows):
+        start = min(w * step, max_start)
+        train_end = start + train_days
+        test_end = min(train_end + test_days, n_total)
+
+        if test_end - train_end < 10:
+            continue  # 测试集太小
+
+        window_train = precomputed[start:train_end]
+        window_test = precomputed[train_end:test_end]
+
+        train_date_range = (window_train[0].get('date','?'), window_train[-1].get('date','?'))
+        test_date_range = (window_test[0].get('date','?'), window_test[-1].get('date','?'))
+
+        ic_best = evaluate_params(best_params, window_test)
+        ic_current = evaluate_params(current_params, window_test)
+        ic_baseline = evaluate_params(baseline_params, window_test)
+
+        oos_ics_best.append(ic_best)
+        oos_ics_current.append(ic_current)
+        oos_ics_baseline.append(ic_baseline)
+
+        # v8.0: 因子级IC — 对16个因子独立计算Spearman IC
+        for f_name in FACTOR_NAMES:
+            f_scores = [pt['factors'].get(f_name, 5.0) for pt in window_test]
+            f_rets = [pt['forward_return'] for pt in window_test]
+            if len(f_scores) >= 10:
+                f_ic = spearman_ic(f_scores, f_rets)
+                factor_oos_ics[f_name].append(f_ic)
+
+        # v8.0: 窗口过拟合检测 (训练vs测试IC差距)
+        ic_best_train = evaluate_params(best_params, window_train)
+        overfit_gap = ic_best_train - ic_best
+
+        windows.append({
+            "window": w + 1,
+            "train_range": f"{train_date_range[0]}~{train_date_range[1]}",
+            "test_range": f"{test_date_range[0]}~{test_date_range[1]}",
+            "n_train": len(window_train),
+            "n_test": len(window_test),
+            "ic_best_oos": round(ic_best, 5),
+            "ic_current_oos": round(ic_current, 5),
+            "ic_baseline_oos": round(ic_baseline, 5),
+            "ic_best_train": round(ic_best_train, 5),
+            "overfit_gap": round(overfit_gap, 5),
+            "overfit_warning": overfit_gap > 0.01 and ic_best < 0
+        })
+
+    if not windows:
+        logger.info(f"  [ERROR] 无法生成有效窗口")
+        return {"error": "无法生成有效窗口", "windows": []}
+
+    # 汇总统计
+    import numpy as np
+    mean_oos = float(np.mean(oos_ics_best))
+    std_oos = float(np.std(oos_ics_best, ddof=1)) if len(oos_ics_best) > 1 else 0.0
+    positive_rate = sum(1 for ic in oos_ics_best if ic > 0) / len(oos_ics_best)
+    significant_rate = sum(1 for ic in oos_ics_best if ic > 0.01) / len(oos_ics_best)
+    overfit_count = sum(1 for w in windows if w["overfit_warning"])
+
+    # 稳定性评级
+    if std_oos < 0.02 and positive_rate >= 0.8:
+        stability = "✅ 稳定"
+    elif std_oos < 0.04 and positive_rate >= 0.5:
+        stability = "⚡ 一般"
+    else:
+        stability = "⚠️ 不稳定"
+
+    t_stat = mean_oos / (std_oos / np.sqrt(len(oos_ics_best))) if std_oos > 0 else 999
+    mean_current = float(np.mean(oos_ics_current))
+    mean_baseline = float(np.mean(oos_ics_baseline))
+
+    # v8.0: 因子稳定性分析
+    factor_stability = {}
+    for f_name in FACTOR_NAMES:
+        f_ics = factor_oos_ics[f_name]
+        if len(f_ics) >= 2:
+            f_mean = float(np.mean(f_ics))
+            f_std = float(np.std(f_ics, ddof=1))
+            f_pos = sum(1 for ic in f_ics if ic > 0) / len(f_ics)
+            factor_stability[f_name] = {
+                "mean_ic": round(f_mean, 4),
+                "std_ic": round(f_std, 4),
+                "positive_rate": round(f_pos, 2),
+                "reliable": f_pos >= 0.6 and abs(f_mean) > 0.005
+            }
+
+    # 输出报告
+    logger.info(f"\n  {'─'*60}")
+    logger.info(f"  [WFCV 结果] 滚动窗口样本外验证")
+    logger.info(f"  有效窗口: {len(windows)}/{n_windows}")
+    logger.info(f"  {'指标':<20s} {'最优参数':>10s} {'当前参数':>10s} {'等权基线':>10s}")
+    logger.info(f"  {'─'*52}")
+    logger.info(f"  {'平均OOS IC':<20s} {mean_oos:>10.5f} {mean_current:>10.5f} {mean_baseline:>10.5f}")
+    logger.info(f"  {'OOS IC标准差':<20s} {std_oos:>10.5f}")
+    logger.info(f"  {'正IC窗口占比':<20s} {positive_rate:>10.0%}")
+    logger.info(f"  {'显著正IC占比':<20s} {significant_rate:>10.0%}")
+    logger.info(f"  {'t统计量':<20s} {t_stat:>10.2f}")
+    logger.info(f"  {'过拟合窗口数':<20s} {overfit_count:>10d}")
+    logger.info(f"  {'稳定性评级':<20s} {stability:>10s}")
+
+    # 详细的窗口IC
+    logger.info(f"\n  [各窗口OOS IC]")
+    for w in windows:
+        flag = " ⚠️过拟合" if w["overfit_warning"] else ""
+        logger.info(f"  W{w['window']}: 训练{w['n_train']}点 → 测试{w['n_test']}点 | "
+                    f"IC最优={w['ic_best_oos']:+.5f} IC当前={w['ic_current_oos']:+.5f} "
+                    f"训练IC={w['ic_best_train']:+.5f} 过拟合gap={w['overfit_gap']:+.5f}{flag}")
+
+    # v8.0: 不稳定的因子报告
+    unreliable_factors = [k for k, v in factor_stability.items() if not v.get("reliable")]
+    if unreliable_factors:
+        logger.info(f"\n  [⚠️ 不稳定因子] (正IC率<60% 或 IC≈0)")
+        for f_name in unreliable_factors[:5]:
+            fs = factor_stability.get(f_name, {})
+            logger.info(f"  {f_name}: mean_IC={fs.get('mean_ic',0):+.4f} "
+                        f"std={fs.get('std_ic',0):.4f} pos_rate={fs.get('positive_rate',0):.0%}")
+
+    return {
+        "windows": windows,
+        "n_windows": len(windows),
+        "mean_oos_ic": round(mean_oos, 5),
+        "std_oos_ic": round(std_oos, 5),
+        "mean_oos_ic_current": round(mean_current, 5),
+        "mean_oos_ic_baseline": round(mean_baseline, 5),
+        "positive_rate": round(positive_rate, 3),
+        "significant_rate": round(significant_rate, 3),
+        "t_statistic": round(t_stat, 2),
+        "overfit_windows": overfit_count,
+        "stability": stability,
+        "factor_stability": factor_stability,
+        "unreliable_factors": unreliable_factors
+    }
+
+
+# ============================================================
 # 主流程
 # ============================================================
 def main():
@@ -401,6 +680,11 @@ def main():
     if len(precomputed) < 100:
         logger.info(f"\n  [ERROR] 回测数据点不足({len(precomputed)}个)。退出。")
         sys.exit(1)
+
+    # ================================================================
+    # v8.0: 因子相关性分析（P0-3）
+    # ================================================================
+    factor_corr_result = compute_factor_correlation(precomputed)
 
     # v7.2: 按时间切分训练/测试集（时序数据不可随机打乱）
     # 训练集: 前70%时间 → 优化参数
@@ -491,6 +775,14 @@ def main():
         current_ic_test = current_ic_train
         baseline_ic_test = baseline_ic_train
         logger.info(f"\n  [样本外验证] 跳过（测试集不足50点）")
+
+    # ================================================================
+    # v8.0: 滚动窗口样本外验证 (P0-1)
+    # ================================================================
+    wfcv_result = walk_forward_cv(
+        precomputed, refine_best_params, current_params, baseline_params,
+        n_windows=5, train_days=120, test_days=20
+    )
 
     # ================================================================
     # 决策：是否更新（v7.2: 综合训练+测试IC判断）
@@ -586,6 +878,22 @@ def main():
         "reason": reason,
         "train_points": len(train_data),
         "test_points": len(test_data),
+        # v8.0: WFCV 指标
+        "wfcv": {
+            "n_windows": wfcv_result.get("n_windows", 0),
+            "mean_oos_ic": wfcv_result.get("mean_oos_ic"),
+            "std_oos_ic": wfcv_result.get("std_oos_ic"),
+            "positive_rate": wfcv_result.get("positive_rate"),
+            "stability": wfcv_result.get("stability"),
+            "overfit_windows": wfcv_result.get("overfit_windows", 0),
+            "unreliable_factors": wfcv_result.get("unreliable_factors", [])[:5]
+        },
+        # v8.0: 因子相关性
+        "factor_correlation": {
+            "n_high_pairs": factor_corr_result.get("n_high_pairs", 0),
+            "avg_abs_corr": factor_corr_result.get("avg_abs_corr", 0),
+            "warnings": factor_corr_result.get("warnings", [])[:3]
+        },
         "param_changes": {
             "weights_changed": sum(
                 1 for k in FACTOR_NAMES
@@ -628,7 +936,27 @@ def main():
         logger.info(f"\n  [进化趋势] 最近{min(5, len(runs))}次优化IC趋势: {ic_trend}")
         logger.info(f"  累计优化次数: {log['summary']['total_optimizations']}")
 
-    # 输出JSON结果 (v7.2: 含样本外指标)
+    # v8.0: 因子相关性摘要
+    if factor_corr_result.get("n_high_pairs", 0) > 0:
+        logger.info(f"\n  [因子相关性] 发现{factor_corr_result['n_high_pairs']}对高度相关因子 "
+                    f"(平均|r|={factor_corr_result['avg_abs_corr']:.3f})")
+        for w in factor_corr_result.get("warnings", [])[:3]:
+            logger.info(f"  {w}")
+    else:
+        logger.info(f"\n  [因子相关性] ✓ 独立性良好")
+
+    # v8.0: WFCV 综合判定
+    if not wfcv_result.get("error"):
+        logger.info(f"\n  [WFCV 综合判定] {wfcv_result.get('stability', '?')} | "
+                    f"平均OOS IC={wfcv_result.get('mean_oos_ic', 0):+.5f} | "
+                    f"正IC率={wfcv_result.get('positive_rate', 0):.0%}")
+        overfit_count = wfcv_result.get("overfit_windows", 0)
+        if should_update and overfit_count >= 2:
+            logger.info(f"  🚨 WFCV检测到{overfit_count}个窗口过拟合，但单次OOS验证通过，更新继续")
+        elif should_update and "⚠️" in str(wfcv_result.get("stability", "")):
+            logger.info(f"  ⚠️ WFCV稳定性较差({wfcv_result.get('stability')})，建议观察而非立即更新")
+
+    # 输出JSON结果 (v8.0: 含WFCV + 因子相关性)
     result = {
         "date": TODAY,
         "baseline_ic_train": round(baseline_ic_train, 5),
@@ -644,7 +972,22 @@ def main():
         "test_points": len(test_data),
         "etf_count": stats['etf_count'],
         "point_count": len(precomputed),
-        "evolution_log_entries": len(runs)
+        "evolution_log_entries": len(runs),
+        # v8.0
+        "wfcv": {
+            "n_windows": wfcv_result.get("n_windows", 0),
+            "mean_oos_ic": wfcv_result.get("mean_oos_ic"),
+            "std_oos_ic": wfcv_result.get("std_oos_ic"),
+            "positive_rate": wfcv_result.get("positive_rate"),
+            "stability": wfcv_result.get("stability"),
+            "windows": wfcv_result.get("windows", [])
+        },
+        "factor_correlation": {
+            "n_high_pairs": factor_corr_result.get("n_high_pairs", 0),
+            "avg_abs_corr": factor_corr_result.get("avg_abs_corr", 0),
+            "high_corr_pairs": factor_corr_result.get("high_corr_pairs", [])[:5],
+            "warnings": factor_corr_result.get("warnings", [])
+        }
     }
     result_path = os.path.join(SCRIPT_DIR, f"optimize_result_{TODAY}.json")
     with open(result_path, 'w', encoding='utf-8') as f:

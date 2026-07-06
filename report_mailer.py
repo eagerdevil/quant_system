@@ -143,6 +143,46 @@ def generate_html_report(report_data):
         <tr><td><b>持仓盈亏</b></td><td style="color:{pnl_color}">{total_pnl:+.2f}元 ({total_pnl_pct:+.2f}%)</td><td><b>今日盈亏</b></td><td style="color:{daily_color}">{total_daily_pnl:+.2f}元</td></tr>
         </table></div>'''
 
+    # v8.0: 基准对比
+    benchmark = report_data.get("benchmark", {})
+    if benchmark and benchmark.get("benchmark_start"):
+        bm = benchmark
+        pf_ret = bm.get("portfolio_return", 0)
+        bm_ret = bm.get("benchmark_return", 0)
+        excess = bm.get("excess_return", 0)
+        beat = bm.get("beat_benchmark", False)
+        beat_color = "#00ff88" if beat else "#ff4757"
+        beat_icon = "✅" if beat else "❌"
+        beat_text = "跑赢基准" if beat else "跑输基准"
+        excess_color = "#00ff88" if excess > 0 else "#ff4757"
+
+        html += f'''<div class="card"><h2>基准对比 — 组合 vs 沪深300</h2>
+        <table style="font-size:14px">
+        <tr>
+          <td style="width:20%"><b>对比起点</b></td>
+          <td style="width:30%">{bm.get("start_date","?")}</td>
+          <td style="width:20%"><b>起始沪深300</b></td>
+          <td style="width:30%">{bm.get("benchmark_start","?"):.2f}点</td>
+        </tr>
+        <tr>
+          <td><b>组合收益</b></td>
+          <td style="color:{'#00ff88' if pf_ret > 0 else '#ff4757'}">{pf_ret:+.2%}</td>
+          <td><b>当前沪深300</b></td>
+          <td>{bm.get("benchmark_end","?"):.2f}点</td>
+        </tr>
+        <tr>
+          <td><b>沪深300收益</b></td>
+          <td style="color:{'#00ff88' if bm_ret > 0 else '#ff4757'}">{bm_ret:+.2%}</td>
+          <td><b>超额收益</b></td>
+          <td style="color:{excess_color};font-weight:bold">{excess:+.2%}</td>
+        </tr>
+        <tr>
+          <td colspan="4" style="text-align:center;padding-top:10px;color:{beat_color};font-size:16px;font-weight:bold">
+            {beat_icon} {beat_text} — {bm.get('message', '')}
+          </td>
+        </tr>
+        </table></div>'''
+
     # 持仓明细
     holdings = port.get("holdings", [])
     hold_list = plan.get("hold_list", [])
@@ -352,6 +392,13 @@ def generate_wechat_markdown(report_data):
     lines.append(f"### 二、账户概览")
     lines.append(f"总资产: **{total_assets:.2f}元** | 总市值: {port.get('total_value', 0):.2f}元 | 可用: {port.get('available_cash', 0):.2f}元")
     lines.append(f"持仓盈亏: {pnl_emoji} {total_pnl:+.2f}元 ({port.get('total_pnl_pct', 0):+.2f}%) | 今日盈亏: {daily_emoji} {total_daily_pnl:+.2f}元")
+
+    # v8.0: 基准对比
+    benchmark = report_data.get("benchmark", {})
+    if benchmark and benchmark.get("benchmark_start"):
+        bm = benchmark
+        beat_icon = "✅" if bm.get("beat_benchmark") else "❌"
+        lines.append(f"*基准对比*: 组合 {bm.get('portfolio_return', 0):+.2%} vs 沪深300 {bm.get('benchmark_return', 0):+.2%} | 超额 {bm.get('excess_return', 0):+.2%} {beat_icon}")
     lines.append("")
 
     # ══════════════════════════════════════
