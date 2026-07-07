@@ -2043,7 +2043,7 @@ def compute_factor_ic_ranking(etf_data_dict, lookback=40, min_etfs=5):
     for fname in FACTOR_NAMES:
         ic_list = factor_timeseries.get(fname, [])
         if len(ic_list) < 5:
-            result.append({"name": fname, "ic": 0.0, "status": "数据不足", "bar": ""})
+            result.append({"name": fname, "ic": 0.0, "status": "数据不足", "bar": "", "direction": ""})
             continue
 
         mean_ic = round(float(np.mean(ic_list)), 4)
