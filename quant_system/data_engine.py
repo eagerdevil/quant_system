@@ -615,25 +615,22 @@ def _get_session():
     return _HTTP_SESSION
 
 def _simple_get(url, timeout=10):
-    """简易HTTP GET，先尝试requests，回退urllib"""
+    """简易HTTP GET，先尝试requests，回退urllib（均使用TLS验证）"""
     session = _get_session()
     if session:
         try:
-            r = session.get(url, timeout=timeout, verify=False)
+            r = session.get(url, timeout=timeout)  # verify=True 默认
             if r.status_code == 200:
                 return r
         except Exception:
             pass
-    # 回退urllib
-    ctx = __import__('ssl').create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = __import__('ssl').CERT_NONE
+    # 回退urllib（默认SSL上下文，验证证书）
     req = urllib.request.Request(url, headers={
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         "Referer": "https://finance.sina.com.cn/",
     })
     try:
-        resp = urllib.request.urlopen(req, timeout=timeout, context=ctx)
+        resp = urllib.request.urlopen(req, timeout=timeout)
         return resp
     except Exception:
         return None
