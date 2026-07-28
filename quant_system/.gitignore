@@ -13,9 +13,3 @@ email_config.json
 # 报告文件（本地存档即可，不必上传）
 report_*.json
 review_*.txt
-
-# 日志和临时文件
-logs/
-*.log
-.env
-.DS_Store

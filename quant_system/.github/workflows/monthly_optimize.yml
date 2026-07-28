@@ -1,0 +1,132 @@
+name: 月度自适应参数优化 (条件触发)
+
+# 由 cron-job.org 每月1号21:00触发
+# 先检查条件 → 满足才优化 → 自动提交
+on:
+  workflow_dispatch:
+
+# 防止并发运行导致 git push 冲突
+concurrency:
+  group: monthly-optimize
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  check-and-optimize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 检查是否需要优化
+        id: check
+        env:
+          TZ: Asia/Shanghai
+        run: |
+          echo "===== 条件检查: $(date '+%Y-%m-%d %H:%M') ====="
+          python check_optimize_needed.py
+          CHECK_EXIT=$?
+          echo "检查结果 exit code: $CHECK_EXIT"
+
+          if [ $CHECK_EXIT -eq 0 ]; then
+            echo "should_optimize=true" >> $GITHUB_OUTPUT
+          elif [ $CHECK_EXIT -eq 2 ]; then
+            echo "should_optimize=false" >> $GITHUB_OUTPUT
+          else
+            echo "检查脚本异常，退出"
+            exit 1
+          fi
+
+      - name: 跳过优化（条件不满足）
+        if: steps.check.outputs.should_optimize != 'true'
+        run: |
+          echo "===== ✓ 条件不满足，跳过本次优化 ====="
+          echo "下次检查将在下个触发日运行"
+
+  optimize:
+    needs: check-and-optimize
+    if: needs.check-and-optimize.outputs.should_optimize == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 拉取最新权重（仅快进，拒绝合并冲突）
+        run: |
+          git pull origin main --ff-only || {
+            echo "git pull --ff-only 失败，可能存在远程冲突。"
+            echo "请手动检查 factor_weights.json 的远程变更后再触发优化。"
+            exit 1
+          }
+
+      - name: 运行参数优化
+        env:
+          TZ: Asia/Shanghai
+        run: |
+          echo "===== 自进化优化: $(date '+%Y-%m-%d %H:%M') ====="
+          python optimizer.py 2>&1
+          echo "===== 优化完成: $(date '+%Y-%m-%d %H:%M') ====="
+
+      - name: 提交参数更新
+        env:
+          TZ: Asia/Shanghai
+        run: |
+          if git diff --quiet factor_weights.json && \
+             git diff --quiet evolution_log.json && \
+             git diff --quiet --cached factor_weights.json; then
+            echo "参数未变更，跳过提交"
+            exit 0
+          fi
+
+          echo "检测到参数更新，提交变更..."
+          git config user.name "Quant Optimizer Bot"
+          git config user.email "quant-bot@github.com"
+
+          IC=$(python -c "import json; c=json.load(open('factor_weights.json','r',encoding='utf-8')); print(c['meta']['ic_score'])")
+          VER=$(python -c "import json; c=json.load(open('factor_weights.json','r',encoding='utf-8')); print(c['meta']['version'])")
+          REASON=$(python -c "import json; c=json.load(open('factor_weights.json','r',encoding='utf-8')); print(c['meta'].get('optimization_reason','条件触发'))")
+
+          git add factor_weights.json evolution_log.json
+          git commit -m "optimize(v${VER}): ${REASON} IC=${IC}
+
+          条件触发式自进化 — 每月保底+市场剧变加跑
+          Co-Authored-By: Quant Optimizer Bot <quant-bot@github.com>"
+
+          git push origin HEAD
+          echo "参数更新已推送 ✓"
+
+      - name: 上传优化报告
+        uses: actions/upload-artifact@v4
+        with:
+          name: optimize-result-${{ github.run_id }}
+          path: |
+            factor_weights.json
+            evolution_log.json
+            optimize_result_*.json
+          retention-days: 30

@@ -1,0 +1,76 @@
+name: 部署仪表盘到GitHub Pages
+
+on:
+  workflow_dispatch:
+
+# 防止并发部署冲突
+concurrency:
+  group: deploy-dashboard
+  cancel-in-progress: false
+
+jobs:
+  deploy-dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: 检出量化系统代码
+        uses: actions/checkout@v4
+        with:
+          path: quant-system
+
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装依赖
+        run: pip install -r quant-system/quant_system/requirements.txt
+
+      - name: 部署目录检查+创建
+        id: check
+        run: |
+          DEPLOY_DIR="quant-system/quant_system/deploy"
+          if [ ! -f "$DEPLOY_DIR/index.html" ]; then
+            echo "deploy/ 目录为空，尝试从最新回测数据生成仪表盘..."
+            cd quant-system/quant_system
+            python dashboard.py 2>/dev/null || true
+            mkdir -p deploy
+            if [ -f quant_dashboard.html ]; then
+              cp quant_dashboard.html deploy/index.html
+              echo "exists=true" >> $GITHUB_OUTPUT
+            elif [ -f dashboard_*.html ]; then
+              cp dashboard_*.html deploy/index.html
+              echo "exists=true" >> $GITHUB_OUTPUT
+            else
+              echo "exists=false" >> $GITHUB_OUTPUT
+              echo "警告: 无回测数据，无法生成仪表盘。请先本地运行 daily_runner.py --backtest"
+            fi
+          else
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "仪表盘文件已存在"
+          fi
+
+      - name: 检出GitHub Pages仓库
+        uses: actions/checkout@v4
+        with:
+          repository: eagerdevil/eagerdevil.github.io
+          token: ${{ secrets.PAGES_DEPLOY_TOKEN }}
+          path: pages-repo
+
+      - name: 部署仪表盘到Pages
+        if: steps.check.outputs.exists == 'true'
+        run: |
+          mkdir -p pages-repo/quant
+          cp quant-system/quant_system/deploy/index.html pages-repo/quant/index.html
+          cd pages-repo
+          git config user.name "Quant Bot"
+          git config user.email "quant-bot@eagerdevil.github.io"
+          git add quant/index.html
+          if git diff --staged --quiet; then
+            echo "仪表盘无变化，跳过提交"
+          else
+            git commit -m "更新量化仪表盘 $(date '+%Y-%m-%d')"
+            git push
+            echo "仪表盘已部署到 https://eagerdevil.github.io/quant/"
+          fi

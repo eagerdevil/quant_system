@@ -1,0 +1,10 @@
+{
+  "date": "20260623",
+  "baseline_ic": 0.01715,
+  "current_ic": 0.01715,
+  "best_ic": 0.05272,
+  "updated": true,
+  "reason": "IC显著提升 +0.03557",
+  "etf_count": 34,
+  "point_count": 6089
+}

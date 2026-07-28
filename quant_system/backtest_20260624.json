@@ -1,0 +1,8156 @@
+{
+  "generated": "20260624",
+  "config": {
+    "start_date": "2025-01-14",
+    "end_date": "2026-06-24",
+    "initial_capital": 100000,
+    "commission": 0.0005,
+    "pool_size": 14,
+    "trading_days": 347
+  },
+  "metrics": {
+    "total_return": 16.5,
+    "annual_return": 11.76,
+    "sharpe": 0.86,
+    "max_drawdown": 9.59,
+    "max_drawdown_days": 106,
+    "calmar": 1.23,
+    "volatility": 14.2,
+    "benchmark_return": 28.31,
+    "alpha": -11.81,
+    "win_rate": 50.9,
+    "total_trades": 535,
+    "sell_trades": 265,
+    "buy_trades": 270
+  },
+  "equity_curve": [
+    {
+      "date": "2025-01-14",
+      "nav": 99980.26,
+      "cash": 60509.46,
+      "holdings_value": 39470.8,
+      "holdings_count": 2,
+      "benchmark_nav": 100000.0
+    },
+    {
+      "date": "2025-01-15",
+      "nav": 99965.06,
+      "cash": 60509.46,
+      "holdings_value": 39455.6,
+      "holdings_count": 2,
+      "benchmark_nav": 99358.47
+    },
+    {
+      "date": "2025-01-16",
+      "nav": 100469.06,
+      "cash": 60509.46,
+      "holdings_value": 39959.6,
+      "holdings_count": 2,
+      "benchmark_nav": 99472.33
+    },
+    {
+      "date": "2025-01-17",
+      "nav": 100436.66,
+      "cash": 60509.46,
+      "holdings_value": 39927.2,
+      "holdings_count": 2,
+      "benchmark_nav": 99785.37
+    },
+    {
+      "date": "2025-01-20",
+      "nav": 100609.46,
+      "cash": 60509.46,
+      "holdings_value": 40100.0,
+      "holdings_count": 2,
+      "benchmark_nav": 100239.23
+    },
+    {
+      "date": "2025-01-21",
+      "nav": 100618.66,
+      "cash": 60509.46,
+      "holdings_value": 40109.2,
+      "holdings_count": 2,
+      "benchmark_nav": 100315.92
+    },
+    {
+      "date": "2025-01-22",
+      "nav": 100921.86,
+      "cash": 60509.46,
+      "holdings_value": 40412.4,
+      "holdings_count": 2,
+      "benchmark_nav": 99384.38
+    },
+    {
+      "date": "2025-01-23",
+      "nav": 100761.06,
+      "cash": 60509.46,
+      "holdings_value": 40251.6,
+      "holdings_count": 2,
+      "benchmark_nav": 99560.27
+    },
+    {
+      "date": "2025-01-24",
+      "nav": 100859.48,
+      "cash": 40531.48,
+      "holdings_value": 60328.0,
+      "holdings_count": 3,
+      "benchmark_nav": 100322.47
+    },
+    {
+      "date": "2025-01-27",
+      "nav": 100373.88,
+      "cash": 40531.48,
+      "holdings_value": 59842.4,
+      "holdings_count": 3,
+      "benchmark_nav": 99909.44
+    },
+    {
+      "date": "2025-02-05",
+      "nav": 101316.28,
+      "cash": 40531.48,
+      "holdings_value": 60784.8,
+      "holdings_count": 3,
+      "benchmark_nav": 99333.6
+    },
+    {
+      "date": "2025-02-06",
+      "nav": 101646.02,
+      "cash": 40935.92,
+      "holdings_value": 60710.1,
+      "holdings_count": 3,
+      "benchmark_nav": 100583.43
+    },
+    {
+      "date": "2025-02-07",
+      "nav": 101809.52,
+      "cash": 40935.92,
+      "holdings_value": 60873.6,
+      "holdings_count": 3,
+      "benchmark_nav": 101888.74
+    },
+    {
+      "date": "2025-02-10",
+      "nav": 102215.93,
+      "cash": 41452.93,
+      "holdings_value": 60763.0,
+      "holdings_count": 3,
+      "benchmark_nav": 102107.56
+    },
+    {
+      "date": "2025-02-11",
+      "nav": 102162.7,
+      "cash": 41439.2,
+      "holdings_value": 60723.5,
+      "holdings_count": 3,
+      "benchmark_nav": 101638.51
+    },
+    {
+      "date": "2025-02-12",
+      "nav": 102620.62,
+      "cash": 41448.92,
+      "holdings_value": 61171.7,
+      "holdings_count": 3,
+      "benchmark_nav": 102599.63
+    },
+    {
+      "date": "2025-02-13",
+      "nav": 102626.52,
+      "cash": 41613.12,
+      "holdings_value": 61013.4,
+      "holdings_count": 3,
+      "benchmark_nav": 102214.35
+    },
+    {
+      "date": "2025-02-14",
+      "nav": 102827.42,
+      "cash": 41613.12,
+      "holdings_value": 61214.3,
+      "holdings_count": 3,
+      "benchmark_nav": 103100.87
+    },
+    {
+      "date": "2025-02-17",
+      "nav": 102981.42,
+      "cash": 41613.12,
+      "holdings_value": 61368.3,
+      "holdings_count": 3,
+      "benchmark_nav": 103320.47
+    },
+    {
+      "date": "2025-02-18",
+      "nav": 102265.62,
+      "cash": 41613.12,
+      "holdings_value": 60652.5,
+      "holdings_count": 3,
+      "benchmark_nav": 102414.32
+    },
+    {
+      "date": "2025-02-19",
+      "nav": 103714.92,
+      "cash": 41613.12,
+      "holdings_value": 62101.8,
+      "holdings_count": 3,
+      "benchmark_nav": 103130.97
+    },
+    {
+      "date": "2025-02-20",
+      "nav": 103658.02,
+      "cash": 41613.12,
+      "holdings_value": 62044.9,
+      "holdings_count": 3,
+      "benchmark_nav": 102836.25
+    },
+    {
+      "date": "2025-02-21",
+      "nav": 105726.58,
+      "cash": 4799.18,
+      "holdings_value": 100927.4,
+      "holdings_count": 5,
+      "benchmark_nav": 104132.92
+    },
+    {
+      "date": "2025-02-24",
+      "nav": 105280.09,
+      "cash": 44348.99,
+      "holdings_value": 60931.1,
+      "holdings_count": 3,
+      "benchmark_nav": 103904.68
+    },
+    {
+      "date": "2025-02-25",
+      "nav": 104728.34,
+      "cash": 4625.54,
+      "holdings_value": 100102.8,
+      "holdings_count": 5,
+      "benchmark_nav": 102751.18
+    },
+    {
+      "date": "2025-02-26",
+      "nav": 105716.24,
+      "cash": 4625.54,
+      "holdings_value": 101090.7,
+      "holdings_count": 5,
+      "benchmark_nav": 103648.7
+    },
+    {
+      "date": "2025-02-27",
+      "nav": 105452.39,
+      "cash": 4754.99,
+      "holdings_value": 100697.4,
+      "holdings_count": 5,
+      "benchmark_nav": 103862.8
+    },
+    {
+      "date": "2025-02-28",
+      "nav": 102487.53,
+      "cash": 23477.43,
+      "holdings_value": 79010.1,
+      "holdings_count": 4,
+      "benchmark_nav": 101819.38
+    },
+    {
+      "date": "2025-03-03",
+      "nav": 102686.38,
+      "cash": 42550.28,
+      "holdings_value": 60136.1,
+      "holdings_count": 3,
+      "benchmark_nav": 101778.02
+    },
+    {
+      "date": "2025-03-04",
+      "nav": 103315.38,
+      "cash": 62941.68,
+      "holdings_value": 40373.7,
+      "holdings_count": 2,
+      "benchmark_nav": 101692.95
+    },
+    {
+      "date": "2025-03-05",
+      "nav": 103549.08,
+      "cash": 62941.68,
+      "holdings_value": 40607.4,
+      "holdings_count": 2,
+      "benchmark_nav": 102147.08
+    },
+    {
+      "date": "2025-03-06",
+      "nav": 103756.69,
+      "cash": 3124.39,
+      "holdings_value": 100632.3,
+      "holdings_count": 5,
+      "benchmark_nav": 103551.85
+    },
+    {
+      "date": "2025-03-07",
+      "nav": 103552.32,
+      "cash": 3333.82,
+      "holdings_value": 100218.5,
+      "holdings_count": 5,
+      "benchmark_nav": 103231.74
+    },
+    {
+      "date": "2025-03-10",
+      "nav": 103417.9,
+      "cash": 22970.9,
+      "holdings_value": 80447.0,
+      "holdings_count": 4,
+      "benchmark_nav": 102833.63
+    },
+    {
+      "date": "2025-03-11",
+      "nav": 103361.91,
+      "cash": 42732.51,
+      "holdings_value": 60629.4,
+      "holdings_count": 3,
+      "benchmark_nav": 103163.95
+    },
+    {
+      "date": "2025-03-12",
+      "nav": 103295.02,
+      "cash": 63698.02,
+      "holdings_value": 39597.0,
+      "holdings_count": 2,
+      "benchmark_nav": 102792.54
+    },
+    {
+      "date": "2025-03-13",
+      "nav": 102716.32,
+      "cash": 63698.02,
+      "holdings_value": 39018.3,
+      "holdings_count": 2,
+      "benchmark_nav": 102382.91
+    },
+    {
+      "date": "2025-03-14",
+      "nav": 103368.4,
+      "cash": 4659.1,
+      "holdings_value": 98709.3,
+      "holdings_count": 5,
+      "benchmark_nav": 104868.95
+    },
+    {
+      "date": "2025-03-17",
+      "nav": 103021.15,
+      "cash": 24561.15,
+      "holdings_value": 78460.0,
+      "holdings_count": 4,
+      "benchmark_nav": 104613.22
+    },
+    {
+      "date": "2025-03-18",
+      "nav": 103394.88,
+      "cash": 4958.28,
+      "holdings_value": 98436.6,
+      "holdings_count": 5,
+      "benchmark_nav": 104899.31
+    },
+    {
+      "date": "2025-03-19",
+      "nav": 103253.32,
+      "cash": 4298.72,
+      "holdings_value": 98954.6,
+      "holdings_count": 5,
+      "benchmark_nav": 104963.43
+    },
+    {
+      "date": "2025-03-20",
+      "nav": 102772.66,
+      "cash": 4224.86,
+      "holdings_value": 98547.8,
+      "holdings_count": 5,
+      "benchmark_nav": 104042.62
+    },
+    {
+      "date": "2025-03-21",
+      "nav": 101315.33,
+      "cash": 23463.23,
+      "holdings_value": 77852.1,
+      "holdings_count": 4,
+      "benchmark_nav": 102464.57
+    },
+    {
+      "date": "2025-03-24",
+      "nav": 101724.18,
+      "cash": 61944.18,
+      "holdings_value": 39780.0,
+      "holdings_count": 2,
+      "benchmark_nav": 102991.99
+    },
+    {
+      "date": "2025-03-25",
+      "nav": 101876.32,
+      "cash": 42208.52,
+      "holdings_value": 59667.8,
+      "holdings_count": 3,
+      "benchmark_nav": 102925.24
+    },
+    {
+      "date": "2025-03-26",
+      "nav": 101760.12,
+      "cash": 42208.52,
+      "holdings_value": 59551.6,
+      "holdings_count": 3,
+      "benchmark_nav": 102586.55
+    },
+    {
+      "date": "2025-03-27",
+      "nav": 101677.02,
+      "cash": 42208.52,
+      "holdings_value": 59468.5,
+      "holdings_count": 3,
+      "benchmark_nav": 102928.12
+    },
+    {
+      "date": "2025-03-28",
+      "nav": 101973.92,
+      "cash": 42208.52,
+      "holdings_value": 59765.4,
+      "holdings_count": 3,
+      "benchmark_nav": 102476.87
+    },
+    {
+      "date": "2025-03-31",
+      "nav": 102023.62,
+      "cash": 42208.52,
+      "holdings_value": 59815.1,
+      "holdings_count": 3,
+      "benchmark_nav": 101747.66
+    },
+    {
+      "date": "2025-04-01",
+      "nav": 102282.42,
+      "cash": 42208.52,
+      "holdings_value": 60073.9,
+      "holdings_count": 3,
+      "benchmark_nav": 101757.34
+    },
+    {
+      "date": "2025-04-02",
+      "nav": 102108.32,
+      "cash": 42208.52,
+      "holdings_value": 59899.8,
+      "holdings_count": 3,
+      "benchmark_nav": 101671.23
+    },
+    {
+      "date": "2025-04-03",
+      "nav": 102083.72,
+      "cash": 42208.52,
+      "holdings_value": 59875.2,
+      "holdings_count": 3,
+      "benchmark_nav": 101072.1
+    },
+    {
+      "date": "2025-04-07",
+      "nav": 98446.12,
+      "cash": 42208.52,
+      "holdings_value": 56237.6,
+      "holdings_count": 3,
+      "benchmark_nav": 93951.12
+    },
+    {
+      "date": "2025-04-08",
+      "nav": 99202.07,
+      "cash": 59497.87,
+      "holdings_value": 39704.2,
+      "holdings_count": 2,
+      "benchmark_nav": 95556.13
+    },
+    {
+      "date": "2025-04-09",
+      "nav": 99455.47,
+      "cash": 59497.87,
+      "holdings_value": 39957.6,
+      "holdings_count": 2,
+      "benchmark_nav": 96499.19
+    },
+    {
+      "date": "2025-04-10",
+      "nav": 99968.87,
+      "cash": 59497.87,
+      "holdings_value": 40471.0,
+      "holdings_count": 2,
+      "benchmark_nav": 97764.19
+    },
+    {
+      "date": "2025-04-11",
+      "nav": 100236.77,
+      "cash": 59497.87,
+      "holdings_value": 40738.9,
+      "holdings_count": 2,
+      "benchmark_nav": 98167.27
+    },
+    {
+      "date": "2025-04-14",
+      "nav": 100551.87,
+      "cash": 59497.87,
+      "holdings_value": 41054.0,
+      "holdings_count": 2,
+      "benchmark_nav": 98392.9
+    },
+    {
+      "date": "2025-04-15",
+      "nav": 100737.08,
+      "cash": 39710.18,
+      "holdings_value": 61026.9,
+      "holdings_count": 3,
+      "benchmark_nav": 98447.6
+    },
+    {
+      "date": "2025-04-16",
+      "nav": 101516.28,
+      "cash": 39710.18,
+      "holdings_value": 61806.1,
+      "holdings_count": 3,
+      "benchmark_nav": 98750.96
+    },
+    {
+      "date": "2025-04-17",
+      "nav": 101812.18,
+      "cash": 39710.18,
+      "holdings_value": 62102.0,
+      "holdings_count": 3,
+      "benchmark_nav": 98735.26
+    },
+    {
+      "date": "2025-04-18",
+      "nav": 101772.68,
+      "cash": 39710.18,
+      "holdings_value": 62062.5,
+      "holdings_count": 3,
+      "benchmark_nav": 98743.11
+    },
+    {
+      "date": "2025-04-21",
+      "nav": 101960.38,
+      "cash": 39710.18,
+      "holdings_value": 62250.2,
+      "holdings_count": 3,
+      "benchmark_nav": 99066.62
+    },
+    {
+      "date": "2025-04-22",
+      "nav": 102914.08,
+      "cash": 39710.18,
+      "holdings_value": 63203.9,
+      "holdings_count": 3,
+      "benchmark_nav": 99042.28
+    },
+    {
+      "date": "2025-04-23",
+      "nav": 101286.38,
+      "cash": 39710.18,
+      "holdings_value": 61576.2,
+      "holdings_count": 3,
+      "benchmark_nav": 99118.97
+    },
+    {
+      "date": "2025-04-24",
+      "nav": 101642.68,
+      "cash": 39710.18,
+      "holdings_value": 61932.5,
+      "holdings_count": 3,
+      "benchmark_nav": 99053.01
+    },
+    {
+      "date": "2025-04-25",
+      "nav": 101426.28,
+      "cash": 39710.18,
+      "holdings_value": 61716.1,
+      "holdings_count": 3,
+      "benchmark_nav": 99121.85
+    },
+    {
+      "date": "2025-04-28",
+      "nav": 101244.78,
+      "cash": 39710.18,
+      "holdings_value": 61534.6,
+      "holdings_count": 3,
+      "benchmark_nav": 98981.3
+    },
+    {
+      "date": "2025-04-29",
+      "nav": 101296.88,
+      "cash": 39710.18,
+      "holdings_value": 61586.7,
+      "holdings_count": 3,
+      "benchmark_nav": 98810.12
+    },
+    {
+      "date": "2025-04-30",
+      "nav": 100867.53,
+      "cash": 39469.63,
+      "holdings_value": 61397.9,
+      "holdings_count": 3,
+      "benchmark_nav": 98692.07
+    },
+    {
+      "date": "2025-05-06",
+      "nav": 101412.13,
+      "cash": 54.53,
+      "holdings_value": 101357.6,
+      "holdings_count": 5,
+      "benchmark_nav": 99685.91
+    },
+    {
+      "date": "2025-05-07",
+      "nav": 101799.23,
+      "cash": 54.53,
+      "holdings_value": 101744.7,
+      "holdings_count": 5,
+      "benchmark_nav": 100290.27
+    },
+    {
+      "date": "2025-05-08",
+      "nav": 101698.43,
+      "cash": 20240.43,
+      "holdings_value": 81458.0,
+      "holdings_count": 4,
+      "benchmark_nav": 100847.0
+    },
+    {
+      "date": "2025-05-09",
+      "nav": 100976.93,
+      "cash": 20240.43,
+      "holdings_value": 80736.5,
+      "holdings_count": 4,
+      "benchmark_nav": 100670.59
+    },
+    {
+      "date": "2025-05-12",
+      "nav": 100719.94,
+      "cash": 328.34,
+      "holdings_value": 100391.6,
+      "holdings_count": 5,
+      "benchmark_nav": 101834.03
+    },
+    {
+      "date": "2025-05-13",
+      "nav": 100773.05,
+      "cash": 19889.15,
+      "holdings_value": 80883.9,
+      "holdings_count": 4,
+      "benchmark_nav": 101981.92
+    },
+    {
+      "date": "2025-05-14",
+      "nav": 100996.64,
+      "cash": 405.24,
+      "holdings_value": 100591.4,
+      "holdings_count": 5,
+      "benchmark_nav": 103210.8
+    },
+    {
+      "date": "2025-05-15",
+      "nav": 99301.0,
+      "cash": 39849.0,
+      "holdings_value": 59452.0,
+      "holdings_count": 3,
+      "benchmark_nav": 102268.27
+    },
+    {
+      "date": "2025-05-16",
+      "nav": 99132.94,
+      "cash": 39403.94,
+      "holdings_value": 59729.0,
+      "holdings_count": 3,
+      "benchmark_nav": 101794.25
+    },
+    {
+      "date": "2025-05-19",
+      "nav": 99190.68,
+      "cash": 39464.28,
+      "holdings_value": 59726.4,
+      "holdings_count": 3,
+      "benchmark_nav": 101481.73
+    },
+    {
+      "date": "2025-05-20",
+      "nav": 99453.48,
+      "cash": 39464.28,
+      "holdings_value": 59989.2,
+      "holdings_count": 3,
+      "benchmark_nav": 102031.91
+    },
+    {
+      "date": "2025-05-21",
+      "nav": 100086.41,
+      "cash": 39692.41,
+      "holdings_value": 60394.0,
+      "holdings_count": 3,
+      "benchmark_nav": 102508.55
+    },
+    {
+      "date": "2025-05-22",
+      "nav": 99972.64,
+      "cash": 39472.04,
+      "holdings_value": 60500.6,
+      "holdings_count": 3,
+      "benchmark_nav": 102442.85
+    },
+    {
+      "date": "2025-05-23",
+      "nav": 99568.35,
+      "cash": 39520.45,
+      "holdings_value": 60047.9,
+      "holdings_count": 3,
+      "benchmark_nav": 101615.74
+    },
+    {
+      "date": "2025-05-26",
+      "nav": 99571.4,
+      "cash": 39854.6,
+      "holdings_value": 59716.8,
+      "holdings_count": 3,
+      "benchmark_nav": 101035.72
+    },
+    {
+      "date": "2025-05-27",
+      "nav": 99059.8,
+      "cash": 39854.6,
+      "holdings_value": 59205.2,
+      "holdings_count": 3,
+      "benchmark_nav": 100493.65
+    },
+    {
+      "date": "2025-05-28",
+      "nav": 99157.4,
+      "cash": 39854.6,
+      "holdings_value": 59302.8,
+      "holdings_count": 3,
+      "benchmark_nav": 100410.94
+    },
+    {
+      "date": "2025-05-29",
+      "nav": 99023.6,
+      "cash": 39854.6,
+      "holdings_value": 59169.0,
+      "holdings_count": 3,
+      "benchmark_nav": 100998.81
+    },
+    {
+      "date": "2025-05-30",
+      "nav": 99179.2,
+      "cash": 39854.6,
+      "holdings_value": 59324.6,
+      "holdings_count": 3,
+      "benchmark_nav": 100515.37
+    },
+    {
+      "date": "2025-06-03",
+      "nav": 99894.8,
+      "cash": 39854.6,
+      "holdings_value": 60040.2,
+      "holdings_count": 3,
+      "benchmark_nav": 100823.71
+    },
+    {
+      "date": "2025-06-04",
+      "nav": 100203.2,
+      "cash": 39854.6,
+      "holdings_value": 60348.6,
+      "holdings_count": 3,
+      "benchmark_nav": 101261.6
+    },
+    {
+      "date": "2025-06-05",
+      "nav": 99991.0,
+      "cash": 39854.6,
+      "holdings_value": 60136.4,
+      "holdings_count": 3,
+      "benchmark_nav": 101492.46
+    },
+    {
+      "date": "2025-06-06",
+      "nav": 100276.4,
+      "cash": 39854.6,
+      "holdings_value": 60421.8,
+      "holdings_count": 3,
+      "benchmark_nav": 101398.76
+    },
+    {
+      "date": "2025-06-09",
+      "nav": 100144.2,
+      "cash": 39854.6,
+      "holdings_value": 60289.6,
+      "holdings_count": 3,
+      "benchmark_nav": 101693.74
+    },
+    {
+      "date": "2025-06-10",
+      "nav": 100176.03,
+      "cash": 59771.83,
+      "holdings_value": 40404.2,
+      "holdings_count": 2,
+      "benchmark_nav": 101176.01
+    },
+    {
+      "date": "2025-06-11",
+      "nav": 100287.5,
+      "cash": 39891.7,
+      "holdings_value": 60395.8,
+      "holdings_count": 3,
+      "benchmark_nav": 101939.25
+    },
+    {
+      "date": "2025-06-12",
+      "nav": 100435.95,
+      "cash": 385.05,
+      "holdings_value": 100050.9,
+      "holdings_count": 5,
+      "benchmark_nav": 101875.65
+    },
+    {
+      "date": "2025-06-13",
+      "nav": 99914.31,
+      "cash": 59042.11,
+      "holdings_value": 40872.2,
+      "holdings_count": 2,
+      "benchmark_nav": 101142.25
+    },
+    {
+      "date": "2025-06-16",
+      "nav": 99947.52,
+      "cash": 39461.12,
+      "holdings_value": 60486.4,
+      "holdings_count": 3,
+      "benchmark_nav": 101394.04
+    },
+    {
+      "date": "2025-06-17",
+      "nav": 99724.52,
+      "cash": 39461.12,
+      "holdings_value": 60263.4,
+      "holdings_count": 3,
+      "benchmark_nav": 101304.53
+    },
+    {
+      "date": "2025-06-18",
+      "nav": 99825.72,
+      "cash": 39461.12,
+      "holdings_value": 60364.6,
+      "holdings_count": 3,
+      "benchmark_nav": 101424.67
+    },
+    {
+      "date": "2025-06-19",
+      "nav": 99351.32,
+      "cash": 39461.12,
+      "holdings_value": 59890.2,
+      "holdings_count": 3,
+      "benchmark_nav": 100590.23
+    },
+    {
+      "date": "2025-06-20",
+      "nav": 99295.29,
+      "cash": 60726.49,
+      "holdings_value": 38568.8,
+      "holdings_count": 2,
+      "benchmark_nav": 100683.15
+    },
+    {
+      "date": "2025-06-23",
+      "nav": 99519.24,
+      "cash": 60022.04,
+      "holdings_value": 39497.2,
+      "holdings_count": 2,
+      "benchmark_nav": 100977.87
+    },
+    {
+      "date": "2025-06-24",
+      "nav": 99307.24,
+      "cash": 60022.04,
+      "holdings_value": 39285.2,
+      "holdings_count": 2,
+      "benchmark_nav": 102185.29
+    },
+    {
+      "date": "2025-06-25",
+      "nav": 99506.87,
+      "cash": 40074.57,
+      "holdings_value": 59432.3,
+      "holdings_count": 3,
+      "benchmark_nav": 103652.1
+    },
+    {
+      "date": "2025-06-26",
+      "nav": 99729.87,
+      "cash": 40074.57,
+      "holdings_value": 59655.3,
+      "holdings_count": 3,
+      "benchmark_nav": 103284.35
+    },
+    {
+      "date": "2025-06-27",
+      "nav": 99416.87,
+      "cash": 40074.57,
+      "holdings_value": 59342.3,
+      "holdings_count": 3,
+      "benchmark_nav": 102649.36
+    },
+    {
+      "date": "2025-06-30",
+      "nav": 99474.47,
+      "cash": 40074.57,
+      "holdings_value": 59399.9,
+      "holdings_count": 3,
+      "benchmark_nav": 103024.18
+    },
+    {
+      "date": "2025-07-01",
+      "nav": 99750.97,
+      "cash": 309.57,
+      "holdings_value": 99441.4,
+      "holdings_count": 5,
+      "benchmark_nav": 103199.02
+    },
+    {
+      "date": "2025-07-02",
+      "nav": 99553.02,
+      "cash": 487.42,
+      "holdings_value": 99065.6,
+      "holdings_count": 5,
+      "benchmark_nav": 103223.1
+    },
+    {
+      "date": "2025-07-03",
+      "nav": 100243.48,
+      "cash": 141.28,
+      "holdings_value": 100102.2,
+      "holdings_count": 5,
+      "benchmark_nav": 103861.5
+    },
+    {
+      "date": "2025-07-04",
+      "nav": 100100.83,
+      "cash": 262.53,
+      "holdings_value": 99838.3,
+      "holdings_count": 5,
+      "benchmark_nav": 104231.34
+    },
+    {
+      "date": "2025-07-07",
+      "nav": 99765.74,
+      "cash": 262.94,
+      "holdings_value": 99502.8,
+      "holdings_count": 5,
+      "benchmark_nav": 103785.59
+    },
+    {
+      "date": "2025-07-08",
+      "nav": 100239.99,
+      "cash": 215.49,
+      "holdings_value": 100024.5,
+      "holdings_count": 5,
+      "benchmark_nav": 104656.67
+    },
+    {
+      "date": "2025-07-09",
+      "nav": 99853.33,
+      "cash": 274.73,
+      "holdings_value": 99578.6,
+      "holdings_count": 5,
+      "benchmark_nav": 104472.14
+    },
+    {
+      "date": "2025-07-10",
+      "nav": 100319.32,
+      "cash": 335.32,
+      "holdings_value": 99984.0,
+      "holdings_count": 5,
+      "benchmark_nav": 104959.51
+    },
+    {
+      "date": "2025-07-11",
+      "nav": 101164.14,
+      "cash": 1066.14,
+      "holdings_value": 100098.0,
+      "holdings_count": 5,
+      "benchmark_nav": 105084.88
+    },
+    {
+      "date": "2025-07-14",
+      "nav": 101121.57,
+      "cash": 1550.47,
+      "holdings_value": 99571.1,
+      "holdings_count": 5,
+      "benchmark_nav": 105159.74
+    },
+    {
+      "date": "2025-07-15",
+      "nav": 101966.28,
+      "cash": 2247.48,
+      "holdings_value": 99718.8,
+      "holdings_count": 5,
+      "benchmark_nav": 105196.12
+    },
+    {
+      "date": "2025-07-16",
+      "nav": 101752.65,
+      "cash": 2026.05,
+      "holdings_value": 99726.6,
+      "holdings_count": 5,
+      "benchmark_nav": 104885.7
+    },
+    {
+      "date": "2025-07-17",
+      "nav": 102650.81,
+      "cash": 3354.81,
+      "holdings_value": 99296.0,
+      "holdings_count": 5,
+      "benchmark_nav": 105599.99
+    },
+    {
+      "date": "2025-07-18",
+      "nav": 103482.98,
+      "cash": 3405.28,
+      "holdings_value": 100077.7,
+      "holdings_count": 5,
+      "benchmark_nav": 106229.75
+    },
+    {
+      "date": "2025-07-21",
+      "nav": 104242.47,
+      "cash": 4445.17,
+      "holdings_value": 99797.3,
+      "holdings_count": 5,
+      "benchmark_nav": 106938.02
+    },
+    {
+      "date": "2025-07-22",
+      "nav": 104609.39,
+      "cash": 5013.79,
+      "holdings_value": 99595.6,
+      "holdings_count": 5,
+      "benchmark_nav": 107810.94
+    },
+    {
+      "date": "2025-07-23",
+      "nav": 104714.71,
+      "cash": 5160.91,
+      "holdings_value": 99553.8,
+      "holdings_count": 5,
+      "benchmark_nav": 107832.14
+    },
+    {
+      "date": "2025-07-24",
+      "nav": 104727.0,
+      "cash": 5454.9,
+      "holdings_value": 99272.1,
+      "holdings_count": 5,
+      "benchmark_nav": 108598.26
+    },
+    {
+      "date": "2025-07-25",
+      "nav": 104894.79,
+      "cash": 6085.49,
+      "holdings_value": 98809.3,
+      "holdings_count": 5,
+      "benchmark_nav": 108025.57
+    },
+    {
+      "date": "2025-07-28",
+      "nav": 105308.64,
+      "cash": 5964.44,
+      "holdings_value": 99344.2,
+      "holdings_count": 5,
+      "benchmark_nav": 108252.24
+    },
+    {
+      "date": "2025-07-29",
+      "nav": 105760.22,
+      "cash": 6873.52,
+      "holdings_value": 98886.7,
+      "holdings_count": 5,
+      "benchmark_nav": 108676.26
+    },
+    {
+      "date": "2025-07-30",
+      "nav": 105358.39,
+      "cash": 5954.49,
+      "holdings_value": 99403.9,
+      "holdings_count": 5,
+      "benchmark_nav": 108655.84
+    },
+    {
+      "date": "2025-07-31",
+      "nav": 104148.92,
+      "cash": 6195.82,
+      "holdings_value": 97953.1,
+      "holdings_count": 5,
+      "benchmark_nav": 106675.76
+    },
+    {
+      "date": "2025-08-01",
+      "nav": 103798.24,
+      "cash": 44581.24,
+      "holdings_value": 59217.0,
+      "holdings_count": 3,
+      "benchmark_nav": 106135.0
+    },
+    {
+      "date": "2025-08-04",
+      "nav": 104120.3,
+      "cash": 4148.6,
+      "holdings_value": 99971.7,
+      "holdings_count": 5,
+      "benchmark_nav": 106547.77
+    },
+    {
+      "date": "2025-08-05",
+      "nav": 104729.59,
+      "cash": 4787.79,
+      "holdings_value": 99941.8,
+      "holdings_count": 5,
+      "benchmark_nav": 107404.97
+    },
+    {
+      "date": "2025-08-06",
+      "nav": 105268.07,
+      "cash": 5279.57,
+      "holdings_value": 99988.5,
+      "holdings_count": 5,
+      "benchmark_nav": 107667.76
+    },
+    {
+      "date": "2025-08-07",
+      "nav": 105106.27,
+      "cash": 5279.57,
+      "holdings_value": 99826.7,
+      "holdings_count": 5,
+      "benchmark_nav": 107698.65
+    },
+    {
+      "date": "2025-08-08",
+      "nav": 104814.59,
+      "cash": 4996.29,
+      "holdings_value": 99818.3,
+      "holdings_count": 5,
+      "benchmark_nav": 107444.76
+    },
+    {
+      "date": "2025-08-11",
+      "nav": 105134.27,
+      "cash": 5676.27,
+      "holdings_value": 99458.0,
+      "holdings_count": 5,
+      "benchmark_nav": 107903.86
+    },
+    {
+      "date": "2025-08-12",
+      "nav": 104768.5,
+      "cash": 5564.3,
+      "holdings_value": 99204.2,
+      "holdings_count": 5,
+      "benchmark_nav": 108461.89
+    },
+    {
+      "date": "2025-08-13",
+      "nav": 106059.75,
+      "cash": 5852.95,
+      "holdings_value": 100206.8,
+      "holdings_count": 5,
+      "benchmark_nav": 109319.1
+    },
+    {
+      "date": "2025-08-14",
+      "nav": 105889.34,
+      "cash": 6916.34,
+      "holdings_value": 98973.0,
+      "holdings_count": 5,
+      "benchmark_nav": 109233.51
+    },
+    {
+      "date": "2025-08-15",
+      "nav": 106817.17,
+      "cash": 6955.37,
+      "holdings_value": 99861.8,
+      "holdings_count": 5,
+      "benchmark_nav": 109993.61
+    },
+    {
+      "date": "2025-08-18",
+      "nav": 107334.77,
+      "cash": 6955.37,
+      "holdings_value": 100379.4,
+      "holdings_count": 5,
+      "benchmark_nav": 110963.63
+    },
+    {
+      "date": "2025-08-19",
+      "nav": 106619.53,
+      "cash": 6857.13,
+      "holdings_value": 99762.4,
+      "holdings_count": 5,
+      "benchmark_nav": 110543.8
+    },
+    {
+      "date": "2025-08-20",
+      "nav": 106786.73,
+      "cash": 6195.83,
+      "holdings_value": 100590.9,
+      "holdings_count": 5,
+      "benchmark_nav": 111800.95
+    },
+    {
+      "date": "2025-08-21",
+      "nav": 106669.33,
+      "cash": 6195.83,
+      "holdings_value": 100473.5,
+      "holdings_count": 5,
+      "benchmark_nav": 112237.28
+    },
+    {
+      "date": "2025-08-22",
+      "nav": 107861.3,
+      "cash": 7228.0,
+      "holdings_value": 100633.3,
+      "holdings_count": 5,
+      "benchmark_nav": 114591.13
+    },
+    {
+      "date": "2025-08-25",
+      "nav": 110028.08,
+      "cash": 9971.08,
+      "holdings_value": 100057.0,
+      "holdings_count": 5,
+      "benchmark_nav": 116978.75
+    },
+    {
+      "date": "2025-08-26",
+      "nav": 109338.45,
+      "cash": 9450.15,
+      "holdings_value": 99888.3,
+      "holdings_count": 5,
+      "benchmark_nav": 116543.47
+    },
+    {
+      "date": "2025-08-27",
+      "nav": 107929.98,
+      "cash": 9231.68,
+      "holdings_value": 98698.3,
+      "holdings_count": 5,
+      "benchmark_nav": 114803.93
+    },
+    {
+      "date": "2025-08-28",
+      "nav": 108609.41,
+      "cash": 9713.91,
+      "holdings_value": 98895.5,
+      "holdings_count": 5,
+      "benchmark_nav": 116836.36
+    },
+    {
+      "date": "2025-08-29",
+      "nav": 108966.51,
+      "cash": 9713.91,
+      "holdings_value": 99252.6,
+      "holdings_count": 5,
+      "benchmark_nav": 117699.59
+    },
+    {
+      "date": "2025-09-01",
+      "nav": 109037.87,
+      "cash": 10031.37,
+      "holdings_value": 99006.5,
+      "holdings_count": 5,
+      "benchmark_nav": 118404.99
+    },
+    {
+      "date": "2025-09-02",
+      "nav": 108546.76,
+      "cash": 9796.16,
+      "holdings_value": 98750.6,
+      "holdings_count": 5,
+      "benchmark_nav": 117534.43
+    },
+    {
+      "date": "2025-09-03",
+      "nav": 105971.26,
+      "cash": 8066.06,
+      "holdings_value": 97905.2,
+      "holdings_count": 5,
+      "benchmark_nav": 116732.97
+    },
+    {
+      "date": "2025-09-04",
+      "nav": 105145.14,
+      "cash": 8613.84,
+      "holdings_value": 96531.3,
+      "holdings_count": 5,
+      "benchmark_nav": 114256.36
+    },
+    {
+      "date": "2025-09-05",
+      "nav": 107260.08,
+      "cash": 8323.18,
+      "holdings_value": 98936.9,
+      "holdings_count": 5,
+      "benchmark_nav": 116745.8
+    },
+    {
+      "date": "2025-09-08",
+      "nav": 107212.68,
+      "cash": 8323.18,
+      "holdings_value": 98889.5,
+      "holdings_count": 5,
+      "benchmark_nav": 116935.56
+    },
+    {
+      "date": "2025-09-09",
+      "nav": 107539.45,
+      "cash": 8675.85,
+      "holdings_value": 98863.6,
+      "holdings_count": 5,
+      "benchmark_nav": 116116.05
+    },
+    {
+      "date": "2025-09-10",
+      "nav": 107506.24,
+      "cash": 9475.94,
+      "holdings_value": 98030.3,
+      "holdings_count": 5,
+      "benchmark_nav": 116354.23
+    },
+    {
+      "date": "2025-09-11",
+      "nav": 109310.36,
+      "cash": 9747.06,
+      "holdings_value": 99563.3,
+      "holdings_count": 5,
+      "benchmark_nav": 119041.55
+    },
+    {
+      "date": "2025-09-12",
+      "nav": 108596.16,
+      "cash": 9417.46,
+      "holdings_value": 99178.7,
+      "holdings_count": 5,
+      "benchmark_nav": 118360.23
+    },
+    {
+      "date": "2025-09-15",
+      "nav": 108711.46,
+      "cash": 9681.96,
+      "holdings_value": 99029.5,
+      "holdings_count": 5,
+      "benchmark_nav": 118649.72
+    },
+    {
+      "date": "2025-09-16",
+      "nav": 109018.25,
+      "cash": 9373.95,
+      "holdings_value": 99644.3,
+      "holdings_count": 5,
+      "benchmark_nav": 118395.31
+    },
+    {
+      "date": "2025-09-17",
+      "nav": 109194.44,
+      "cash": 9435.34,
+      "holdings_value": 99759.1,
+      "holdings_count": 5,
+      "benchmark_nav": 119119.81
+    },
+    {
+      "date": "2025-09-18",
+      "nav": 108332.36,
+      "cash": 9153.36,
+      "holdings_value": 99179.0,
+      "holdings_count": 5,
+      "benchmark_nav": 117734.93
+    },
+    {
+      "date": "2025-09-19",
+      "nav": 108705.55,
+      "cash": 9378.95,
+      "holdings_value": 99326.6,
+      "holdings_count": 5,
+      "benchmark_nav": 117834.65
+    },
+    {
+      "date": "2025-09-22",
+      "nav": 110156.55,
+      "cash": 9378.95,
+      "holdings_value": 100777.6,
+      "holdings_count": 5,
+      "benchmark_nav": 118376.2
+    },
+    {
+      "date": "2025-09-23",
+      "nav": 110032.5,
+      "cash": 9879.7,
+      "holdings_value": 100152.8,
+      "holdings_count": 5,
+      "benchmark_nav": 118302.12
+    },
+    {
+      "date": "2025-09-24",
+      "nav": 111351.02,
+      "cash": 10472.92,
+      "holdings_value": 100878.1,
+      "holdings_count": 5,
+      "benchmark_nav": 119513.73
+    },
+    {
+      "date": "2025-09-25",
+      "nav": 112614.37,
+      "cash": 12768.37,
+      "holdings_value": 99846.0,
+      "holdings_count": 5,
+      "benchmark_nav": 120231.43
+    },
+    {
+      "date": "2025-09-26",
+      "nav": 111879.27,
+      "cash": 12768.37,
+      "holdings_value": 99110.9,
+      "holdings_count": 5,
+      "benchmark_nav": 119094.42
+    },
+    {
+      "date": "2025-09-29",
+      "nav": 113252.47,
+      "cash": 12768.37,
+      "holdings_value": 100484.1,
+      "holdings_count": 5,
+      "benchmark_nav": 120926.62
+    },
+    {
+      "date": "2025-09-30",
+      "nav": 114127.19,
+      "cash": 13479.19,
+      "holdings_value": 100648.0,
+      "holdings_count": 5,
+      "benchmark_nav": 121466.86
+    },
+    {
+      "date": "2025-10-09",
+      "nav": 117634.16,
+      "cash": 15130.56,
+      "holdings_value": 102503.6,
+      "holdings_count": 5,
+      "benchmark_nav": 123267.39
+    },
+    {
+      "date": "2025-10-10",
+      "nav": 115647.06,
+      "cash": 15185.66,
+      "holdings_value": 100461.4,
+      "holdings_count": 5,
+      "benchmark_nav": 120842.34
+    },
+    {
+      "date": "2025-10-13",
+      "nav": 116083.12,
+      "cash": 16849.52,
+      "holdings_value": 99233.6,
+      "holdings_count": 5,
+      "benchmark_nav": 120244.26
+    },
+    {
+      "date": "2025-10-14",
+      "nav": 113459.66,
+      "cash": 36568.66,
+      "holdings_value": 76891.0,
+      "holdings_count": 4,
+      "benchmark_nav": 118806.77
+    },
+    {
+      "date": "2025-10-15",
+      "nav": 114747.26,
+      "cash": 16571.66,
+      "holdings_value": 98175.6,
+      "holdings_count": 5,
+      "benchmark_nav": 120566.46
+    },
+    {
+      "date": "2025-10-16",
+      "nav": 114603.96,
+      "cash": 16571.66,
+      "holdings_value": 98032.3,
+      "holdings_count": 5,
+      "benchmark_nav": 120883.96
+    },
+    {
+      "date": "2025-10-17",
+      "nav": 111955.28,
+      "cash": 52268.48,
+      "holdings_value": 59686.8,
+      "holdings_count": 3,
+      "benchmark_nav": 118156.86
+    },
+    {
+      "date": "2025-10-20",
+      "nav": 111805.98,
+      "cash": 52268.48,
+      "holdings_value": 59537.5,
+      "holdings_count": 3,
+      "benchmark_nav": 118784.78
+    },
+    {
+      "date": "2025-10-21",
+      "nav": 112932.7,
+      "cash": 12710.9,
+      "holdings_value": 100221.8,
+      "holdings_count": 5,
+      "benchmark_nav": 120607.82
+    },
+    {
+      "date": "2025-10-22",
+      "nav": 112717.13,
+      "cash": 12956.13,
+      "holdings_value": 99761.0,
+      "holdings_count": 5,
+      "benchmark_nav": 120207.35
+    },
+    {
+      "date": "2025-10-23",
+      "nav": 112342.43,
+      "cash": 12956.13,
+      "holdings_value": 99386.3,
+      "holdings_count": 5,
+      "benchmark_nav": 120567.77
+    },
+    {
+      "date": "2025-10-24",
+      "nav": 114473.38,
+      "cash": 15159.88,
+      "holdings_value": 99313.5,
+      "holdings_count": 5,
+      "benchmark_nav": 121990.09
+    },
+    {
+      "date": "2025-10-27",
+      "nav": 115862.93,
+      "cash": 15902.73,
+      "holdings_value": 99960.2,
+      "holdings_count": 5,
+      "benchmark_nav": 123438.57
+    },
+    {
+      "date": "2025-10-28",
+      "nav": 114829.62,
+      "cash": 16042.92,
+      "holdings_value": 98786.7,
+      "holdings_count": 5,
+      "benchmark_nav": 122809.08
+    },
+    {
+      "date": "2025-10-29",
+      "nav": 116538.62,
+      "cash": 17357.02,
+      "holdings_value": 99181.6,
+      "holdings_count": 5,
+      "benchmark_nav": 124271.44
+    },
+    {
+      "date": "2025-10-30",
+      "nav": 115247.8,
+      "cash": 15075.8,
+      "holdings_value": 100172.0,
+      "holdings_count": 5,
+      "benchmark_nav": 123278.65
+    },
+    {
+      "date": "2025-10-31",
+      "nav": 113022.42,
+      "cash": 14140.62,
+      "holdings_value": 98881.8,
+      "holdings_count": 5,
+      "benchmark_nav": 121466.34
+    },
+    {
+      "date": "2025-11-03",
+      "nav": 113292.53,
+      "cash": 14390.13,
+      "holdings_value": 98902.4,
+      "holdings_count": 5,
+      "benchmark_nav": 121799.54
+    },
+    {
+      "date": "2025-11-04",
+      "nav": 112157.88,
+      "cash": 52869.18,
+      "holdings_value": 59288.7,
+      "holdings_count": 3,
+      "benchmark_nav": 120891.29
+    },
+    {
+      "date": "2025-11-05",
+      "nav": 111817.28,
+      "cash": 52869.18,
+      "holdings_value": 58948.1,
+      "holdings_count": 3,
+      "benchmark_nav": 121115.34
+    },
+    {
+      "date": "2025-11-06",
+      "nav": 112557.67,
+      "cash": 14329.57,
+      "holdings_value": 98228.1,
+      "holdings_count": 5,
+      "benchmark_nav": 122846.51
+    },
+    {
+      "date": "2025-11-07",
+      "nav": 112257.87,
+      "cash": 13994.57,
+      "holdings_value": 98263.3,
+      "holdings_count": 5,
+      "benchmark_nav": 122464.1
+    },
+    {
+      "date": "2025-11-10",
+      "nav": 112906.37,
+      "cash": 13994.57,
+      "holdings_value": 98911.8,
+      "holdings_count": 5,
+      "benchmark_nav": 122889.7
+    },
+    {
+      "date": "2025-11-11",
+      "nav": 112866.88,
+      "cash": 14203.28,
+      "holdings_value": 98663.6,
+      "holdings_count": 5,
+      "benchmark_nav": 121767.34
+    },
+    {
+      "date": "2025-11-12",
+      "nav": 112975.66,
+      "cash": 14232.76,
+      "holdings_value": 98742.9,
+      "holdings_count": 5,
+      "benchmark_nav": 121603.49
+    },
+    {
+      "date": "2025-11-13",
+      "nav": 113952.25,
+      "cash": 15314.15,
+      "holdings_value": 98638.1,
+      "holdings_count": 5,
+      "benchmark_nav": 123073.44
+    },
+    {
+      "date": "2025-11-14",
+      "nav": 112180.41,
+      "cash": 34383.41,
+      "holdings_value": 77797.0,
+      "holdings_count": 4,
+      "benchmark_nav": 121138.37
+    },
+    {
+      "date": "2025-11-17",
+      "nav": 111680.11,
+      "cash": 34383.41,
+      "holdings_value": 77296.7,
+      "holdings_count": 4,
+      "benchmark_nav": 120350.79
+    },
+    {
+      "date": "2025-11-18",
+      "nav": 110587.0,
+      "cash": 52998.5,
+      "holdings_value": 57588.5,
+      "holdings_count": 3,
+      "benchmark_nav": 119569.22
+    },
+    {
+      "date": "2025-11-19",
+      "nav": 110713.6,
+      "cash": 52998.5,
+      "holdings_value": 57715.1,
+      "holdings_count": 3,
+      "benchmark_nav": 120095.33
+    },
+    {
+      "date": "2025-11-20",
+      "nav": 110559.99,
+      "cash": 51881.59,
+      "holdings_value": 58678.4,
+      "holdings_count": 3,
+      "benchmark_nav": 119484.42
+    },
+    {
+      "date": "2025-11-21",
+      "nav": 108728.84,
+      "cash": 51001.44,
+      "holdings_value": 57727.4,
+      "holdings_count": 3,
+      "benchmark_nav": 116570.17
+    },
+    {
+      "date": "2025-11-24",
+      "nav": 108528.44,
+      "cash": 51001.44,
+      "holdings_value": 57527.0,
+      "holdings_count": 3,
+      "benchmark_nav": 116424.64
+    },
+    {
+      "date": "2025-11-25",
+      "nav": 109389.64,
+      "cash": 51001.44,
+      "holdings_value": 58388.2,
+      "holdings_count": 3,
+      "benchmark_nav": 117533.12
+    },
+    {
+      "date": "2025-11-26",
+      "nav": 109284.84,
+      "cash": 51001.44,
+      "holdings_value": 58283.4,
+      "holdings_count": 3,
+      "benchmark_nav": 118245.85
+    },
+    {
+      "date": "2025-11-27",
+      "nav": 109337.44,
+      "cash": 51001.44,
+      "holdings_value": 58336.0,
+      "holdings_count": 3,
+      "benchmark_nav": 118187.48
+    },
+    {
+      "date": "2025-11-28",
+      "nav": 109770.44,
+      "cash": 51001.44,
+      "holdings_value": 58769.0,
+      "holdings_count": 3,
+      "benchmark_nav": 118482.2
+    },
+    {
+      "date": "2025-12-01",
+      "nav": 110682.04,
+      "cash": 51001.44,
+      "holdings_value": 59680.6,
+      "holdings_count": 3,
+      "benchmark_nav": 119786.47
+    },
+    {
+      "date": "2025-12-02",
+      "nav": 110232.59,
+      "cash": 50327.79,
+      "holdings_value": 59904.8,
+      "holdings_count": 3,
+      "benchmark_nav": 119206.45
+    },
+    {
+      "date": "2025-12-03",
+      "nav": 110580.29,
+      "cash": 50327.79,
+      "holdings_value": 60252.5,
+      "holdings_count": 3,
+      "benchmark_nav": 118597.11
+    },
+    {
+      "date": "2025-12-04",
+      "nav": 110573.89,
+      "cash": 50327.79,
+      "holdings_value": 60246.1,
+      "holdings_count": 3,
+      "benchmark_nav": 119003.33
+    },
+    {
+      "date": "2025-12-05",
+      "nav": 111209.21,
+      "cash": 10547.01,
+      "holdings_value": 100662.2,
+      "holdings_count": 5,
+      "benchmark_nav": 119997.17
+    },
+    {
+      "date": "2025-12-08",
+      "nav": 111728.98,
+      "cash": 10422.78,
+      "holdings_value": 101306.2,
+      "holdings_count": 5,
+      "benchmark_nav": 120971.12
+    },
+    {
+      "date": "2025-12-09",
+      "nav": 111029.38,
+      "cash": 10422.78,
+      "holdings_value": 100606.6,
+      "holdings_count": 5,
+      "benchmark_nav": 120355.24
+    },
+    {
+      "date": "2025-12-10",
+      "nav": 111511.77,
+      "cash": 11228.37,
+      "holdings_value": 100283.4,
+      "holdings_count": 5,
+      "benchmark_nav": 120187.98
+    },
+    {
+      "date": "2025-12-11",
+      "nav": 110508.95,
+      "cash": 10940.65,
+      "holdings_value": 99568.3,
+      "holdings_count": 5,
+      "benchmark_nav": 119150.17
+    },
+    {
+      "date": "2025-12-12",
+      "nav": 111365.86,
+      "cash": 11039.16,
+      "holdings_value": 100326.7,
+      "holdings_count": 5,
+      "benchmark_nav": 119903.21
+    },
+    {
+      "date": "2025-12-15",
+      "nav": 111317.89,
+      "cash": 11360.89,
+      "holdings_value": 99957.0,
+      "holdings_count": 5,
+      "benchmark_nav": 119147.03
+    },
+    {
+      "date": "2025-12-16",
+      "nav": 109452.43,
+      "cash": 30858.33,
+      "holdings_value": 78594.1,
+      "holdings_count": 4,
+      "benchmark_nav": 117720.27
+    },
+    {
+      "date": "2025-12-17",
+      "nav": 111205.64,
+      "cash": 10867.54,
+      "holdings_value": 100338.1,
+      "holdings_count": 5,
+      "benchmark_nav": 119875.2
+    },
+    {
+      "date": "2025-12-18",
+      "nav": 110303.09,
+      "cash": 10235.79,
+      "holdings_value": 100067.3,
+      "holdings_count": 5,
+      "benchmark_nav": 119166.14
+    },
+    {
+      "date": "2025-12-19",
+      "nav": 110874.92,
+      "cash": 10588.82,
+      "holdings_value": 100286.1,
+      "holdings_count": 5,
+      "benchmark_nav": 119568.96
+    },
+    {
+      "date": "2025-12-22",
+      "nav": 112849.12,
+      "cash": 11874.12,
+      "holdings_value": 100975.0,
+      "holdings_count": 5,
+      "benchmark_nav": 120705.97
+    },
+    {
+      "date": "2025-12-23",
+      "nav": 113279.85,
+      "cash": 12570.45,
+      "holdings_value": 100709.4,
+      "holdings_count": 5,
+      "benchmark_nav": 120944.42
+    },
+    {
+      "date": "2025-12-24",
+      "nav": 113648.25,
+      "cash": 12570.45,
+      "holdings_value": 101077.8,
+      "holdings_count": 5,
+      "benchmark_nav": 121293.33
+    },
+    {
+      "date": "2025-12-25",
+      "nav": 113597.67,
+      "cash": 12551.67,
+      "holdings_value": 101046.0,
+      "holdings_count": 5,
+      "benchmark_nav": 121515.28
+    },
+    {
+      "date": "2025-12-26",
+      "nav": 113673.54,
+      "cash": 14232.14,
+      "holdings_value": 99441.4,
+      "holdings_count": 5,
+      "benchmark_nav": 121900.05
+    },
+    {
+      "date": "2025-12-29",
+      "nav": 113373.34,
+      "cash": 14489.94,
+      "holdings_value": 98883.4,
+      "holdings_count": 5,
+      "benchmark_nav": 121432.31
+    },
+    {
+      "date": "2025-12-30",
+      "nav": 113651.9,
+      "cash": 14710.9,
+      "holdings_value": 98941.0,
+      "holdings_count": 5,
+      "benchmark_nav": 121744.05
+    },
+    {
+      "date": "2025-12-31",
+      "nav": 112798.8,
+      "cash": 14710.9,
+      "holdings_value": 98087.9,
+      "holdings_count": 5,
+      "benchmark_nav": 121185.49
+    },
+    {
+      "date": "2026-01-05",
+      "nav": 115587.68,
+      "cash": 15369.78,
+      "holdings_value": 100217.9,
+      "holdings_count": 5,
+      "benchmark_nav": 123483.85
+    },
+    {
+      "date": "2026-01-06",
+      "nav": 116319.38,
+      "cash": 15369.78,
+      "holdings_value": 100949.6,
+      "holdings_count": 5,
+      "benchmark_nav": 125393.01
+    },
+    {
+      "date": "2026-01-07",
+      "nav": 116064.1,
+      "cash": 15118.1,
+      "holdings_value": 100946.0,
+      "holdings_count": 5,
+      "benchmark_nav": 125026.04
+    },
+    {
+      "date": "2026-01-08",
+      "nav": 115874.21,
+      "cash": 15244.51,
+      "holdings_value": 100629.7,
+      "holdings_count": 5,
+      "benchmark_nav": 124004.72
+    },
+    {
+      "date": "2026-01-09",
+      "nav": 117242.11,
+      "cash": 15244.51,
+      "holdings_value": 101997.6,
+      "holdings_count": 5,
+      "benchmark_nav": 124561.45
+    },
+    {
+      "date": "2026-01-12",
+      "nav": 119304.65,
+      "cash": 18489.95,
+      "holdings_value": 100814.7,
+      "holdings_count": 5,
+      "benchmark_nav": 125372.85
+    },
+    {
+      "date": "2026-01-13",
+      "nav": 117543.65,
+      "cash": 17795.35,
+      "holdings_value": 99748.3,
+      "holdings_count": 5,
+      "benchmark_nav": 124616.68
+    },
+    {
+      "date": "2026-01-14",
+      "nav": 118061.42,
+      "cash": 17599.42,
+      "holdings_value": 100462.0,
+      "holdings_count": 5,
+      "benchmark_nav": 124116.75
+    },
+    {
+      "date": "2026-01-15",
+      "nav": 118074.33,
+      "cash": 17807.03,
+      "holdings_value": 100267.3,
+      "holdings_count": 5,
+      "benchmark_nav": 124365.4
+    },
+    {
+      "date": "2026-01-16",
+      "nav": 118032.53,
+      "cash": 17807.03,
+      "holdings_value": 100225.5,
+      "holdings_count": 5,
+      "benchmark_nav": 123853.43
+    },
+    {
+      "date": "2026-01-19",
+      "nav": 117489.01,
+      "cash": 37045.41,
+      "holdings_value": 80443.6,
+      "holdings_count": 4,
+      "benchmark_nav": 123921.23
+    },
+    {
+      "date": "2026-01-20",
+      "nav": 116914.51,
+      "cash": 37045.41,
+      "holdings_value": 79869.1,
+      "holdings_count": 4,
+      "benchmark_nav": 123513.43
+    },
+    {
+      "date": "2026-01-21",
+      "nav": 118362.71,
+      "cash": 37045.41,
+      "holdings_value": 81317.3,
+      "holdings_count": 4,
+      "benchmark_nav": 123623.1
+    },
+    {
+      "date": "2026-01-22",
+      "nav": 118537.78,
+      "cash": 56888.88,
+      "holdings_value": 61648.9,
+      "holdings_count": 3,
+      "benchmark_nav": 123639.85
+    },
+    {
+      "date": "2026-01-23",
+      "nav": 119410.38,
+      "cash": 78290.18,
+      "holdings_value": 41120.2,
+      "holdings_count": 2,
+      "benchmark_nav": 123084.69
+    },
+    {
+      "date": "2026-01-26",
+      "nav": 118961.18,
+      "cash": 78290.18,
+      "holdings_value": 40671.0,
+      "holdings_count": 2,
+      "benchmark_nav": 123201.43
+    },
+    {
+      "date": "2026-01-27",
+      "nav": 119412.88,
+      "cash": 78290.18,
+      "holdings_value": 41122.7,
+      "holdings_count": 2,
+      "benchmark_nav": 123168.19
+    },
+    {
+      "date": "2026-01-28",
+      "nav": 119227.38,
+      "cash": 78290.18,
+      "holdings_value": 40937.2,
+      "holdings_count": 2,
+      "benchmark_nav": 123490.13
+    },
+    {
+      "date": "2026-01-29",
+      "nav": 118541.74,
+      "cash": 58415.74,
+      "holdings_value": 60126.0,
+      "holdings_count": 3,
+      "benchmark_nav": 124429.27
+    },
+    {
+      "date": "2026-01-30",
+      "nav": 119047.84,
+      "cash": 58415.74,
+      "holdings_value": 60632.1,
+      "holdings_count": 3,
+      "benchmark_nav": 123185.2
+    },
+    {
+      "date": "2026-02-02",
+      "nav": 117199.62,
+      "cash": 78243.02,
+      "holdings_value": 38956.6,
+      "holdings_count": 2,
+      "benchmark_nav": 120558.35
+    },
+    {
+      "date": "2026-02-03",
+      "nav": 117567.62,
+      "cash": 78243.02,
+      "holdings_value": 39324.6,
+      "holdings_count": 2,
+      "benchmark_nav": 121975.17
+    },
+    {
+      "date": "2026-02-04",
+      "nav": 116714.71,
+      "cash": 77292.61,
+      "holdings_value": 39422.1,
+      "holdings_count": 2,
+      "benchmark_nav": 122984.71
+    },
+    {
+      "date": "2026-02-05",
+      "nav": 116185.31,
+      "cash": 77292.61,
+      "holdings_value": 38892.7,
+      "holdings_count": 2,
+      "benchmark_nav": 122245.02
+    },
+    {
+      "date": "2026-02-06",
+      "nav": 115859.47,
+      "cash": 76463.07,
+      "holdings_value": 39396.4,
+      "holdings_count": 2,
+      "benchmark_nav": 121543.03
+    },
+    {
+      "date": "2026-02-09",
+      "nav": 117195.07,
+      "cash": 76463.07,
+      "holdings_value": 40732.0,
+      "holdings_count": 2,
+      "benchmark_nav": 123518.14
+    },
+    {
+      "date": "2026-02-10",
+      "nav": 117171.54,
+      "cash": 57186.34,
+      "holdings_value": 59985.2,
+      "holdings_count": 3,
+      "benchmark_nav": 123655.29
+    },
+    {
+      "date": "2026-02-11",
+      "nav": 117167.04,
+      "cash": 57294.84,
+      "holdings_value": 59872.2,
+      "holdings_count": 3,
+      "benchmark_nav": 123380.99
+    },
+    {
+      "date": "2026-02-12",
+      "nav": 117637.27,
+      "cash": 17653.77,
+      "holdings_value": 99983.5,
+      "holdings_count": 5,
+      "benchmark_nav": 123531.75
+    },
+    {
+      "date": "2026-02-13",
+      "nav": 116852.59,
+      "cash": 37608.79,
+      "holdings_value": 79243.8,
+      "holdings_count": 4,
+      "benchmark_nav": 121983.02
+    },
+    {
+      "date": "2026-02-24",
+      "nav": 118167.22,
+      "cash": 18146.02,
+      "holdings_value": 100021.2,
+      "holdings_count": 5,
+      "benchmark_nav": 123216.61
+    },
+    {
+      "date": "2026-02-25",
+      "nav": 119654.52,
+      "cash": 18146.02,
+      "holdings_value": 101508.5,
+      "holdings_count": 5,
+      "benchmark_nav": 123958.66
+    },
+    {
+      "date": "2026-02-26",
+      "nav": 119551.37,
+      "cash": 18270.87,
+      "holdings_value": 101280.5,
+      "holdings_count": 5,
+      "benchmark_nav": 123722.56
+    },
+    {
+      "date": "2026-02-27",
+      "nav": 120089.54,
+      "cash": 18874.94,
+      "holdings_value": 101214.6,
+      "holdings_count": 5,
+      "benchmark_nav": 123298.02
+    },
+    {
+      "date": "2026-03-02",
+      "nav": 121805.92,
+      "cash": 21224.22,
+      "holdings_value": 100581.7,
+      "holdings_count": 5,
+      "benchmark_nav": 123769.68
+    },
+    {
+      "date": "2026-03-03",
+      "nav": 118964.07,
+      "cash": 59320.77,
+      "holdings_value": 59643.3,
+      "holdings_count": 3,
+      "benchmark_nav": 121864.97
+    },
+    {
+      "date": "2026-03-04",
+      "nav": 118009.19,
+      "cash": 78673.09,
+      "holdings_value": 39336.1,
+      "holdings_count": 2,
+      "benchmark_nav": 120470.4
+    },
+    {
+      "date": "2026-03-05",
+      "nav": 118099.49,
+      "cash": 78673.09,
+      "holdings_value": 39426.4,
+      "holdings_count": 2,
+      "benchmark_nav": 121650.08
+    },
+    {
+      "date": "2026-03-06",
+      "nav": 118020.9,
+      "cash": 58695.1,
+      "holdings_value": 59325.8,
+      "holdings_count": 3,
+      "benchmark_nav": 121983.8
+    },
+    {
+      "date": "2026-03-09",
+      "nav": 117423.7,
+      "cash": 58695.1,
+      "holdings_value": 58728.6,
+      "holdings_count": 3,
+      "benchmark_nav": 120806.48
+    },
+    {
+      "date": "2026-03-10",
+      "nav": 118195.5,
+      "cash": 58695.1,
+      "holdings_value": 59500.4,
+      "holdings_count": 3,
+      "benchmark_nav": 122358.62
+    },
+    {
+      "date": "2026-03-11",
+      "nav": 117851.41,
+      "cash": 18560.01,
+      "holdings_value": 99291.4,
+      "holdings_count": 5,
+      "benchmark_nav": 123137.04
+    },
+    {
+      "date": "2026-03-12",
+      "nav": 117478.11,
+      "cash": 18560.01,
+      "holdings_value": 98918.1,
+      "holdings_count": 5,
+      "benchmark_nav": 122693.65
+    },
+    {
+      "date": "2026-03-13",
+      "nav": 116425.21,
+      "cash": 18560.01,
+      "holdings_value": 97865.2,
+      "holdings_count": 5,
+      "benchmark_nav": 122211.52
+    },
+    {
+      "date": "2026-03-16",
+      "nav": 115757.61,
+      "cash": 18560.01,
+      "holdings_value": 97197.6,
+      "holdings_count": 5,
+      "benchmark_nav": 122274.86
+    },
+    {
+      "date": "2026-03-17",
+      "nav": 114613.33,
+      "cash": 54714.33,
+      "holdings_value": 59899.0,
+      "holdings_count": 3,
+      "benchmark_nav": 121381.79
+    },
+    {
+      "date": "2026-03-18",
+      "nav": 114837.73,
+      "cash": 54714.33,
+      "holdings_value": 60123.4,
+      "holdings_count": 3,
+      "benchmark_nav": 121928.58
+    },
+    {
+      "date": "2026-03-19",
+      "nav": 113661.53,
+      "cash": 54714.33,
+      "holdings_value": 58947.2,
+      "holdings_count": 3,
+      "benchmark_nav": 119963.41
+    },
+    {
+      "date": "2026-03-20",
+      "nav": 113363.33,
+      "cash": 54714.33,
+      "holdings_value": 58649.0,
+      "holdings_count": 3,
+      "benchmark_nav": 119538.6
+    },
+    {
+      "date": "2026-03-23",
+      "nav": 110210.47,
+      "cash": 71826.67,
+      "holdings_value": 38383.8,
+      "holdings_count": 2,
+      "benchmark_nav": 115638.1
+    },
+    {
+      "date": "2026-03-24",
+      "nav": 110597.57,
+      "cash": 71826.67,
+      "holdings_value": 38770.9,
+      "holdings_count": 2,
+      "benchmark_nav": 117122.71
+    },
+    {
+      "date": "2026-03-25",
+      "nav": 111177.57,
+      "cash": 71826.67,
+      "holdings_value": 39350.9,
+      "holdings_count": 2,
+      "benchmark_nav": 118765.15
+    },
+    {
+      "date": "2026-03-26",
+      "nav": 110867.87,
+      "cash": 71826.67,
+      "holdings_value": 39041.2,
+      "holdings_count": 2,
+      "benchmark_nav": 117196.26
+    },
+    {
+      "date": "2026-03-27",
+      "nav": 111011.47,
+      "cash": 71826.67,
+      "holdings_value": 39184.8,
+      "holdings_count": 2,
+      "benchmark_nav": 117851.66
+    },
+    {
+      "date": "2026-03-30",
+      "nav": 111007.37,
+      "cash": 71826.67,
+      "holdings_value": 39180.7,
+      "holdings_count": 2,
+      "benchmark_nav": 117573.69
+    },
+    {
+      "date": "2026-03-31",
+      "nav": 110607.07,
+      "cash": 71826.67,
+      "holdings_value": 38780.4,
+      "holdings_count": 2,
+      "benchmark_nav": 116476.99
+    },
+    {
+      "date": "2026-04-01",
+      "nav": 110885.37,
+      "cash": 71826.67,
+      "holdings_value": 39058.7,
+      "holdings_count": 2,
+      "benchmark_nav": 118466.76
+    },
+    {
+      "date": "2026-04-02",
+      "nav": 110550.97,
+      "cash": 71826.67,
+      "holdings_value": 38724.3,
+      "holdings_count": 2,
+      "benchmark_nav": 117232.38
+    },
+    {
+      "date": "2026-04-03",
+      "nav": 110198.17,
+      "cash": 71826.67,
+      "holdings_value": 38371.5,
+      "holdings_count": 2,
+      "benchmark_nav": 116234.62
+    },
+    {
+      "date": "2026-04-07",
+      "nav": 110123.57,
+      "cash": 71826.67,
+      "holdings_value": 38296.9,
+      "holdings_count": 2,
+      "benchmark_nav": 116230.17
+    },
+    {
+      "date": "2026-04-08",
+      "nav": 111425.27,
+      "cash": 52028.17,
+      "holdings_value": 59397.1,
+      "holdings_count": 3,
+      "benchmark_nav": 120285.61
+    },
+    {
+      "date": "2026-04-09",
+      "nav": 111031.87,
+      "cash": 52028.17,
+      "holdings_value": 59003.7,
+      "holdings_count": 3,
+      "benchmark_nav": 119517.66
+    },
+    {
+      "date": "2026-04-10",
+      "nav": 111969.84,
+      "cash": 52069.84,
+      "holdings_value": 59900.0,
+      "holdings_count": 3,
+      "benchmark_nav": 121359.02
+    },
+    {
+      "date": "2026-04-13",
+      "nav": 111948.24,
+      "cash": 52069.84,
+      "holdings_value": 59878.4,
+      "holdings_count": 3,
+      "benchmark_nav": 121609.77
+    },
+    {
+      "date": "2026-04-14",
+      "nav": 112792.68,
+      "cash": 51775.88,
+      "holdings_value": 61016.8,
+      "holdings_count": 3,
+      "benchmark_nav": 123052.76
+    },
+    {
+      "date": "2026-04-15",
+      "nav": 112847.58,
+      "cash": 51775.88,
+      "holdings_value": 61071.7,
+      "holdings_count": 3,
+      "benchmark_nav": 122633.19
+    },
+    {
+      "date": "2026-04-16",
+      "nav": 114571.63,
+      "cash": 52799.23,
+      "holdings_value": 61772.4,
+      "holdings_count": 3,
+      "benchmark_nav": 123977.5
+    },
+    {
+      "date": "2026-04-17",
+      "nav": 115167.68,
+      "cash": 53744.88,
+      "holdings_value": 61422.8,
+      "holdings_count": 3,
+      "benchmark_nav": 123769.68
+    },
+    {
+      "date": "2026-04-20",
+      "nav": 115267.68,
+      "cash": 53744.88,
+      "holdings_value": 61522.8,
+      "holdings_count": 3,
+      "benchmark_nav": 124522.71
+    },
+    {
+      "date": "2026-04-21",
+      "nav": 115347.2,
+      "cash": 55303.7,
+      "holdings_value": 60043.5,
+      "holdings_count": 3,
+      "benchmark_nav": 124799.11
+    },
+    {
+      "date": "2026-04-22",
+      "nav": 115688.79,
+      "cash": 16272.89,
+      "holdings_value": 99415.9,
+      "holdings_count": 5,
+      "benchmark_nav": 125627.01
+    },
+    {
+      "date": "2026-04-23",
+      "nav": 114593.25,
+      "cash": 15321.35,
+      "holdings_value": 99271.9,
+      "holdings_count": 5,
+      "benchmark_nav": 125278.89
+    },
+    {
+      "date": "2026-04-24",
+      "nav": 114230.61,
+      "cash": 14580.51,
+      "holdings_value": 99650.1,
+      "holdings_count": 5,
+      "benchmark_nav": 124834.97
+    },
+    {
+      "date": "2026-04-27",
+      "nav": 114385.14,
+      "cash": 14848.84,
+      "holdings_value": 99536.3,
+      "holdings_count": 5,
+      "benchmark_nav": 124876.33
+    },
+    {
+      "date": "2026-04-28",
+      "nav": 112864.5,
+      "cash": 15178.5,
+      "holdings_value": 97686.0,
+      "holdings_count": 5,
+      "benchmark_nav": 124542.87
+    },
+    {
+      "date": "2026-04-29",
+      "nav": 114851.31,
+      "cash": 14638.31,
+      "holdings_value": 100213.0,
+      "holdings_count": 5,
+      "benchmark_nav": 125907.59
+    },
+    {
+      "date": "2026-04-30",
+      "nav": 114539.41,
+      "cash": 14638.31,
+      "holdings_value": 99901.1,
+      "holdings_count": 5,
+      "benchmark_nav": 125828.02
+    },
+    {
+      "date": "2026-05-06",
+      "nav": 116528.97,
+      "cash": 15498.17,
+      "holdings_value": 101030.8,
+      "holdings_count": 5,
+      "benchmark_nav": 127654.47
+    },
+    {
+      "date": "2026-05-07",
+      "nav": 117314.24,
+      "cash": 17313.14,
+      "holdings_value": 100001.1,
+      "holdings_count": 5,
+      "benchmark_nav": 128267.47
+    },
+    {
+      "date": "2026-05-08",
+      "nav": 117445.57,
+      "cash": 17267.47,
+      "holdings_value": 100178.1,
+      "holdings_count": 5,
+      "benchmark_nav": 127518.88
+    },
+    {
+      "date": "2026-05-11",
+      "nav": 118558.91,
+      "cash": 17888.91,
+      "holdings_value": 100670.0,
+      "holdings_count": 5,
+      "benchmark_nav": 129611.0
+    },
+    {
+      "date": "2026-05-12",
+      "nav": 118068.81,
+      "cash": 17888.91,
+      "holdings_value": 100179.9,
+      "holdings_count": 5,
+      "benchmark_nav": 129511.8
+    },
+    {
+      "date": "2026-05-13",
+      "nav": 119537.14,
+      "cash": 18038.64,
+      "holdings_value": 101498.5,
+      "holdings_count": 5,
+      "benchmark_nav": 130828.1
+    },
+    {
+      "date": "2026-05-14",
+      "nav": 117612.66,
+      "cash": 18045.76,
+      "holdings_value": 99566.9,
+      "holdings_count": 5,
+      "benchmark_nav": 128636.27
+    },
+    {
+      "date": "2026-05-15",
+      "nav": 115592.08,
+      "cash": 17302.08,
+      "holdings_value": 98290.0,
+      "holdings_count": 5,
+      "benchmark_nav": 127196.42
+    },
+    {
+      "date": "2026-05-18",
+      "nav": 115410.01,
+      "cash": 17803.81,
+      "holdings_value": 97606.2,
+      "holdings_count": 5,
+      "benchmark_nav": 126514.05
+    },
+    {
+      "date": "2026-05-19",
+      "nav": 115496.47,
+      "cash": 17390.87,
+      "holdings_value": 98105.6,
+      "holdings_count": 5,
+      "benchmark_nav": 127020.79
+    },
+    {
+      "date": "2026-05-20",
+      "nav": 115852.97,
+      "cash": 17390.87,
+      "holdings_value": 98462.1,
+      "holdings_count": 5,
+      "benchmark_nav": 126963.73
+    },
+    {
+      "date": "2026-05-21",
+      "nav": 114310.57,
+      "cash": 17390.87,
+      "holdings_value": 96919.7,
+      "holdings_count": 5,
+      "benchmark_nav": 125194.34
+    },
+    {
+      "date": "2026-05-22",
+      "nav": 116279.17,
+      "cash": 17390.87,
+      "holdings_value": 98888.3,
+      "holdings_count": 5,
+      "benchmark_nav": 126817.15
+    },
+    {
+      "date": "2026-05-25",
+      "nav": 118905.77,
+      "cash": 17390.87,
+      "holdings_value": 101514.9,
+      "holdings_count": 5,
+      "benchmark_nav": 128819.49
+    },
+    {
+      "date": "2026-05-26",
+      "nav": 118523.97,
+      "cash": 17390.87,
+      "holdings_value": 101133.1,
+      "holdings_count": 5,
+      "benchmark_nav": 129506.56
+    },
+    {
+      "date": "2026-05-27",
+      "nav": 118007.29,
+      "cash": 17776.39,
+      "holdings_value": 100230.9,
+      "holdings_count": 5,
+      "benchmark_nav": 128467.97
+    },
+    {
+      "date": "2026-05-28",
+      "nav": 118656.66,
+      "cash": 18090.76,
+      "holdings_value": 100565.9,
+      "holdings_count": 5,
+      "benchmark_nav": 128626.06
+    },
+    {
+      "date": "2026-05-29",
+      "nav": 117579.4,
+      "cash": 19748.3,
+      "holdings_value": 97831.1,
+      "holdings_count": 5,
+      "benchmark_nav": 128047.87
+    },
+    {
+      "date": "2026-06-01",
+      "nav": 115256.9,
+      "cash": 19748.3,
+      "holdings_value": 95508.6,
+      "holdings_count": 5,
+      "benchmark_nav": 126795.17
+    },
+    {
+      "date": "2026-06-02",
+      "nav": 116946.0,
+      "cash": 18306.8,
+      "holdings_value": 98639.2,
+      "holdings_count": 5,
+      "benchmark_nav": 128635.22
+    },
+    {
+      "date": "2026-06-03",
+      "nav": 118174.97,
+      "cash": 19246.07,
+      "holdings_value": 98928.9,
+      "holdings_count": 5,
+      "benchmark_nav": 129269.95
+    },
+    {
+      "date": "2026-06-04",
+      "nav": 117359.08,
+      "cash": 18898.68,
+      "holdings_value": 98460.4,
+      "holdings_count": 5,
+      "benchmark_nav": 128378.45
+    },
+    {
+      "date": "2026-06-05",
+      "nav": 114700.38,
+      "cash": 18898.68,
+      "holdings_value": 95801.7,
+      "holdings_count": 5,
+      "benchmark_nav": 126079.56
+    },
+    {
+      "date": "2026-06-08",
+      "nav": 111152.79,
+      "cash": 37065.99,
+      "holdings_value": 74086.8,
+      "holdings_count": 4,
+      "benchmark_nav": 123376.28
+    },
+    {
+      "date": "2026-06-09",
+      "nav": 113567.89,
+      "cash": 37065.99,
+      "holdings_value": 76501.9,
+      "holdings_count": 4,
+      "benchmark_nav": 125684.07
+    },
+    {
+      "date": "2026-06-10",
+      "nav": 112059.69,
+      "cash": 37065.99,
+      "holdings_value": 74993.7,
+      "holdings_count": 4,
+      "benchmark_nav": 124291.07
+    },
+    {
+      "date": "2026-06-11",
+      "nav": 111134.75,
+      "cash": 56535.35,
+      "holdings_value": 54599.4,
+      "holdings_count": 3,
+      "benchmark_nav": 123605.83
+    },
+    {
+      "date": "2026-06-12",
+      "nav": 111441.49,
+      "cash": 54760.89,
+      "holdings_value": 56680.6,
+      "holdings_count": 3,
+      "benchmark_nav": 125043.06
+    },
+    {
+      "date": "2026-06-15",
+      "nav": 114187.26,
+      "cash": 15095.86,
+      "holdings_value": 99091.4,
+      "holdings_count": 5,
+      "benchmark_nav": 128037.14
+    },
+    {
+      "date": "2026-06-16",
+      "nav": 114484.4,
+      "cash": 14930.1,
+      "holdings_value": 99554.3,
+      "holdings_count": 5,
+      "benchmark_nav": 127841.35
+    },
+    {
+      "date": "2026-06-17",
+      "nav": 116430.89,
+      "cash": 15959.69,
+      "holdings_value": 100471.2,
+      "holdings_count": 5,
+      "benchmark_nav": 129075.73
+    },
+    {
+      "date": "2026-06-18",
+      "nav": 117841.48,
+      "cash": 16694.98,
+      "holdings_value": 101146.5,
+      "holdings_count": 5,
+      "benchmark_nav": 129342.97
+    },
+    {
+      "date": "2026-06-22",
+      "nav": 119160.38,
+      "cash": 16694.98,
+      "holdings_value": 102465.4,
+      "holdings_count": 5,
+      "benchmark_nav": 132433.11
+    },
+    {
+      "date": "2026-06-23",
+      "nav": 116363.59,
+      "cash": 16076.69,
+      "holdings_value": 100286.9,
+      "holdings_count": 5,
+      "benchmark_nav": 128761.64
+    },
+    {
+      "date": "2026-06-24",
+      "nav": 116498.46,
+      "cash": 16020.56,
+      "holdings_value": 100477.9,
+      "holdings_count": 5,
+      "benchmark_nav": 128306.73
+    }
+  ],
+  "trades": [
+    {
+      "date": "2025-01-14",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 6.092,
+      "shares": 3200,
+      "amount": 19504.15,
+      "reason": "评分86分 排名TOP5"
+    },
+    {
+      "date": "2025-01-14",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.611,
+      "shares": 12400,
+      "amount": 19986.39,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2025-01-24",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.024,
+      "shares": 19500,
+      "amount": 19977.98,
+      "reason": "评分75分 排名TOP5"
+    },
+    {
+      "date": "2025-02-06",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 1.045,
+      "shares": 19500,
+      "amount": 20367.31,
+      "reason": "得分排名下滑 (浮盈+2.1%)"
+    },
+    {
+      "date": "2025-02-06",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.067,
+      "shares": 18700,
+      "amount": 19962.88,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-02-10",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.094,
+      "shares": 18700,
+      "amount": 20447.57,
+      "reason": "得分排名下滑 (浮盈+2.5%)"
+    },
+    {
+      "date": "2025-02-10",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 2.142,
+      "shares": 9300,
+      "amount": 19930.56,
+      "reason": "评分74分 排名TOP5"
+    },
+    {
+      "date": "2025-02-11",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.607,
+      "shares": 12400,
+      "amount": 19916.84,
+      "reason": "得分排名下滑 (浮盈-0.2%)"
+    },
+    {
+      "date": "2025-02-11",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 5.859,
+      "shares": 3400,
+      "amount": 19930.56,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-02-12",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 2.15,
+      "shares": 9300,
+      "amount": 19985.0,
+      "reason": "得分排名下滑 (浮盈+0.4%)"
+    },
+    {
+      "date": "2025-02-12",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.091,
+      "shares": 18300,
+      "amount": 19975.28,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2025-02-13",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 5.907,
+      "shares": 3400,
+      "amount": 20073.76,
+      "reason": "得分排名下滑 (浮盈+0.8%)"
+    },
+    {
+      "date": "2025-02-13",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.094,
+      "shares": 18300,
+      "amount": 20010.19,
+      "reason": "得分排名下滑 (浮盈+0.3%)"
+    },
+    {
+      "date": "2025-02-13",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.18,
+      "shares": 16900,
+      "amount": 19951.97,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-02-13",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.073,
+      "shares": 18600,
+      "amount": 19967.78,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-02-21",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.275,
+      "shares": 16900,
+      "amount": 21536.73,
+      "reason": "得分排名下滑 (浮盈+8.1%)"
+    },
+    {
+      "date": "2025-02-21",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.157,
+      "shares": 18600,
+      "amount": 21509.44,
+      "reason": "得分排名下滑 (浮盈+7.8%)"
+    },
+    {
+      "date": "2025-02-21",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.075,
+      "shares": 4900,
+      "amount": 19977.48,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2025-02-21",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.082,
+      "shares": 18400,
+      "amount": 19918.75,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2025-02-21",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.141,
+      "shares": 17500,
+      "amount": 19977.48,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-02-21",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.611,
+      "shares": 12400,
+      "amount": 19986.39,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-02-24",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.079,
+      "shares": 18400,
+      "amount": 19843.67,
+      "reason": "得分排名下滑 (浮盈-0.3%)"
+    },
+    {
+      "date": "2025-02-24",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.59,
+      "shares": 12400,
+      "amount": 19706.14,
+      "reason": "得分排名下滑 (浮盈-1.3%)"
+    },
+    {
+      "date": "2025-02-25",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 2.197,
+      "shares": 9100,
+      "amount": 20002.7,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-02-25",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 5.973,
+      "shares": 3300,
+      "amount": 19720.76,
+      "reason": "评分83分 排名TOP5"
+    },
+    {
+      "date": "2025-02-27",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.144,
+      "shares": 17500,
+      "amount": 20009.99,
+      "reason": "得分排名下滑 (浮盈+0.3%)"
+    },
+    {
+      "date": "2025-02-27",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 1.361,
+      "shares": 14600,
+      "amount": 19880.54,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2025-02-28",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 1.283,
+      "shares": 14600,
+      "amount": 18722.43,
+      "reason": "得分排名下滑 (浮盈-5.7%)"
+    },
+    {
+      "date": "2025-03-03",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 2.154,
+      "shares": 9100,
+      "amount": 19591.6,
+      "reason": "得分排名下滑 (浮盈-2.0%)"
+    },
+    {
+      "date": "2025-03-03",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 5.877,
+      "shares": 3300,
+      "amount": 19384.4,
+      "reason": "得分排名下滑 (浮盈-1.6%)"
+    },
+    {
+      "date": "2025-03-03",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.213,
+      "shares": 16400,
+      "amount": 19903.15,
+      "reason": "评分88分 排名TOP5"
+    },
+    {
+      "date": "2025-03-04",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.244,
+      "shares": 16400,
+      "amount": 20391.4,
+      "reason": "得分排名下滑 (浮盈+2.6%)"
+    },
+    {
+      "date": "2025-03-06",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 6.039,
+      "shares": 3300,
+      "amount": 19938.66,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-03-06",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 2.191,
+      "shares": 9100,
+      "amount": 19948.07,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-03-06",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.054,
+      "shares": 18900,
+      "amount": 19930.56,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2025-03-07",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 1.068,
+      "shares": 18900,
+      "amount": 20175.11,
+      "reason": "得分排名下滑 (浮盈+1.3%)"
+    },
+    {
+      "date": "2025-03-07",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.167,
+      "shares": 17100,
+      "amount": 19965.68,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-03-10",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 2.159,
+      "shares": 9100,
+      "amount": 19637.08,
+      "reason": "得分排名下滑 (浮盈-1.5%)"
+    },
+    {
+      "date": "2025-03-11",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.035,
+      "shares": 4900,
+      "amount": 19761.61,
+      "reason": "得分排名下滑 (浮盈-1.0%)"
+    },
+    {
+      "date": "2025-03-12",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 6.555,
+      "shares": 3200,
+      "amount": 20965.51,
+      "reason": "得分排名下滑 (浮盈+7.6%)"
+    },
+    {
+      "date": "2025-03-14",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 6.098,
+      "shares": 3300,
+      "amount": 20113.34,
+      "reason": "得分排名下滑 (浮盈+1.0%)"
+    },
+    {
+      "date": "2025-03-14",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.106,
+      "shares": 4800,
+      "amount": 19718.65,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-03-14",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.241,
+      "shares": 16100,
+      "amount": 19990.09,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-03-14",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 1.315,
+      "shares": 15200,
+      "amount": 19997.99,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-03-14",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 6.702,
+      "shares": 2900,
+      "amount": 19445.52,
+      "reason": "评分83分 排名TOP5"
+    },
+    {
+      "date": "2025-03-17",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 1.31,
+      "shares": 15200,
+      "amount": 19902.04,
+      "reason": "得分排名下滑 (浮盈-0.4%)"
+    },
+    {
+      "date": "2025-03-18",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.241,
+      "shares": 16100,
+      "amount": 19970.11,
+      "reason": "得分排名下滑 (浮盈+0.0%)"
+    },
+    {
+      "date": "2025-03-18",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.14,
+      "shares": 17500,
+      "amount": 19959.97,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2025-03-18",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 6.126,
+      "shares": 3200,
+      "amount": 19613.0,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-03-19",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.131,
+      "shares": 17100,
+      "amount": 19330.43,
+      "reason": "得分排名下滑 (浮盈-3.1%)"
+    },
+    {
+      "date": "2025-03-19",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.11,
+      "shares": 18000,
+      "amount": 19989.99,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2025-03-20",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 6.84,
+      "shares": 2900,
+      "amount": 19826.08,
+      "reason": "得分排名下滑 (浮盈+2.1%)"
+    },
+    {
+      "date": "2025-03-20",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.105,
+      "shares": 18000,
+      "amount": 19899.94,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-03-21",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.01,
+      "shares": 4800,
+      "amount": 19238.38,
+      "reason": "得分排名下滑 (浮盈-2.3%)"
+    },
+    {
+      "date": "2025-03-24",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.11,
+      "shares": 17500,
+      "amount": 19415.29,
+      "reason": "得分排名下滑 (浮盈-2.6%)"
+    },
+    {
+      "date": "2025-03-24",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 5.961,
+      "shares": 3200,
+      "amount": 19065.66,
+      "reason": "得分排名下滑 (浮盈-2.7%)"
+    },
+    {
+      "date": "2025-03-25",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 6.802,
+      "shares": 2900,
+      "amount": 19735.66,
+      "reason": "评分85分 排名TOP5"
+    },
+    {
+      "date": "2025-04-08",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 0.961,
+      "shares": 18000,
+      "amount": 17289.35,
+      "reason": "得分排名下滑 (浮盈-13.4%)"
+    },
+    {
+      "date": "2025-04-15",
+      "code": "159928",
+      "name": "消费ETF",
+      "action": "BUY",
+      "price": 0.831,
+      "shares": 23800,
+      "amount": 19787.69,
+      "reason": "评分71分 排名TOP5"
+    },
+    {
+      "date": "2025-04-30",
+      "code": "159928",
+      "name": "消费ETF",
+      "action": "SELL",
+      "price": 0.817,
+      "shares": 23800,
+      "amount": 19434.88,
+      "reason": "得分排名下滑 (浮盈-1.7%)"
+    },
+    {
+      "date": "2025-04-30",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.446,
+      "shares": 13600,
+      "amount": 19675.43,
+      "reason": "评分72分 排名TOP5"
+    },
+    {
+      "date": "2025-05-06",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.192,
+      "shares": 16500,
+      "amount": 19677.83,
+      "reason": "评分73分 排名TOP5"
+    },
+    {
+      "date": "2025-05-06",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.078,
+      "shares": 18300,
+      "amount": 19737.26,
+      "reason": "评分69分 排名TOP5"
+    },
+    {
+      "date": "2025-05-08",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.485,
+      "shares": 13600,
+      "amount": 20185.9,
+      "reason": "得分排名下滑 (浮盈+2.7%)"
+    },
+    {
+      "date": "2025-05-12",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.063,
+      "shares": 18300,
+      "amount": 19443.17,
+      "reason": "得分排名下滑 (浮盈-1.4%)"
+    },
+    {
+      "date": "2025-05-12",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.058,
+      "shares": 18700,
+      "amount": 19794.49,
+      "reason": "评分71分 排名TOP5"
+    },
+    {
+      "date": "2025-05-12",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 3.99,
+      "shares": 4900,
+      "amount": 19560.78,
+      "reason": "评分70分 排名TOP5"
+    },
+    {
+      "date": "2025-05-13",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 3.994,
+      "shares": 4900,
+      "amount": 19560.81,
+      "reason": "得分排名下滑 (浮盈+0.1%)"
+    },
+    {
+      "date": "2025-05-14",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.163,
+      "shares": 16500,
+      "amount": 19179.91,
+      "reason": "得分排名下滑 (浮盈-2.4%)"
+    },
+    {
+      "date": "2025-05-14",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 1.197,
+      "shares": 16300,
+      "amount": 19520.86,
+      "reason": "评分75分 排名TOP5"
+    },
+    {
+      "date": "2025-05-14",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 5.798,
+      "shares": 3300,
+      "amount": 19142.97,
+      "reason": "评分71分 排名TOP5"
+    },
+    {
+      "date": "2025-05-15",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 7.098,
+      "shares": 2900,
+      "amount": 20573.91,
+      "reason": "得分排名下滑 (浮盈+4.4%)"
+    },
+    {
+      "date": "2025-05-15",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 5.721,
+      "shares": 3300,
+      "amount": 18869.86,
+      "reason": "得分排名下滑 (浮盈-1.3%)"
+    },
+    {
+      "date": "2025-05-16",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 1.169,
+      "shares": 16300,
+      "amount": 19045.17,
+      "reason": "得分排名下滑 (浮盈-2.3%)"
+    },
+    {
+      "date": "2025-05-16",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 7.215,
+      "shares": 2700,
+      "amount": 19490.24,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-05-19",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 7.258,
+      "shares": 2700,
+      "amount": 19586.8,
+      "reason": "得分排名下滑 (浮盈+0.6%)"
+    },
+    {
+      "date": "2025-05-19",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 3.983,
+      "shares": 4900,
+      "amount": 19526.46,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2025-05-21",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.019,
+      "shares": 4900,
+      "amount": 19683.25,
+      "reason": "得分排名下滑 (浮盈+0.9%)"
+    },
+    {
+      "date": "2025-05-21",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 7.479,
+      "shares": 2600,
+      "amount": 19455.12,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-05-22",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 7.487,
+      "shares": 2600,
+      "amount": 19456.47,
+      "reason": "得分排名下滑 (浮盈+0.1%)"
+    },
+    {
+      "date": "2025-05-22",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 0.71,
+      "shares": 27700,
+      "amount": 19676.83,
+      "reason": "评分74分 排名TOP5"
+    },
+    {
+      "date": "2025-05-23",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 1.069,
+      "shares": 18700,
+      "amount": 19980.3,
+      "reason": "得分排名下滑 (浮盈+1.0%)"
+    },
+    {
+      "date": "2025-05-23",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 0.702,
+      "shares": 27700,
+      "amount": 19435.68,
+      "reason": "得分排名下滑 (浮盈-1.1%)"
+    },
+    {
+      "date": "2025-05-23",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.043,
+      "shares": 18900,
+      "amount": 19722.56,
+      "reason": "评分74分 排名TOP5"
+    },
+    {
+      "date": "2025-05-23",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.534,
+      "shares": 12800,
+      "amount": 19645.02,
+      "reason": "评分74分 排名TOP5"
+    },
+    {
+      "date": "2025-05-26",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.042,
+      "shares": 18900,
+      "amount": 19683.95,
+      "reason": "得分排名下滑 (浮盈-0.1%)"
+    },
+    {
+      "date": "2025-05-26",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.543,
+      "shares": 12800,
+      "amount": 19740.52,
+      "reason": "得分排名下滑 (浮盈+0.6%)"
+    },
+    {
+      "date": "2025-05-26",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 7.462,
+      "shares": 2600,
+      "amount": 19410.9,
+      "reason": "评分83分 排名TOP5"
+    },
+    {
+      "date": "2025-05-26",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.069,
+      "shares": 18400,
+      "amount": 19679.43,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-06-10",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 1.083,
+      "shares": 18400,
+      "amount": 19917.24,
+      "reason": "得分排名下滑 (浮盈+1.3%)"
+    },
+    {
+      "date": "2025-06-11",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.577,
+      "shares": 12600,
+      "amount": 19880.14,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2025-06-12",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 1.175,
+      "shares": 16900,
+      "amount": 19867.43,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2025-06-12",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.006,
+      "shares": 4900,
+      "amount": 19639.21,
+      "reason": "评分74分 排名TOP5"
+    },
+    {
+      "date": "2025-06-13",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.554,
+      "shares": 12600,
+      "amount": 19570.61,
+      "reason": "得分排名下滑 (浮盈-1.5%)"
+    },
+    {
+      "date": "2025-06-13",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 1.16,
+      "shares": 16900,
+      "amount": 19594.2,
+      "reason": "得分排名下滑 (浮盈-1.3%)"
+    },
+    {
+      "date": "2025-06-13",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 3.98,
+      "shares": 4900,
+      "amount": 19492.25,
+      "reason": "得分排名下滑 (浮盈-0.6%)"
+    },
+    {
+      "date": "2025-06-16",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.112,
+      "shares": 17600,
+      "amount": 19580.99,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-06-20",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.182,
+      "shares": 18000,
+      "amount": 21265.36,
+      "reason": "得分排名下滑 (浮盈+7.0%)"
+    },
+    {
+      "date": "2025-06-23",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 1.097,
+      "shares": 17600,
+      "amount": 19297.55,
+      "reason": "得分排名下滑 (浮盈-1.3%)"
+    },
+    {
+      "date": "2025-06-23",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.19,
+      "shares": 16800,
+      "amount": 20002.0,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-06-25",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.595,
+      "shares": 12500,
+      "amount": 19947.47,
+      "reason": "评分75分 排名TOP5"
+    },
+    {
+      "date": "2025-07-01",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 7.435,
+      "shares": 2600,
+      "amount": 19321.33,
+      "reason": "得分排名下滑 (浮盈-0.4%)"
+    },
+    {
+      "date": "2025-07-01",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 3.988,
+      "shares": 4900,
+      "amount": 19550.97,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2025-07-01",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.13,
+      "shares": 17500,
+      "amount": 19784.89,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2025-07-01",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 5.982,
+      "shares": 3300,
+      "amount": 19750.47,
+      "reason": "评分75分 排名TOP5"
+    },
+    {
+      "date": "2025-07-02",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.2,
+      "shares": 16800,
+      "amount": 20149.92,
+      "reason": "得分排名下滑 (浮盈+0.8%)"
+    },
+    {
+      "date": "2025-07-02",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.623,
+      "shares": 12500,
+      "amount": 20277.36,
+      "reason": "得分排名下滑 (浮盈+1.8%)"
+    },
+    {
+      "date": "2025-07-02",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 5.947,
+      "shares": 3300,
+      "amount": 19615.29,
+      "reason": "得分排名下滑 (浮盈-0.6%)"
+    },
+    {
+      "date": "2025-07-02",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 0.773,
+      "shares": 25800,
+      "amount": 19953.37,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-07-02",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 2.104,
+      "shares": 9500,
+      "amount": 19997.99,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-07-02",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 1.199,
+      "shares": 16600,
+      "amount": 19913.35,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-07-03",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.015,
+      "shares": 4900,
+      "amount": 19663.66,
+      "reason": "得分排名下滑 (浮盈+0.7%)"
+    },
+    {
+      "date": "2025-07-03",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.626,
+      "shares": 12300,
+      "amount": 20009.8,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2025-07-04",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.636,
+      "shares": 12300,
+      "amount": 20112.74,
+      "reason": "得分排名下滑 (浮盈+0.6%)"
+    },
+    {
+      "date": "2025-07-04",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.211,
+      "shares": 16500,
+      "amount": 19991.49,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-07-07",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.132,
+      "shares": 17500,
+      "amount": 19800.09,
+      "reason": "得分排名下滑 (浮盈+0.2%)"
+    },
+    {
+      "date": "2025-07-07",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 2.11,
+      "shares": 9500,
+      "amount": 20034.98,
+      "reason": "得分排名下滑 (浮盈+0.3%)"
+    },
+    {
+      "date": "2025-07-07",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 1.191,
+      "shares": 16600,
+      "amount": 19760.71,
+      "reason": "得分排名下滑 (浮盈-0.7%)"
+    },
+    {
+      "date": "2025-07-07",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.14,
+      "shares": 17500,
+      "amount": 19959.97,
+      "reason": "评分83分 排名TOP5"
+    },
+    {
+      "date": "2025-07-07",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.635,
+      "shares": 12200,
+      "amount": 19956.97,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-07-07",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.014,
+      "shares": 4900,
+      "amount": 19678.43,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-07-08",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.048,
+      "shares": 4900,
+      "amount": 19825.28,
+      "reason": "得分排名下滑 (浮盈+0.8%)"
+    },
+    {
+      "date": "2025-07-08",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 2.159,
+      "shares": 9200,
+      "amount": 19872.73,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-07-09",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 2.163,
+      "shares": 9200,
+      "amount": 19889.65,
+      "reason": "得分排名下滑 (浮盈+0.2%)"
+    },
+    {
+      "date": "2025-07-09",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.045,
+      "shares": 4900,
+      "amount": 19830.41,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-07-10",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 1.146,
+      "shares": 17500,
+      "amount": 20044.97,
+      "reason": "得分排名下滑 (浮盈+0.5%)"
+    },
+    {
+      "date": "2025-07-10",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.639,
+      "shares": 12200,
+      "amount": 19985.8,
+      "reason": "得分排名下滑 (浮盈+0.2%)"
+    },
+    {
+      "date": "2025-07-10",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.065,
+      "shares": 4900,
+      "amount": 19908.54,
+      "reason": "得分排名下滑 (浮盈+0.5%)"
+    },
+    {
+      "date": "2025-07-10",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.155,
+      "shares": 17300,
+      "amount": 19991.49,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-07-10",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.125,
+      "shares": 17700,
+      "amount": 19922.46,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-07-10",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 2.169,
+      "shares": 9200,
+      "amount": 19964.78,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-07-11",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 0.777,
+      "shares": 25800,
+      "amount": 20036.58,
+      "reason": "得分排名下滑 (浮盈+0.5%)"
+    },
+    {
+      "date": "2025-07-11",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.181,
+      "shares": 17300,
+      "amount": 20421.08,
+      "reason": "得分排名下滑 (浮盈+2.3%)"
+    },
+    {
+      "date": "2025-07-11",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.141,
+      "shares": 17700,
+      "amount": 20185.6,
+      "reason": "得分排名下滑 (浮盈+1.4%)"
+    },
+    {
+      "date": "2025-07-11",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.168,
+      "shares": 17100,
+      "amount": 19982.79,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-07-11",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.633,
+      "shares": 12200,
+      "amount": 19932.56,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-07-11",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.079,
+      "shares": 4900,
+      "amount": 19997.09,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-07-14",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 1.173,
+      "shares": 17100,
+      "amount": 20048.27,
+      "reason": "得分排名下滑 (浮盈+0.4%)"
+    },
+    {
+      "date": "2025-07-14",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.623,
+      "shares": 12200,
+      "amount": 19790.7,
+      "reason": "得分排名下滑 (浮盈-0.6%)"
+    },
+    {
+      "date": "2025-07-14",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.078,
+      "shares": 4900,
+      "amount": 19972.21,
+      "reason": "得分排名下滑 (浮盈-0.0%)"
+    },
+    {
+      "date": "2025-07-14",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 1.22,
+      "shares": 16300,
+      "amount": 19895.94,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-07-14",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.134,
+      "shares": 17600,
+      "amount": 19968.38,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-07-14",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 6.079,
+      "shares": 3200,
+      "amount": 19462.53,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-07-15",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 1.267,
+      "shares": 16300,
+      "amount": 20641.77,
+      "reason": "得分排名下滑 (浮盈+3.9%)"
+    },
+    {
+      "date": "2025-07-15",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.159,
+      "shares": 17200,
+      "amount": 19944.77,
+      "reason": "评分85分 排名TOP5"
+    },
+    {
+      "date": "2025-07-16",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 2.206,
+      "shares": 9200,
+      "amount": 20285.05,
+      "reason": "得分排名下滑 (浮盈+1.7%)"
+    },
+    {
+      "date": "2025-07-16",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 6.076,
+      "shares": 3200,
+      "amount": 19433.48,
+      "reason": "得分排名下滑 (浮盈-0.0%)"
+    },
+    {
+      "date": "2025-07-16",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.16,
+      "shares": 17200,
+      "amount": 19961.98,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2025-07-16",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 0.768,
+      "shares": 26000,
+      "amount": 19977.98,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2025-07-17",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.141,
+      "shares": 17600,
+      "amount": 20071.56,
+      "reason": "得分排名下滑 (浮盈+0.6%)"
+    },
+    {
+      "date": "2025-07-17",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 0.794,
+      "shares": 26000,
+      "amount": 20633.68,
+      "reason": "得分排名下滑 (浮盈+3.4%)"
+    },
+    {
+      "date": "2025-07-17",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.102,
+      "shares": 4800,
+      "amount": 19699.44,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-07-17",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 6.146,
+      "shares": 3200,
+      "amount": 19677.03,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-07-18",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.171,
+      "shares": 17200,
+      "amount": 20131.13,
+      "reason": "得分排名下滑 (浮盈+0.9%)"
+    },
+    {
+      "date": "2025-07-18",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.132,
+      "shares": 4800,
+      "amount": 19823.68,
+      "reason": "得分排名下滑 (浮盈+0.7%)"
+    },
+    {
+      "date": "2025-07-18",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.662,
+      "shares": 12000,
+      "amount": 19953.97,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2025-07-18",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.146,
+      "shares": 17400,
+      "amount": 19950.37,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-07-21",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 1.223,
+      "shares": 17200,
+      "amount": 21025.08,
+      "reason": "得分排名下滑 (浮盈+5.5%)"
+    },
+    {
+      "date": "2025-07-21",
+      "code": "512170",
+      "name": "医疗ETF",
+      "action": "BUY",
+      "price": 0.348,
+      "shares": 57400,
+      "amount": 19985.19,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2025-07-22",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.149,
+      "shares": 17400,
+      "amount": 19982.6,
+      "reason": "得分排名下滑 (浮盈+0.3%)"
+    },
+    {
+      "date": "2025-07-22",
+      "code": "512170",
+      "name": "医疗ETF",
+      "action": "SELL",
+      "price": 0.35,
+      "shares": 57400,
+      "amount": 20079.96,
+      "reason": "得分排名下滑 (浮盈+0.6%)"
+    },
+    {
+      "date": "2025-07-22",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 1.295,
+      "shares": 15400,
+      "amount": 19952.97,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-07-22",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 7.512,
+      "shares": 2600,
+      "amount": 19540.97,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2025-07-23",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 6.27,
+      "shares": 3200,
+      "amount": 20053.97,
+      "reason": "得分排名下滑 (浮盈+2.0%)"
+    },
+    {
+      "date": "2025-07-23",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 2.287,
+      "shares": 8700,
+      "amount": 19906.85,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-07-24",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.663,
+      "shares": 12000,
+      "amount": 19946.02,
+      "reason": "得分排名下滑 (浮盈+0.1%)"
+    },
+    {
+      "date": "2025-07-24",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 2.325,
+      "shares": 8700,
+      "amount": 20217.39,
+      "reason": "得分排名下滑 (浮盈+1.7%)"
+    },
+    {
+      "date": "2025-07-24",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 0.816,
+      "shares": 24500,
+      "amount": 20002.0,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-07-24",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.225,
+      "shares": 4700,
+      "amount": 19867.43,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-07-25",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 1.333,
+      "shares": 15400,
+      "amount": 20517.94,
+      "reason": "得分排名下滑 (浮盈+2.9%)"
+    },
+    {
+      "date": "2025-07-25",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.227,
+      "shares": 16200,
+      "amount": 19887.34,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2025-07-28",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.214,
+      "shares": 4700,
+      "amount": 19795.9,
+      "reason": "得分排名下滑 (浮盈-0.3%)"
+    },
+    {
+      "date": "2025-07-28",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 2.342,
+      "shares": 8500,
+      "amount": 19916.95,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-07-29",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.189,
+      "shares": 16500,
+      "amount": 19608.69,
+      "reason": "得分排名下滑 (浮盈-1.8%)"
+    },
+    {
+      "date": "2025-07-29",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 0.841,
+      "shares": 24500,
+      "amount": 20594.2,
+      "reason": "得分排名下滑 (浮盈+3.1%)"
+    },
+    {
+      "date": "2025-07-29",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.243,
+      "shares": 16200,
+      "amount": 20126.53,
+      "reason": "得分排名下滑 (浮盈+1.3%)"
+    },
+    {
+      "date": "2025-07-29",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 2.383,
+      "shares": 8500,
+      "amount": 20245.37,
+      "reason": "得分排名下滑 (浮盈+1.8%)"
+    },
+    {
+      "date": "2025-07-29",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.683,
+      "shares": 11800,
+      "amount": 19869.33,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-07-29",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.279,
+      "shares": 15600,
+      "amount": 19962.38,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-07-29",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.214,
+      "shares": 16400,
+      "amount": 19919.55,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-07-29",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.235,
+      "shares": 4700,
+      "amount": 19914.45,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2025-07-30",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 7.419,
+      "shares": 2600,
+      "amount": 19279.76,
+      "reason": "得分排名下滑 (浮盈-1.2%)"
+    },
+    {
+      "date": "2025-07-30",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.202,
+      "shares": 16400,
+      "amount": 19702.94,
+      "reason": "得分排名下滑 (浮盈-1.0%)"
+    },
+    {
+      "date": "2025-07-30",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.232,
+      "shares": 4700,
+      "amount": 19880.45,
+      "reason": "得分排名下滑 (浮盈-0.1%)"
+    },
+    {
+      "date": "2025-07-30",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.225,
+      "shares": 16300,
+      "amount": 19977.48,
+      "reason": "评分83分 排名TOP5"
+    },
+    {
+      "date": "2025-07-30",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 0.829,
+      "shares": 24100,
+      "amount": 19988.89,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-07-30",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 6.389,
+      "shares": 3100,
+      "amount": 19815.8,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-07-31",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.704,
+      "shares": 11800,
+      "amount": 20097.15,
+      "reason": "得分排名下滑 (浮盈+1.2%)"
+    },
+    {
+      "date": "2025-07-31",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 0.826,
+      "shares": 24100,
+      "amount": 19896.65,
+      "reason": "得分排名下滑 (浮盈-0.4%)"
+    },
+    {
+      "date": "2025-07-31",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.155,
+      "shares": 4800,
+      "amount": 19953.97,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2025-07-31",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 2.301,
+      "shares": 8600,
+      "amount": 19798.49,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-08-01",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 1.224,
+      "shares": 15600,
+      "amount": 19084.85,
+      "reason": "得分排名下滑 (浮盈-4.3%)"
+    },
+    {
+      "date": "2025-08-01",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 6.287,
+      "shares": 3100,
+      "amount": 19479.96,
+      "reason": "得分排名下滑 (浮盈-1.6%)"
+    },
+    {
+      "date": "2025-08-01",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 2.303,
+      "shares": 8600,
+      "amount": 19795.9,
+      "reason": "得分排名下滑 (浮盈+0.1%)"
+    },
+    {
+      "date": "2025-08-01",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.091,
+      "shares": 18300,
+      "amount": 19975.28,
+      "reason": "评分83分 排名TOP5"
+    },
+    {
+      "date": "2025-08-04",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.193,
+      "shares": 16300,
+      "amount": 19436.18,
+      "reason": "得分排名下滑 (浮盈-2.6%)"
+    },
+    {
+      "date": "2025-08-04",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.648,
+      "shares": 12100,
+      "amount": 19950.77,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2025-08-04",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.187,
+      "shares": 16800,
+      "amount": 19951.57,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-08-04",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 0.835,
+      "shares": 23900,
+      "amount": 19966.48,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-08-05",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.183,
+      "shares": 4800,
+      "amount": 20068.36,
+      "reason": "得分排名下滑 (浮盈+0.7%)"
+    },
+    {
+      "date": "2025-08-05",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.189,
+      "shares": 16800,
+      "amount": 19965.21,
+      "reason": "得分排名下滑 (浮盈+0.2%)"
+    },
+    {
+      "date": "2025-08-05",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 7.497,
+      "shares": 2600,
+      "amount": 19501.95,
+      "reason": "评分88分 排名TOP5"
+    },
+    {
+      "date": "2025-08-05",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.205,
+      "shares": 16500,
+      "amount": 19892.44,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2025-08-06",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.113,
+      "shares": 18300,
+      "amount": 20357.72,
+      "reason": "得分排名下滑 (浮盈+2.0%)"
+    },
+    {
+      "date": "2025-08-06",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 2.336,
+      "shares": 8500,
+      "amount": 19865.93,
+      "reason": "评分74分 排名TOP5"
+    },
+    {
+      "date": "2025-08-08",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 2.312,
+      "shares": 8500,
+      "amount": 19642.17,
+      "reason": "得分排名下滑 (浮盈-1.0%)"
+    },
+    {
+      "date": "2025-08-08",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.207,
+      "shares": 16500,
+      "amount": 19925.46,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2025-08-11",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.708,
+      "shares": 12100,
+      "amount": 20656.47,
+      "reason": "得分排名下滑 (浮盈+3.6%)"
+    },
+    {
+      "date": "2025-08-11",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.305,
+      "shares": 15300,
+      "amount": 19976.48,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-08-12",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.202,
+      "shares": 16500,
+      "amount": 19823.08,
+      "reason": "得分排名下滑 (浮盈-0.4%)"
+    },
+    {
+      "date": "2025-08-12",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.703,
+      "shares": 11700,
+      "amount": 19935.06,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-08-13",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 0.845,
+      "shares": 23900,
+      "amount": 20185.4,
+      "reason": "得分排名下滑 (浮盈+1.2%)"
+    },
+    {
+      "date": "2025-08-13",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.198,
+      "shares": 16600,
+      "amount": 19896.74,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-08-14",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.241,
+      "shares": 16500,
+      "amount": 20466.26,
+      "reason": "得分排名下滑 (浮盈+3.0%)"
+    },
+    {
+      "date": "2025-08-14",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.717,
+      "shares": 11700,
+      "amount": 20078.86,
+      "reason": "得分排名下滑 (浮盈+0.8%)"
+    },
+    {
+      "date": "2025-08-14",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 0.83,
+      "shares": 24000,
+      "amount": 19929.96,
+      "reason": "评分83分 排名TOP5"
+    },
+    {
+      "date": "2025-08-14",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 6.514,
+      "shares": 3000,
+      "amount": 19551.77,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-08-15",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.195,
+      "shares": 16600,
+      "amount": 19827.08,
+      "reason": "得分排名下滑 (浮盈-0.3%)"
+    },
+    {
+      "date": "2025-08-15",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 6.658,
+      "shares": 3000,
+      "amount": 19964.01,
+      "reason": "得分排名下滑 (浮盈+2.2%)"
+    },
+    {
+      "date": "2025-08-15",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.722,
+      "shares": 11600,
+      "amount": 19985.19,
+      "reason": "评分83分 排名TOP5"
+    },
+    {
+      "date": "2025-08-15",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.295,
+      "shares": 4600,
+      "amount": 19766.88,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2025-08-19",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.305,
+      "shares": 4600,
+      "amount": 19793.1,
+      "reason": "得分排名下滑 (浮盈+0.2%)"
+    },
+    {
+      "date": "2025-08-19",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.291,
+      "shares": 15400,
+      "amount": 19891.34,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-08-20",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 7.413,
+      "shares": 2600,
+      "amount": 19264.16,
+      "reason": "得分排名下滑 (浮盈-1.1%)"
+    },
+    {
+      "date": "2025-08-20",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.207,
+      "shares": 16500,
+      "amount": 19925.46,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2025-08-22",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 0.865,
+      "shares": 24000,
+      "amount": 20749.62,
+      "reason": "得分排名下滑 (浮盈+4.2%)"
+    },
+    {
+      "date": "2025-08-22",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.479,
+      "shares": 4400,
+      "amount": 19717.45,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-08-25",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 1.446,
+      "shares": 15300,
+      "amount": 22112.74,
+      "reason": "得分排名下滑 (浮盈+10.8%)"
+    },
+    {
+      "date": "2025-08-25",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.565,
+      "shares": 4400,
+      "amount": 20075.96,
+      "reason": "得分排名下滑 (浮盈+1.9%)"
+    },
+    {
+      "date": "2025-08-25",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 0.881,
+      "shares": 22700,
+      "amount": 20008.7,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-08-25",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 7.472,
+      "shares": 2600,
+      "amount": 19436.91,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-08-26",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 7.492,
+      "shares": 2600,
+      "amount": 19469.46,
+      "reason": "得分排名下滑 (浮盈+0.3%)"
+    },
+    {
+      "date": "2025-08-26",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.541,
+      "shares": 4400,
+      "amount": 19990.39,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-08-27",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 0.849,
+      "shares": 22700,
+      "amount": 19262.66,
+      "reason": "得分排名下滑 (浮盈-3.6%)"
+    },
+    {
+      "date": "2025-08-27",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 7.489,
+      "shares": 2600,
+      "amount": 19481.14,
+      "reason": "评分86分 排名TOP5"
+    },
+    {
+      "date": "2025-08-28",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.326,
+      "shares": 15400,
+      "amount": 20410.19,
+      "reason": "得分排名下滑 (浮盈+2.7%)"
+    },
+    {
+      "date": "2025-08-28",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 0.866,
+      "shares": 23000,
+      "amount": 19927.96,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-09-01",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.616,
+      "shares": 4400,
+      "amount": 20300.24,
+      "reason": "得分排名下滑 (浮盈+1.7%)"
+    },
+    {
+      "date": "2025-09-01",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.314,
+      "shares": 15200,
+      "amount": 19982.79,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-09-02",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.676,
+      "shares": 11600,
+      "amount": 19431.88,
+      "reason": "得分排名下滑 (浮盈-2.7%)"
+    },
+    {
+      "date": "2025-09-02",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 7.717,
+      "shares": 2600,
+      "amount": 20054.17,
+      "reason": "得分排名下滑 (浮盈+3.0%)"
+    },
+    {
+      "date": "2025-09-02",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.59,
+      "shares": 4300,
+      "amount": 19746.87,
+      "reason": "评分85分 排名TOP5"
+    },
+    {
+      "date": "2025-09-02",
+      "code": "512170",
+      "name": "医疗ETF",
+      "action": "BUY",
+      "price": 0.393,
+      "shares": 50800,
+      "amount": 19974.38,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-09-03",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.187,
+      "shares": 16500,
+      "amount": 19575.71,
+      "reason": "得分排名下滑 (浮盈-1.7%)"
+    },
+    {
+      "date": "2025-09-03",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 0.799,
+      "shares": 23000,
+      "amount": 18367.81,
+      "reason": "得分排名下滑 (浮盈-7.7%)"
+    },
+    {
+      "date": "2025-09-03",
+      "code": "512170",
+      "name": "医疗ETF",
+      "action": "SELL",
+      "price": 0.388,
+      "shares": 50800,
+      "amount": 19700.54,
+      "reason": "得分排名下滑 (浮盈-1.3%)"
+    },
+    {
+      "date": "2025-09-03",
+      "code": "159928",
+      "name": "消费ETF",
+      "action": "BUY",
+      "price": 0.857,
+      "shares": 23300,
+      "amount": 19978.08,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-09-03",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.676,
+      "shares": 11900,
+      "amount": 19954.37,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-09-03",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 6.94,
+      "shares": 2800,
+      "amount": 19441.72,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-09-04",
+      "code": "159928",
+      "name": "消费ETF",
+      "action": "SELL",
+      "price": 0.858,
+      "shares": 23300,
+      "amount": 19981.4,
+      "reason": "得分排名下滑 (浮盈+0.1%)"
+    },
+    {
+      "date": "2025-09-04",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.682,
+      "shares": 11900,
+      "amount": 20005.79,
+      "reason": "得分排名下滑 (浮盈+0.4%)"
+    },
+    {
+      "date": "2025-09-04",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 7.797,
+      "shares": 2500,
+      "amount": 19502.25,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-09-04",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.444,
+      "shares": 13800,
+      "amount": 19937.16,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-09-05",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 7.011,
+      "shares": 2800,
+      "amount": 19620.98,
+      "reason": "得分排名下滑 (浮盈+1.0%)"
+    },
+    {
+      "date": "2025-09-05",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.701,
+      "shares": 11700,
+      "amount": 19911.65,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-09-09",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 8.009,
+      "shares": 2500,
+      "amount": 20012.49,
+      "reason": "得分排名下滑 (浮盈+2.7%)"
+    },
+    {
+      "date": "2025-09-09",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.701,
+      "shares": 11700,
+      "amount": 19891.75,
+      "reason": "得分排名下滑 (浮盈+0.0%)"
+    },
+    {
+      "date": "2025-09-09",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 2.845,
+      "shares": 7000,
+      "amount": 19924.96,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-09-09",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 7.006,
+      "shares": 2800,
+      "amount": 19626.61,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-09-10",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 1.5,
+      "shares": 13800,
+      "amount": 20689.65,
+      "reason": "得分排名下滑 (浮盈+3.9%)"
+    },
+    {
+      "date": "2025-09-10",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 2.875,
+      "shares": 7000,
+      "amount": 20114.94,
+      "reason": "得分排名下滑 (浮盈+1.1%)"
+    },
+    {
+      "date": "2025-09-10",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 7.997,
+      "shares": 2500,
+      "amount": 20002.5,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-09-10",
+      "code": "512170",
+      "name": "医疗ETF",
+      "action": "BUY",
+      "price": 0.392,
+      "shares": 51000,
+      "amount": 20002.0,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-09-11",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 7.224,
+      "shares": 2800,
+      "amount": 20217.09,
+      "reason": "得分排名下滑 (浮盈+3.1%)"
+    },
+    {
+      "date": "2025-09-11",
+      "code": "159928",
+      "name": "消费ETF",
+      "action": "BUY",
+      "price": 0.89,
+      "shares": 22400,
+      "amount": 19945.97,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2025-09-12",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.266,
+      "shares": 15200,
+      "amount": 19233.58,
+      "reason": "得分排名下滑 (浮盈-3.7%)"
+    },
+    {
+      "date": "2025-09-12",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 7.242,
+      "shares": 2700,
+      "amount": 19563.18,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-09-15",
+      "code": "512170",
+      "name": "医疗ETF",
+      "action": "SELL",
+      "price": 0.395,
+      "shares": 51000,
+      "amount": 20134.93,
+      "reason": "得分排名下滑 (浮盈+0.8%)"
+    },
+    {
+      "date": "2025-09-15",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.727,
+      "shares": 11500,
+      "amount": 19870.43,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-09-16",
+      "code": "159928",
+      "name": "消费ETF",
+      "action": "SELL",
+      "price": 0.878,
+      "shares": 22400,
+      "amount": 19657.37,
+      "reason": "得分排名下滑 (浮盈-1.3%)"
+    },
+    {
+      "date": "2025-09-16",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.263,
+      "shares": 15800,
+      "amount": 19965.38,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-09-17",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.269,
+      "shares": 15800,
+      "amount": 20040.17,
+      "reason": "得分排名下滑 (浮盈+0.5%)"
+    },
+    {
+      "date": "2025-09-17",
+      "code": "159928",
+      "name": "消费ETF",
+      "action": "BUY",
+      "price": 0.872,
+      "shares": 22900,
+      "amount": 19978.78,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-09-18",
+      "code": "159928",
+      "name": "消费ETF",
+      "action": "SELL",
+      "price": 0.858,
+      "shares": 22900,
+      "amount": 19638.38,
+      "reason": "得分排名下滑 (浮盈-1.6%)"
+    },
+    {
+      "date": "2025-09-18",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.464,
+      "shares": 13600,
+      "amount": 19920.36,
+      "reason": "评分83分 排名TOP5"
+    },
+    {
+      "date": "2025-09-19",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.751,
+      "shares": 11500,
+      "amount": 20126.43,
+      "reason": "得分排名下滑 (浮盈+1.4%)"
+    },
+    {
+      "date": "2025-09-19",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.431,
+      "shares": 13900,
+      "amount": 19900.85,
+      "reason": "评分86分 排名TOP5"
+    },
+    {
+      "date": "2025-09-23",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.475,
+      "shares": 13900,
+      "amount": 20492.25,
+      "reason": "得分排名下滑 (浮盈+3.1%)"
+    },
+    {
+      "date": "2025-09-23",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 1.903,
+      "shares": 10500,
+      "amount": 19991.49,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-09-24",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 8.238,
+      "shares": 2500,
+      "amount": 20584.7,
+      "reason": "得分排名下滑 (浮盈+3.0%)"
+    },
+    {
+      "date": "2025-09-24",
+      "code": "512170",
+      "name": "医疗ETF",
+      "action": "BUY",
+      "price": 0.385,
+      "shares": 51900,
+      "amount": 19991.49,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-09-25",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 1.533,
+      "shares": 13600,
+      "amount": 20838.38,
+      "reason": "得分排名下滑 (浮盈+4.7%)"
+    },
+    {
+      "date": "2025-09-25",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 1.994,
+      "shares": 10500,
+      "amount": 20926.53,
+      "reason": "得分排名下滑 (浮盈+4.8%)"
+    },
+    {
+      "date": "2025-09-25",
+      "code": "512170",
+      "name": "医疗ETF",
+      "action": "SELL",
+      "price": 0.388,
+      "shares": 51900,
+      "amount": 20127.13,
+      "reason": "得分排名下滑 (浮盈+0.8%)"
+    },
+    {
+      "date": "2025-09-25",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 8.197,
+      "shares": 2400,
+      "amount": 19682.64,
+      "reason": "评分88分 排名TOP5"
+    },
+    {
+      "date": "2025-09-25",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.779,
+      "shares": 11200,
+      "amount": 19934.76,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2025-09-25",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.548,
+      "shares": 12900,
+      "amount": 19979.18,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-09-30",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.813,
+      "shares": 11200,
+      "amount": 20295.45,
+      "reason": "得分排名下滑 (浮盈+1.9%)"
+    },
+    {
+      "date": "2025-09-30",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.57,
+      "shares": 12900,
+      "amount": 20242.87,
+      "reason": "得分排名下滑 (浮盈+1.4%)"
+    },
+    {
+      "date": "2025-09-30",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.653,
+      "shares": 12000,
+      "amount": 19845.92,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-09-30",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 1.958,
+      "shares": 10200,
+      "amount": 19981.59,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2025-10-09",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 1.797,
+      "shares": 12000,
+      "amount": 21553.22,
+      "reason": "得分排名下滑 (浮盈+8.7%)"
+    },
+    {
+      "date": "2025-10-09",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.267,
+      "shares": 15700,
+      "amount": 19901.85,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-10-10",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.27,
+      "shares": 15700,
+      "amount": 19929.03,
+      "reason": "得分排名下滑 (浮盈+0.2%)"
+    },
+    {
+      "date": "2025-10-10",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.528,
+      "shares": 13000,
+      "amount": 19873.93,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-10-13",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 8.914,
+      "shares": 2400,
+      "amount": 21382.9,
+      "reason": "得分排名下滑 (浮盈+8.7%)"
+    },
+    {
+      "date": "2025-10-13",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.546,
+      "shares": 13000,
+      "amount": 20087.95,
+      "reason": "得分排名下滑 (浮盈+1.2%)"
+    },
+    {
+      "date": "2025-10-13",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 3.054,
+      "shares": 6500,
+      "amount": 19860.93,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-10-13",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.829,
+      "shares": 10900,
+      "amount": 19946.07,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2025-10-14",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.81,
+      "shares": 10900,
+      "amount": 19719.14,
+      "reason": "得分排名下滑 (浮盈-1.0%)"
+    },
+    {
+      "date": "2025-10-15",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.265,
+      "shares": 15800,
+      "amount": 19996.99,
+      "reason": "评分87分 排名TOP5"
+    },
+    {
+      "date": "2025-10-17",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 7.114,
+      "shares": 2700,
+      "amount": 19198.2,
+      "reason": "得分排名下滑 (浮盈-1.8%)"
+    },
+    {
+      "date": "2025-10-17",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 1.757,
+      "shares": 10200,
+      "amount": 17912.44,
+      "reason": "得分排名下滑 (浮盈-10.3%)"
+    },
+    {
+      "date": "2025-10-17",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 2.915,
+      "shares": 6500,
+      "amount": 18938.03,
+      "reason": "得分排名下滑 (浮盈-4.6%)"
+    },
+    {
+      "date": "2025-10-17",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.233,
+      "shares": 15800,
+      "amount": 19471.66,
+      "reason": "得分排名下滑 (浮盈-2.5%)"
+    },
+    {
+      "date": "2025-10-17",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.433,
+      "shares": 13900,
+      "amount": 19928.66,
+      "reason": "评分85分 排名TOP5"
+    },
+    {
+      "date": "2025-10-17",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.671,
+      "shares": 11900,
+      "amount": 19894.84,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-10-21",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 1.674,
+      "shares": 11900,
+      "amount": 19910.64,
+      "reason": "得分排名下滑 (浮盈+0.2%)"
+    },
+    {
+      "date": "2025-10-21",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.873,
+      "shares": 10600,
+      "amount": 19863.73,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-10-21",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 7.28,
+      "shares": 2700,
+      "amount": 19665.83,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-10-21",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.647,
+      "shares": 12100,
+      "amount": 19938.66,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-10-22",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 7.224,
+      "shares": 2700,
+      "amount": 19495.05,
+      "reason": "得分排名下滑 (浮盈-0.8%)"
+    },
+    {
+      "date": "2025-10-22",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 9.162,
+      "shares": 2100,
+      "amount": 19249.82,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-10-24",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.535,
+      "shares": 13900,
+      "amount": 21325.83,
+      "reason": "得分排名下滑 (浮盈+7.1%)"
+    },
+    {
+      "date": "2025-10-24",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.705,
+      "shares": 12100,
+      "amount": 20620.18,
+      "reason": "得分排名下滑 (浮盈+3.5%)"
+    },
+    {
+      "date": "2025-10-24",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 7.369,
+      "shares": 2700,
+      "amount": 19906.25,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-10-24",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 3.147,
+      "shares": 6300,
+      "amount": 19836.01,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2025-10-27",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.956,
+      "shares": 10600,
+      "amount": 20723.23,
+      "reason": "得分排名下滑 (浮盈+4.4%)"
+    },
+    {
+      "date": "2025-10-27",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.272,
+      "shares": 15700,
+      "amount": 19980.39,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-10-28",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 7.441,
+      "shares": 2700,
+      "amount": 20080.65,
+      "reason": "得分排名下滑 (浮盈+1.0%)"
+    },
+    {
+      "date": "2025-10-28",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.545,
+      "shares": 12900,
+      "amount": 19940.47,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-10-29",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 3.3,
+      "shares": 6300,
+      "amount": 20779.6,
+      "reason": "得分排名下滑 (浮盈+4.9%)"
+    },
+    {
+      "date": "2025-10-29",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.292,
+      "shares": 15700,
+      "amount": 20274.26,
+      "reason": "得分排名下滑 (浮盈+1.6%)"
+    },
+    {
+      "date": "2025-10-29",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 7.594,
+      "shares": 2600,
+      "amount": 19754.27,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2025-10-29",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.737,
+      "shares": 11500,
+      "amount": 19985.49,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-10-30",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 8.757,
+      "shares": 2100,
+      "amount": 18380.51,
+      "reason": "得分排名下滑 (浮盈-4.4%)"
+    },
+    {
+      "date": "2025-10-30",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 7.497,
+      "shares": 2600,
+      "amount": 19482.45,
+      "reason": "得分排名下滑 (浮盈-1.3%)"
+    },
+    {
+      "date": "2025-10-30",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.698,
+      "shares": 11500,
+      "amount": 19517.24,
+      "reason": "得分排名下滑 (浮盈-2.2%)"
+    },
+    {
+      "date": "2025-10-30",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 3.239,
+      "shares": 6100,
+      "amount": 19767.78,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-10-30",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.267,
+      "shares": 15700,
+      "amount": 19901.85,
+      "reason": "评分83分 排名TOP5"
+    },
+    {
+      "date": "2025-10-30",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 1.959,
+      "shares": 10200,
+      "amount": 19991.79,
+      "reason": "评分83分 排名TOP5"
+    },
+    {
+      "date": "2025-10-31",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.488,
+      "shares": 12900,
+      "amount": 19185.6,
+      "reason": "得分排名下滑 (浮盈-3.7%)"
+    },
+    {
+      "date": "2025-10-31",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 1.896,
+      "shares": 10200,
+      "amount": 19329.53,
+      "reason": "得分排名下滑 (浮盈-3.2%)"
+    },
+    {
+      "date": "2025-10-31",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 8.851,
+      "shares": 2200,
+      "amount": 19481.94,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-10-31",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.188,
+      "shares": 16800,
+      "amount": 19968.38,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-11-03",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.204,
+      "shares": 16800,
+      "amount": 20217.09,
+      "reason": "得分排名下滑 (浮盈+1.3%)"
+    },
+    {
+      "date": "2025-11-03",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.976,
+      "shares": 10100,
+      "amount": 19967.58,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2025-11-04",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 3.112,
+      "shares": 6100,
+      "amount": 18973.71,
+      "reason": "得分排名下滑 (浮盈-3.9%)"
+    },
+    {
+      "date": "2025-11-04",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.243,
+      "shares": 15700,
+      "amount": 19505.34,
+      "reason": "得分排名下滑 (浮盈-1.9%)"
+    },
+    {
+      "date": "2025-11-06",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.805,
+      "shares": 4300,
+      "amount": 20651.17,
+      "reason": "得分排名下滑 (浮盈+4.7%)"
+    },
+    {
+      "date": "2025-11-06",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.216,
+      "shares": 16400,
+      "amount": 19952.37,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-11-06",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 7.451,
+      "shares": 2600,
+      "amount": 19382.29,
+      "reason": "评分75分 排名TOP5"
+    },
+    {
+      "date": "2025-11-06",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 3.201,
+      "shares": 6200,
+      "amount": 19856.12,
+      "reason": "评分74分 排名TOP5"
+    },
+    {
+      "date": "2025-11-07",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 7.44,
+      "shares": 2600,
+      "amount": 19334.33,
+      "reason": "得分排名下滑 (浮盈-0.1%)"
+    },
+    {
+      "date": "2025-11-07",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.795,
+      "shares": 4100,
+      "amount": 19669.33,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-11-11",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.232,
+      "shares": 16400,
+      "amount": 20194.7,
+      "reason": "得分排名下滑 (浮盈+1.3%)"
+    },
+    {
+      "date": "2025-11-11",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 1.816,
+      "shares": 11000,
+      "amount": 19985.99,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-11-12",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.974,
+      "shares": 10100,
+      "amount": 19927.43,
+      "reason": "得分排名下滑 (浮盈-0.1%)"
+    },
+    {
+      "date": "2025-11-12",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.243,
+      "shares": 16000,
+      "amount": 19897.94,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-11-13",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 9.234,
+      "shares": 2200,
+      "amount": 20304.64,
+      "reason": "得分排名下滑 (浮盈+4.3%)"
+    },
+    {
+      "date": "2025-11-13",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 1.833,
+      "shares": 11000,
+      "amount": 20152.92,
+      "reason": "得分排名下滑 (浮盈+0.9%)"
+    },
+    {
+      "date": "2025-11-13",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 7.465,
+      "shares": 2600,
+      "amount": 19418.7,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-11-13",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.975,
+      "shares": 10100,
+      "amount": 19957.47,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-11-14",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 7.338,
+      "shares": 2600,
+      "amount": 19069.26,
+      "reason": "得分排名下滑 (浮盈-1.7%)"
+    },
+    {
+      "date": "2025-11-18",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.844,
+      "shares": 10100,
+      "amount": 18615.09,
+      "reason": "得分排名下滑 (浮盈-6.6%)"
+    },
+    {
+      "date": "2025-11-20",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 3.026,
+      "shares": 6200,
+      "amount": 18751.82,
+      "reason": "得分排名下滑 (浮盈-5.5%)"
+    },
+    {
+      "date": "2025-11-20",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 1.742,
+      "shares": 11400,
+      "amount": 19868.73,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2025-11-21",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.564,
+      "shares": 4100,
+      "amount": 18703.04,
+      "reason": "得分排名下滑 (浮盈-4.8%)"
+    },
+    {
+      "date": "2025-11-21",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 8.897,
+      "shares": 2200,
+      "amount": 19583.19,
+      "reason": "评分83分 排名TOP5"
+    },
+    {
+      "date": "2025-12-02",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.208,
+      "shares": 16000,
+      "amount": 19318.34,
+      "reason": "得分排名下滑 (浮盈-2.8%)"
+    },
+    {
+      "date": "2025-12-02",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.94,
+      "shares": 10300,
+      "amount": 19991.99,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2025-12-05",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.193,
+      "shares": 16700,
+      "amount": 19933.06,
+      "reason": "评分70分 排名TOP5"
+    },
+    {
+      "date": "2025-12-05",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 1.854,
+      "shares": 10700,
+      "amount": 19847.72,
+      "reason": "评分69分 排名TOP5"
+    },
+    {
+      "date": "2025-12-08",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.19,
+      "shares": 16700,
+      "amount": 19863.06,
+      "reason": "得分排名下滑 (浮盈-0.3%)"
+    },
+    {
+      "date": "2025-12-08",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 3.171,
+      "shares": 6300,
+      "amount": 19987.29,
+      "reason": "评分73分 排名TOP5"
+    },
+    {
+      "date": "2025-12-10",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 1.937,
+      "shares": 10700,
+      "amount": 20715.54,
+      "reason": "得分排名下滑 (浮盈+4.5%)"
+    },
+    {
+      "date": "2025-12-10",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.592,
+      "shares": 12500,
+      "amount": 19909.95,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-12-11",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.567,
+      "shares": 12500,
+      "amount": 19577.71,
+      "reason": "得分排名下滑 (浮盈-1.6%)"
+    },
+    {
+      "date": "2025-12-11",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 1.891,
+      "shares": 10500,
+      "amount": 19865.43,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-12-12",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 1.909,
+      "shares": 10500,
+      "amount": 20034.48,
+      "reason": "得分排名下滑 (浮盈+1.0%)"
+    },
+    {
+      "date": "2025-12-12",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 0.81,
+      "shares": 24600,
+      "amount": 19935.96,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-12-15",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 0.823,
+      "shares": 24600,
+      "amount": 20235.68,
+      "reason": "得分排名下滑 (浮盈+1.6%)"
+    },
+    {
+      "date": "2025-12-15",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.555,
+      "shares": 12800,
+      "amount": 19913.95,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-12-16",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.524,
+      "shares": 12800,
+      "amount": 19497.45,
+      "reason": "得分排名下滑 (浮盈-2.0%)"
+    },
+    {
+      "date": "2025-12-17",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.561,
+      "shares": 12800,
+      "amount": 19990.79,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2025-12-18",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.878,
+      "shares": 10300,
+      "amount": 19333.73,
+      "reason": "得分排名下滑 (浮盈-3.2%)"
+    },
+    {
+      "date": "2025-12-18",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 1.865,
+      "shares": 10700,
+      "amount": 19965.48,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2025-12-19",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 1.875,
+      "shares": 10700,
+      "amount": 20052.47,
+      "reason": "得分排名下滑 (浮盈+0.5%)"
+    },
+    {
+      "date": "2025-12-19",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.688,
+      "shares": 4200,
+      "amount": 19699.44,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2025-12-22",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 1.847,
+      "shares": 11400,
+      "amount": 21045.27,
+      "reason": "得分排名下滑 (浮盈+6.0%)"
+    },
+    {
+      "date": "2025-12-22",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 3.175,
+      "shares": 6300,
+      "amount": 19992.5,
+      "reason": "得分排名下滑 (浮盈+0.1%)"
+    },
+    {
+      "date": "2025-12-22",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 7.368,
+      "shares": 2700,
+      "amount": 19903.55,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-12-22",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.945,
+      "shares": 10200,
+      "amount": 19848.92,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-12-23",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.604,
+      "shares": 12800,
+      "amount": 20520.93,
+      "reason": "得分排名下滑 (浮盈+2.8%)"
+    },
+    {
+      "date": "2025-12-23",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 7.374,
+      "shares": 2700,
+      "amount": 19899.85,
+      "reason": "得分排名下滑 (浮盈+0.1%)"
+    },
+    {
+      "date": "2025-12-23",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 3.185,
+      "shares": 6200,
+      "amount": 19756.87,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-12-23",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 1.919,
+      "shares": 10400,
+      "amount": 19967.58,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2025-12-25",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 3.222,
+      "shares": 6200,
+      "amount": 19966.41,
+      "reason": "得分排名下滑 (浮盈+1.2%)"
+    },
+    {
+      "date": "2025-12-25",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.624,
+      "shares": 12300,
+      "amount": 19985.19,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-12-26",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 9.718,
+      "shares": 2200,
+      "amount": 21368.91,
+      "reason": "得分排名下滑 (浮盈+9.2%)"
+    },
+    {
+      "date": "2025-12-26",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 3.226,
+      "shares": 6100,
+      "amount": 19688.44,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2025-12-29",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.916,
+      "shares": 10200,
+      "amount": 19533.43,
+      "reason": "得分排名下滑 (浮盈-1.5%)"
+    },
+    {
+      "date": "2025-12-29",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 9.633,
+      "shares": 2000,
+      "amount": 19275.63,
+      "reason": "评分83分 排名TOP5"
+    },
+    {
+      "date": "2025-12-30",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.639,
+      "shares": 12300,
+      "amount": 20149.62,
+      "reason": "得分排名下滑 (浮盈+0.9%)"
+    },
+    {
+      "date": "2025-12-30",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.433,
+      "shares": 13900,
+      "amount": 19928.66,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2026-01-05",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.479,
+      "shares": 13900,
+      "amount": 20547.82,
+      "reason": "得分排名下滑 (浮盈+3.2%)"
+    },
+    {
+      "date": "2026-01-05",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.93,
+      "shares": 10300,
+      "amount": 19888.94,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2026-01-07",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.919,
+      "shares": 10300,
+      "amount": 19755.82,
+      "reason": "得分排名下滑 (浮盈-0.6%)"
+    },
+    {
+      "date": "2026-01-07",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 7.999,
+      "shares": 2500,
+      "amount": 20007.5,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2026-01-08",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 8.024,
+      "shares": 2500,
+      "amount": 20049.97,
+      "reason": "得分排名下滑 (浮盈+0.3%)"
+    },
+    {
+      "date": "2026-01-08",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 2.032,
+      "shares": 9800,
+      "amount": 19923.56,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2026-01-12",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 2.159,
+      "shares": 10400,
+      "amount": 22442.37,
+      "reason": "得分排名下滑 (浮盈+12.5%)"
+    },
+    {
+      "date": "2026-01-12",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 2.118,
+      "shares": 9800,
+      "amount": 20746.02,
+      "reason": "得分排名下滑 (浮盈+4.2%)"
+    },
+    {
+      "date": "2026-01-12",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.818,
+      "shares": 11000,
+      "amount": 20008.0,
+      "reason": "评分74分 排名TOP5"
+    },
+    {
+      "date": "2026-01-12",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.594,
+      "shares": 12500,
+      "amount": 19934.96,
+      "reason": "评分72分 排名TOP5"
+    },
+    {
+      "date": "2026-01-13",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.751,
+      "shares": 11000,
+      "amount": 19251.37,
+      "reason": "得分排名下滑 (浮盈-3.7%)"
+    },
+    {
+      "date": "2026-01-13",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.246,
+      "shares": 16000,
+      "amount": 19945.97,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2026-01-14",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.579,
+      "shares": 12500,
+      "amount": 19727.63,
+      "reason": "得分排名下滑 (浮盈-0.9%)"
+    },
+    {
+      "date": "2026-01-14",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.778,
+      "shares": 11200,
+      "amount": 19923.56,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2026-01-15",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.804,
+      "shares": 11200,
+      "amount": 20194.7,
+      "reason": "得分排名下滑 (浮盈+1.5%)"
+    },
+    {
+      "date": "2026-01-15",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.573,
+      "shares": 12700,
+      "amount": 19987.09,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2026-01-19",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.203,
+      "shares": 16000,
+      "amount": 19238.38,
+      "reason": "得分排名下滑 (浮盈-3.5%)"
+    },
+    {
+      "date": "2026-01-22",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.727,
+      "shares": 4200,
+      "amount": 19843.47,
+      "reason": "得分排名下滑 (浮盈+0.8%)"
+    },
+    {
+      "date": "2026-01-23",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 10.706,
+      "shares": 2000,
+      "amount": 21401.29,
+      "reason": "得分排名下滑 (浮盈+11.1%)"
+    },
+    {
+      "date": "2026-01-29",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 2.091,
+      "shares": 9500,
+      "amount": 19874.43,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2026-02-02",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 3.252,
+      "shares": 6100,
+      "amount": 19827.28,
+      "reason": "得分排名下滑 (浮盈+0.8%)"
+    },
+    {
+      "date": "2026-02-04",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 2.005,
+      "shares": 9500,
+      "amount": 19037.98,
+      "reason": "得分排名下滑 (浮盈-4.1%)"
+    },
+    {
+      "date": "2026-02-04",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.768,
+      "shares": 11300,
+      "amount": 19988.39,
+      "reason": "评分86分 排名TOP5"
+    },
+    {
+      "date": "2026-02-06",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.499,
+      "shares": 12700,
+      "amount": 19027.78,
+      "reason": "得分排名下滑 (浮盈-4.7%)"
+    },
+    {
+      "date": "2026-02-06",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 10.446,
+      "shares": 1900,
+      "amount": 19857.32,
+      "reason": "评分88分 排名TOP5"
+    },
+    {
+      "date": "2026-02-10",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 8.377,
+      "shares": 2300,
+      "amount": 19276.73,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2026-02-11",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.775,
+      "shares": 11300,
+      "amount": 20047.47,
+      "reason": "得分排名下滑 (浮盈+0.4%)"
+    },
+    {
+      "date": "2026-02-11",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.533,
+      "shares": 13000,
+      "amount": 19938.96,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2026-02-12",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.559,
+      "shares": 13000,
+      "amount": 20256.87,
+      "reason": "得分排名下滑 (浮盈+1.7%)"
+    },
+    {
+      "date": "2026-02-12",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 3.319,
+      "shares": 6000,
+      "amount": 19923.96,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2026-02-12",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "BUY",
+      "price": 1.814,
+      "shares": 11000,
+      "amount": 19963.98,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2026-02-12",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 1.0,
+      "shares": 20000,
+      "amount": 20010.0,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2026-02-13",
+      "code": "512760",
+      "name": "芯片ETF国泰",
+      "action": "SELL",
+      "price": 1.815,
+      "shares": 11000,
+      "amount": 19955.02,
+      "reason": "得分排名下滑 (浮盈+0.1%)"
+    },
+    {
+      "date": "2026-02-24",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 1.018,
+      "shares": 20000,
+      "amount": 20349.82,
+      "reason": "得分排名下滑 (浮盈+1.8%)"
+    },
+    {
+      "date": "2026-02-24",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 2.26,
+      "shares": 8800,
+      "amount": 19897.94,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2026-02-24",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.543,
+      "shares": 12900,
+      "amount": 19914.65,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2026-02-26",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 8.63,
+      "shares": 2300,
+      "amount": 19839.08,
+      "reason": "得分排名下滑 (浮盈+3.0%)"
+    },
+    {
+      "date": "2026-02-26",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.564,
+      "shares": 12900,
+      "amount": 20165.51,
+      "reason": "得分排名下滑 (浮盈+1.4%)"
+    },
+    {
+      "date": "2026-02-26",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.735,
+      "shares": 4200,
+      "amount": 19896.94,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2026-02-26",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.168,
+      "shares": 17100,
+      "amount": 19982.79,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2026-02-27",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.725,
+      "shares": 4200,
+      "amount": 19835.08,
+      "reason": "得分排名下滑 (浮盈-0.2%)"
+    },
+    {
+      "date": "2026-02-27",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 8.737,
+      "shares": 2200,
+      "amount": 19231.01,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2026-03-02",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 2.498,
+      "shares": 8800,
+      "amount": 21971.41,
+      "reason": "得分排名下滑 (浮盈+10.5%)"
+    },
+    {
+      "date": "2026-03-02",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.183,
+      "shares": 17100,
+      "amount": 20219.19,
+      "reason": "得分排名下滑 (浮盈+1.3%)"
+    },
+    {
+      "date": "2026-03-02",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.739,
+      "shares": 4200,
+      "amount": 19913.75,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2026-03-02",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.544,
+      "shares": 12900,
+      "amount": 19927.56,
+      "reason": "评分75分 排名TOP5"
+    },
+    {
+      "date": "2026-03-03",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 3.205,
+      "shares": 6000,
+      "amount": 19220.39,
+      "reason": "得分排名下滑 (浮盈-3.4%)"
+    },
+    {
+      "date": "2026-03-03",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.464,
+      "shares": 12900,
+      "amount": 18876.16,
+      "reason": "得分排名下滑 (浮盈-5.2%)"
+    },
+    {
+      "date": "2026-03-04",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.61,
+      "shares": 4200,
+      "amount": 19352.32,
+      "reason": "得分排名下滑 (浮盈-2.7%)"
+    },
+    {
+      "date": "2026-03-06",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 1.024,
+      "shares": 19500,
+      "amount": 19977.98,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2026-03-11",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 1.002,
+      "shares": 19500,
+      "amount": 19529.23,
+      "reason": "得分排名下滑 (浮盈-2.1%)"
+    },
+    {
+      "date": "2026-03-11",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.196,
+      "shares": 16700,
+      "amount": 19983.19,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2026-03-11",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 2.271,
+      "shares": 8800,
+      "amount": 19994.79,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2026-03-11",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 3.335,
+      "shares": 5900,
+      "amount": 19686.34,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2026-03-17",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 8.078,
+      "shares": 2200,
+      "amount": 17762.71,
+      "reason": "得分排名下滑 (浮盈-7.5%)"
+    },
+    {
+      "date": "2026-03-17",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 2.091,
+      "shares": 8800,
+      "amount": 18391.6,
+      "reason": "得分排名下滑 (浮盈-7.9%)"
+    },
+    {
+      "date": "2026-03-23",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 9.011,
+      "shares": 1900,
+      "amount": 17112.34,
+      "reason": "得分排名下滑 (浮盈-13.7%)"
+    },
+    {
+      "date": "2026-04-08",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.602,
+      "shares": 4300,
+      "amount": 19798.49,
+      "reason": "评分62分 排名TOP5"
+    },
+    {
+      "date": "2026-04-10",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.642,
+      "shares": 4300,
+      "amount": 19950.62,
+      "reason": "得分排名下滑 (浮盈+0.9%)"
+    },
+    {
+      "date": "2026-04-10",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.809,
+      "shares": 11000,
+      "amount": 19908.95,
+      "reason": "评分68分 排名TOP5"
+    },
+    {
+      "date": "2026-04-14",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.181,
+      "shares": 16700,
+      "amount": 19712.84,
+      "reason": "得分排名下滑 (浮盈-1.3%)"
+    },
+    {
+      "date": "2026-04-14",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 2.083,
+      "shares": 9600,
+      "amount": 20006.8,
+      "reason": "评分69分 排名TOP5"
+    },
+    {
+      "date": "2026-04-16",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.907,
+      "shares": 11000,
+      "amount": 20966.51,
+      "reason": "得分排名下滑 (浮盈+5.4%)"
+    },
+    {
+      "date": "2026-04-16",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.746,
+      "shares": 4200,
+      "amount": 19943.17,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2026-04-17",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 2.17,
+      "shares": 9600,
+      "amount": 20821.58,
+      "reason": "得分排名下滑 (浮盈+4.2%)"
+    },
+    {
+      "date": "2026-04-17",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 1.892,
+      "shares": 10500,
+      "amount": 19875.93,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2026-04-21",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 3.681,
+      "shares": 5900,
+      "amount": 21707.04,
+      "reason": "得分排名下滑 (浮盈+10.4%)"
+    },
+    {
+      "date": "2026-04-21",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 1.892,
+      "shares": 10500,
+      "amount": 19856.07,
+      "reason": "得分排名下滑 (浮盈+0.0%)"
+    },
+    {
+      "date": "2026-04-21",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.197,
+      "shares": 16700,
+      "amount": 19999.89,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2026-04-21",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 8.331,
+      "shares": 2400,
+      "amount": 20004.4,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2026-04-22",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 2.179,
+      "shares": 9100,
+      "amount": 19838.81,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2026-04-22",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 10.096,
+      "shares": 1900,
+      "amount": 19191.99,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2026-04-23",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 9.988,
+      "shares": 1900,
+      "amount": 18967.71,
+      "reason": "得分排名下滑 (浮盈-1.1%)"
+    },
+    {
+      "date": "2026-04-23",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 2.237,
+      "shares": 8900,
+      "amount": 19919.25,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2026-04-24",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 2.118,
+      "shares": 9100,
+      "amount": 19264.16,
+      "reason": "得分排名下滑 (浮盈-2.8%)"
+    },
+    {
+      "date": "2026-04-24",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 0.93,
+      "shares": 21500,
+      "amount": 20005.0,
+      "reason": "评分80分 排名TOP5"
+    },
+    {
+      "date": "2026-04-27",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.782,
+      "shares": 4200,
+      "amount": 20074.36,
+      "reason": "得分排名下滑 (浮盈+0.8%)"
+    },
+    {
+      "date": "2026-04-27",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 2.23,
+      "shares": 8900,
+      "amount": 19837.08,
+      "reason": "得分排名下滑 (浮盈-0.3%)"
+    },
+    {
+      "date": "2026-04-27",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "BUY",
+      "price": 2.095,
+      "shares": 9500,
+      "amount": 19912.45,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2026-04-27",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 3.652,
+      "shares": 5400,
+      "amount": 19730.66,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2026-04-28",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.192,
+      "shares": 16700,
+      "amount": 19896.45,
+      "reason": "得分排名下滑 (浮盈-0.4%)"
+    },
+    {
+      "date": "2026-04-28",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.77,
+      "shares": 4100,
+      "amount": 19566.78,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2026-04-29",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 0.904,
+      "shares": 21500,
+      "amount": 19426.28,
+      "reason": "得分排名下滑 (浮盈-2.8%)"
+    },
+    {
+      "date": "2026-04-29",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.195,
+      "shares": 16700,
+      "amount": 19966.48,
+      "reason": "评分75分 排名TOP5"
+    },
+    {
+      "date": "2026-05-06",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 8.658,
+      "shares": 2400,
+      "amount": 20768.81,
+      "reason": "得分排名下滑 (浮盈+3.9%)"
+    },
+    {
+      "date": "2026-05-06",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 2.01,
+      "shares": 9900,
+      "amount": 19908.95,
+      "reason": "评分73分 排名TOP5"
+    },
+    {
+      "date": "2026-05-07",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 3.845,
+      "shares": 5400,
+      "amount": 20752.62,
+      "reason": "得分排名下滑 (浮盈+5.3%)"
+    },
+    {
+      "date": "2026-05-07",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.178,
+      "shares": 16700,
+      "amount": 19662.76,
+      "reason": "得分排名下滑 (浮盈-1.4%)"
+    },
+    {
+      "date": "2026-05-07",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 2.054,
+      "shares": 9900,
+      "amount": 20324.43,
+      "reason": "得分排名下滑 (浮盈+2.2%)"
+    },
+    {
+      "date": "2026-05-07",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 0.953,
+      "shares": 20900,
+      "amount": 19927.66,
+      "reason": "评分71分 排名TOP5"
+    },
+    {
+      "date": "2026-05-07",
+      "code": "512170",
+      "name": "医疗ETF",
+      "action": "BUY",
+      "price": 0.338,
+      "shares": 59100,
+      "amount": 19985.79,
+      "reason": "评分71分 排名TOP5"
+    },
+    {
+      "date": "2026-05-07",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "BUY",
+      "price": 10.001,
+      "shares": 1900,
+      "amount": 19011.4,
+      "reason": "评分71分 排名TOP5"
+    },
+    {
+      "date": "2026-05-08",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 0.972,
+      "shares": 20900,
+      "amount": 20304.64,
+      "reason": "得分排名下滑 (浮盈+2.0%)"
+    },
+    {
+      "date": "2026-05-08",
+      "code": "518850",
+      "name": "黄金ETF华夏",
+      "action": "SELL",
+      "price": 9.974,
+      "shares": 1900,
+      "amount": 18941.12,
+      "reason": "得分排名下滑 (浮盈-0.3%)"
+    },
+    {
+      "date": "2026-05-08",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "BUY",
+      "price": 1.08,
+      "shares": 18500,
+      "amount": 19989.99,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2026-05-08",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 8.769,
+      "shares": 2200,
+      "amount": 19301.45,
+      "reason": "评分75分 排名TOP5"
+    },
+    {
+      "date": "2026-05-11",
+      "code": "512170",
+      "name": "医疗ETF",
+      "action": "SELL",
+      "price": 0.34,
+      "shares": 59100,
+      "amount": 20083.95,
+      "reason": "得分排名下滑 (浮盈+0.6%)"
+    },
+    {
+      "date": "2026-05-11",
+      "code": "512880",
+      "name": "证券ETF",
+      "action": "SELL",
+      "price": 1.097,
+      "shares": 18500,
+      "amount": 20284.35,
+      "reason": "得分排名下滑 (浮盈+1.6%)"
+    },
+    {
+      "date": "2026-05-11",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 3.947,
+      "shares": 5000,
+      "amount": 19744.87,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2026-05-11",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 0.98,
+      "shares": 20400,
+      "amount": 20002.0,
+      "reason": "评分75分 排名TOP5"
+    },
+    {
+      "date": "2026-05-13",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 0.983,
+      "shares": 20400,
+      "amount": 20043.17,
+      "reason": "得分排名下滑 (浮盈+0.3%)"
+    },
+    {
+      "date": "2026-05-13",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 2.093,
+      "shares": 9500,
+      "amount": 19893.44,
+      "reason": "评分75分 排名TOP5"
+    },
+    {
+      "date": "2026-05-14",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 2.105,
+      "shares": 9500,
+      "amount": 19987.5,
+      "reason": "得分排名下滑 (浮盈+0.6%)"
+    },
+    {
+      "date": "2026-05-14",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "BUY",
+      "price": 0.942,
+      "shares": 21200,
+      "amount": 19980.39,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2026-05-15",
+      "code": "512400",
+      "name": "有色ETF",
+      "action": "SELL",
+      "price": 2.039,
+      "shares": 9500,
+      "amount": 19360.81,
+      "reason": "得分排名下滑 (浮盈-2.7%)"
+    },
+    {
+      "date": "2026-05-15",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 3.97,
+      "shares": 5000,
+      "amount": 19840.08,
+      "reason": "得分排名下滑 (浮盈+0.6%)"
+    },
+    {
+      "date": "2026-05-15",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 2.466,
+      "shares": 8100,
+      "amount": 19984.59,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2026-05-15",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 2.1,
+      "shares": 9500,
+      "amount": 19959.97,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2026-05-18",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 2.486,
+      "shares": 8100,
+      "amount": 20126.53,
+      "reason": "得分排名下滑 (浮盈+0.8%)"
+    },
+    {
+      "date": "2026-05-18",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 3.923,
+      "shares": 5000,
+      "amount": 19624.81,
+      "reason": "评分81分 排名TOP5"
+    },
+    {
+      "date": "2026-05-19",
+      "code": "512670",
+      "name": "国防ETF",
+      "action": "SELL",
+      "price": 0.922,
+      "shares": 21200,
+      "amount": 19536.63,
+      "reason": "得分排名下滑 (浮盈-2.1%)"
+    },
+    {
+      "date": "2026-05-19",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 2.524,
+      "shares": 7900,
+      "amount": 19949.57,
+      "reason": "评分78分 排名TOP5"
+    },
+    {
+      "date": "2026-05-27",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 4.056,
+      "shares": 5000,
+      "amount": 20269.86,
+      "reason": "得分排名下滑 (浮盈+3.4%)"
+    },
+    {
+      "date": "2026-05-27",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.911,
+      "shares": 10400,
+      "amount": 19884.34,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2026-05-28",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.942,
+      "shares": 10400,
+      "amount": 20186.7,
+      "reason": "得分排名下滑 (浮盈+1.6%)"
+    },
+    {
+      "date": "2026-05-28",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 4.138,
+      "shares": 4800,
+      "amount": 19872.33,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2026-05-29",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "SELL",
+      "price": 2.273,
+      "shares": 9500,
+      "amount": 21582.7,
+      "reason": "得分排名下滑 (浮盈+8.2%)"
+    },
+    {
+      "date": "2026-05-29",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.844,
+      "shares": 10800,
+      "amount": 19925.16,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2026-06-02",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 8.406,
+      "shares": 2200,
+      "amount": 18483.95,
+      "reason": "得分排名下滑 (浮盈-4.1%)"
+    },
+    {
+      "date": "2026-06-02",
+      "code": "513100",
+      "name": "纳指ETF国泰",
+      "action": "BUY",
+      "price": 2.343,
+      "shares": 8500,
+      "amount": 19925.46,
+      "reason": "评分79分 排名TOP5"
+    },
+    {
+      "date": "2026-06-03",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 2.583,
+      "shares": 7900,
+      "amount": 20395.5,
+      "reason": "得分排名下滑 (浮盈+2.3%)"
+    },
+    {
+      "date": "2026-06-03",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 8.455,
+      "shares": 2300,
+      "amount": 19456.22,
+      "reason": "评分75分 排名TOP5"
+    },
+    {
+      "date": "2026-06-04",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "SELL",
+      "price": 8.448,
+      "shares": 2300,
+      "amount": 19420.68,
+      "reason": "得分排名下滑 (浮盈-0.1%)"
+    },
+    {
+      "date": "2026-06-04",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 2.566,
+      "shares": 7700,
+      "amount": 19768.08,
+      "reason": "评分82分 排名TOP5"
+    },
+    {
+      "date": "2026-06-08",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "SELL",
+      "price": 1.683,
+      "shares": 10800,
+      "amount": 18167.31,
+      "reason": "得分排名下滑 (浮盈-8.7%)"
+    },
+    {
+      "date": "2026-06-11",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.751,
+      "shares": 4100,
+      "amount": 19469.36,
+      "reason": "得分排名下滑 (浮盈-0.4%)"
+    },
+    {
+      "date": "2026-06-12",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 2.349,
+      "shares": 7700,
+      "amount": 18078.26,
+      "reason": "得分排名下滑 (浮盈-8.5%)"
+    },
+    {
+      "date": "2026-06-12",
+      "code": "588000",
+      "name": "科创50ETF",
+      "action": "BUY",
+      "price": 1.756,
+      "shares": 11300,
+      "amount": 19852.72,
+      "reason": "评分75分 排名TOP5"
+    },
+    {
+      "date": "2026-06-15",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "BUY",
+      "price": 4.919,
+      "shares": 4000,
+      "amount": 19685.84,
+      "reason": "评分74分 排名TOP5"
+    },
+    {
+      "date": "2026-06-15",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "BUY",
+      "price": 1.161,
+      "shares": 17200,
+      "amount": 19979.18,
+      "reason": "评分73分 排名TOP5"
+    },
+    {
+      "date": "2026-06-16",
+      "code": "512890",
+      "name": "红利低波ETF",
+      "action": "SELL",
+      "price": 1.145,
+      "shares": 17200,
+      "amount": 19684.15,
+      "reason": "得分排名下滑 (浮盈-1.4%)"
+    },
+    {
+      "date": "2026-06-16",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 2.48,
+      "shares": 8000,
+      "amount": 19849.92,
+      "reason": "评分72分 排名TOP5"
+    },
+    {
+      "date": "2026-06-17",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 2.541,
+      "shares": 8000,
+      "amount": 20317.84,
+      "reason": "得分排名下滑 (浮盈+2.5%)"
+    },
+    {
+      "date": "2026-06-17",
+      "code": "510500",
+      "name": "中证500ETF",
+      "action": "BUY",
+      "price": 8.763,
+      "shares": 2200,
+      "amount": 19288.24,
+      "reason": "评分76分 排名TOP5"
+    },
+    {
+      "date": "2026-06-18",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "SELL",
+      "price": 4.269,
+      "shares": 4800,
+      "amount": 20480.95,
+      "reason": "得分排名下滑 (浮盈+3.2%)"
+    },
+    {
+      "date": "2026-06-18",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 2.667,
+      "shares": 7400,
+      "amount": 19745.67,
+      "reason": "评分77分 排名TOP5"
+    },
+    {
+      "date": "2026-06-23",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "SELL",
+      "price": 2.593,
+      "shares": 7400,
+      "amount": 19178.61,
+      "reason": "得分排名下滑 (浮盈-2.8%)"
+    },
+    {
+      "date": "2026-06-23",
+      "code": "159915",
+      "name": "创业板ETF",
+      "action": "BUY",
+      "price": 4.21,
+      "shares": 4700,
+      "amount": 19796.89,
+      "reason": "评分84分 排名TOP5"
+    },
+    {
+      "date": "2026-06-24",
+      "code": "510300",
+      "name": "沪深300ETF",
+      "action": "SELL",
+      "price": 4.929,
+      "shares": 4000,
+      "amount": 19706.14,
+      "reason": "得分排名下滑 (浮盈+0.2%)"
+    },
+    {
+      "date": "2026-06-24",
+      "code": "515070",
+      "name": "人工智能ETF华夏",
+      "action": "BUY",
+      "price": 2.599,
+      "shares": 7600,
+      "amount": 19762.28,
+      "reason": "评分82分 排名TOP5"
+    }
+  ]
+}

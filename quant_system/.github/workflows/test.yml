@@ -1,0 +1,48 @@
+name: 量化系统 CI 测试
+
+# 每次推送 + PR 时运行，确保系统不退化
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.py'
+      - '**.json'
+      - '.github/workflows/test.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:  # 也支持手动触发
+
+concurrency:
+  group: ci-test-${{ github.ref }}
+  cancel-in-progress: true  # 新提交到达时取消旧的（节约Actions额度）
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt pytest
+
+      - name: 运行测试
+        env:
+          TZ: Asia/Shanghai
+        run: |
+          echo "===== CI 测试开始: $(date '+%Y-%m-%d %H:%M') ====="
+          python -m pytest tests/ -v --tb=short --color=yes
+          echo "===== CI 测试完成: $(date '+%Y-%m-%d %H:%M') ====="
+
+      - name: 测试摘要
+        if: always()
+        run: |
+          echo "测试结果见上方 pytest 输出。"
+          echo "如有失败，请检查代码变更是否影响核心逻辑。"

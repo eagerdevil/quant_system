@@ -1,0 +1,68 @@
+{
+  "date": "20260626",
+  "market": {
+    "shanghai": {
+      "close": 4032.3,
+      "chg": -2.14
+    },
+    "shenzhen": {
+      "close": 15846.98,
+      "chg": -3.04
+    },
+    "chinext": {
+      "close": 4209.29,
+      "chg": -3.72
+    },
+    "hs300": {
+      "close": 4878.74,
+      "chg": -2.82
+    },
+    "star50": {
+      "close": 2012.53,
+      "chg": -2.6
+    }
+  },
+  "timing": {
+    "bull_signals": 2,
+    "total": 6,
+    "position": 0.4
+  },
+  "holdings": {
+    "518850": {
+      "name": "黄金ETF华夏",
+      "price": 8.398,
+      "score": 51,
+      "grade": "D_谨慎",
+      "pnl_pct": -7.62
+    },
+    "159183": {
+      "name": "新能源车ETF招商",
+      "price": 0.961,
+      "score": 51,
+      "grade": "D_谨慎",
+      "pnl_pct": -2.44
+    },
+    "159659": {
+      "name": "纳斯达克100ETF招商",
+      "price": 2.278,
+      "score": 84,
+      "grade": "A_强烈买入",
+      "pnl_pct": -2.77
+    },
+    "562500": {
+      "name": "机器人ETF华夏",
+      "price": 1.108,
+      "score": 78,
+      "grade": "A_强烈买入",
+      "pnl_pct": -3.4
+    }
+  },
+  "account": {
+    "total_value": 3878.0,
+    "total_cost": 4079.6,
+    "total_pnl": -201.6,
+    "total_assets": 3963.04,
+    "cash": 84.64,
+    "cash_pct": 2.1
+  }
+}
