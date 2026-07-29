@@ -1,11 +1,8 @@
 name: 每日A股量化分析
 
-# 由 cron-job.org 外部触发（周一至周五 17:07 北京时间）
-# 也可手动触发
 on:
   workflow_dispatch:
 
-# 防止并发运行（同一时间只允许一个分析任务）
 concurrency:
   group: daily-quant
   cancel-in-progress: false
@@ -25,7 +22,7 @@ jobs:
           python-version: '3.12'
 
       - name: 安装依赖
-        run: pip install -r requirements.txt
+        run: pip install -r quant_system/requirements.txt
 
       - name: 运行量化模型
         env:
@@ -33,12 +30,12 @@ jobs:
           QQMAIL_AUTH_CODE: ${{ secrets.QQMAIL_AUTH_CODE }}
         run: |
           echo "===== 开始运行: $(date '+%Y-%m-%d %H:%M') ====="
-          python daily_runner.py 2>&1
+          cd quant_system && python daily_runner.py 2>&1
           echo "===== 运行完成: $(date '+%Y-%m-%d %H:%M') ====="
 
       - name: 上传报告（可选，留作存档）
         uses: actions/upload-artifact@v4
         with:
           name: quant-report-${{ github.run_id }}
-          path: report_*.json
+          path: quant_system/report_*.json
           retention-days: 7
