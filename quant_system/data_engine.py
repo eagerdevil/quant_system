@@ -40,8 +40,32 @@ def _parse_kline(k_str):
         return None
 
 
-# GitHub Actions 环境检测（东方财富API屏蔽美国IP，GitHub Actions Runner在美国）
+# GitHub Actions 环境检测（东方财富API可能封禁美国IP，GitHub Actions Runner在美国）
 _ON_GITHUB = os.environ.get("GITHUB_ACTIONS") == "true" or os.environ.get("CI") == "true"
+
+# 东方财富API可用性标志（启动时预检，避免逐个超时）
+_EASTMONEY_OK = True
+
+def _probe_eastmoney():
+    """GitHub Actions启动时快速探测东方财富API连通性，失败则全局跳过"""
+    global _EASTMONEY_OK
+    if not _ON_GITHUB:
+        return  # 本地环境不需要探测
+    try:
+        url = "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.000300&fields1=f1&fields2=f51&klt=101&fqt=0&end=20260101&lmt=1"
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0",
+            "Referer": "https://quote.eastmoney.com/",
+        })
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read())
+            if data and data.get("data"):
+                logger.info("  [PROBE] 东方财富API连通正常 ✓")
+                return
+    except Exception as e:
+        pass
+    _EASTMONEY_OK = False
+    logger.info("  [PROBE] 东方财富API不可达，全局跳过(改用腾讯/新浪备用源)")
 
 # 备用数据源开关（东方财富API被限时自动使用）
 _USE_FALLBACK = False
@@ -56,7 +80,9 @@ INDEX_CODES = {
 }
 
 def fetch_json(url, timeout=10):
-    # GitHub Actions 环境也先尝试东方财富API，失败后自动走备用源（各调用方有fallback逻辑）
+    # 东方财富API预检失败 → 直接跳过快失败，节省时间
+    if not _EASTMONEY_OK and "eastmoney.com" in url:
+        return None
     for attempt in range(MAX_RETRY):
         try:
             req = urllib.request.Request(url, headers={
@@ -1026,6 +1052,9 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
         sequential: True=逐只拉取(防限流), False=快速模式
     """
     logger.info("[DATA ENGINE] 开始采集数据...")
+
+    # GitHub Actions: 快速探测东方财富API连通性，不通则全局跳过
+    _probe_eastmoney()
 
     result = {
         "timestamp": datetime.now().isoformat(),
