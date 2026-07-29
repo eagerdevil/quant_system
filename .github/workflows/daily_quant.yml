@@ -1,11 +1,8 @@
 name: 每日A股量化分析
 
-# 由 cron-job.org 外部触发（周一至周五 17:07 北京时间）
-# 也可手动触发
 on:
   workflow_dispatch:
 
-# 防止并发运行（同一时间只允许一个分析任务）
 concurrency:
   group: daily-quant
   cancel-in-progress: false
