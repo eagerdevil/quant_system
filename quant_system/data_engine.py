@@ -56,11 +56,7 @@ INDEX_CODES = {
 }
 
 def fetch_json(url, timeout=10):
-    # GitHub Actions 在美国，东方财富API封禁美国IP → 直接走备用接口
-    if _ON_GITHUB and "eastmoney.com" in url:
-        logger.info(f"  [SKIP] GitHub环境跳过东方财富，直接走备用源")
-        return None
-
+    # GitHub Actions 环境也先尝试东方财富API，失败后自动走备用源（各调用方有fallback逻辑）
     for attempt in range(MAX_RETRY):
         try:
             req = urllib.request.Request(url, headers={
