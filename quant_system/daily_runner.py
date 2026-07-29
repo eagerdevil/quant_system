@@ -95,7 +95,7 @@ def update_portfolio_prices(portfolio, etf_data):
         if code in etf_data:
             rt = etf_data[code].get("realtime") or {}
             kline = etf_data[code].get("kline", [])
-            portfolio[code]["current_price"] = rt.get("price") if rt.get("price") else portfolio[code].get("cost", 0)
+            portfolio[code]["current_price"] = rt.get("price") if rt.get("price") else (kline[-1]["close"] if kline else portfolio[code].get("cost", 0))
             # 昨收价：优先实时数据，其次K线倒数第二根
             prev_close = rt.get("prev_close")
             if not prev_close and len(kline) >= 2:
