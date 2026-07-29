@@ -1083,20 +1083,27 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
 
         name = KEY_ETFS.get(code, code)
 
-        # 最多重试3次
+        # GitHub Actions: 跳过实时行情(hq.sinajs.cn封禁US IP)，用K线收盘价
+        # 本地环境: 正常拉取实时行情
         kline, realtime = None, None
-        for attempt in range(3):
-            kline = fetch_etf_kline(code, 250) if not kline else kline
-            realtime = fetch_etf_realtime(code) if not realtime else realtime
-            if kline and realtime:
-                break
-            if attempt < 2:
-                time.sleep(1.0)
+        if _ON_GITHUB:
+            # 仅拉K线，不重试（K线API web.ifzq.gtimg.cn 对US IP友好）
+            kline = fetch_etf_kline(code, 250)
+            realtime = None  # 用K线收盘价作为现价
+        else:
+            for attempt in range(3):
+                kline = fetch_etf_kline(code, 250) if not kline else kline
+                realtime = fetch_etf_realtime(code) if not realtime else realtime
+                if kline and realtime:
+                    break
+                if attempt < 2:
+                    time.sleep(1.0)
 
         if kline:
             etf_data[code] = {"name": name, "kline": kline, "realtime": realtime}
+            rt_tag = "K线" if (_ON_GITHUB or not realtime) else "OK"
             if sequential:
-                logger.info(f"    [{i+1}/{len(all_etf_codes)}] {code} {name} - OK ({len(kline)}d)")
+                logger.info(f"    [{i+1}/{len(all_etf_codes)}] {code} {name} - {rt_tag} ({len(kline)}d)")
         else:
             fail_count += 1
             logger.info(f"    [{i+1}/{len(all_etf_codes)}] {code} {name} - FAIL (3次重试后仍失败)")
@@ -1116,17 +1123,22 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
 
             name = USER_STOCKS.get(code, code)
             kline, realtime = None, None
-            for attempt in range(3):
-                kline = fetch_stock_kline(code, 250) if not kline else kline
-                realtime = fetch_stock_realtime(code) if not realtime else realtime
-                if kline and realtime:
-                    break
-                if attempt < 2:
-                    time.sleep(1.0)
+            if _ON_GITHUB:
+                kline = fetch_stock_kline(code, 250)
+                realtime = None
+            else:
+                for attempt in range(3):
+                    kline = fetch_stock_kline(code, 250) if not kline else kline
+                    realtime = fetch_stock_realtime(code) if not realtime else realtime
+                    if kline and realtime:
+                        break
+                    if attempt < 2:
+                        time.sleep(1.0)
 
             if kline:
                 stock_data[code] = {"name": name, "kline": kline, "realtime": realtime}
-                logger.info(f"    [{i+1}/{len(stock_codes_list)}] {code} {name} - OK ({len(kline)}d)")
+                rt_tag = "K线" if (_ON_GITHUB or not realtime) else "OK"
+                logger.info(f"    [{i+1}/{len(stock_codes_list)}] {code} {name} - {rt_tag} ({len(kline)}d)")
             else:
                 logger.info(f"    [{i+1}/{len(stock_codes_list)}] {code} {name} - FAIL")
 
