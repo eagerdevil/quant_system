@@ -25,7 +25,7 @@ jobs:
           python-version: '3.12'
 
       - name: 安装依赖
-        run: pip install -r quant_system/requirements.txt
+        run: pip install -r requirements.txt
 
       - name: 运行量化模型
         env:
@@ -33,12 +33,12 @@ jobs:
           QQMAIL_AUTH_CODE: ${{ secrets.QQMAIL_AUTH_CODE }}
         run: |
           echo "===== 开始运行: $(date '+%Y-%m-%d %H:%M') ====="
-          cd quant_system && python daily_runner.py 2>&1
+          python daily_runner.py 2>&1
           echo "===== 运行完成: $(date '+%Y-%m-%d %H:%M') ====="
 
       - name: 上传报告（可选，留作存档）
         uses: actions/upload-artifact@v4
         with:
           name: quant-report-${{ github.run_id }}
-          path: quant_system/report_*.json
+          path: report_*.json
           retention-days: 7
