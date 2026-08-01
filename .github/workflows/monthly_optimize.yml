@@ -17,6 +17,8 @@ jobs:
   check-and-optimize:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      should_optimize: ${{ steps.check.outputs.should_optimize }}
 
     steps:
       - name: 检出代码
