@@ -31,14 +31,14 @@ jobs:
           python-version: '3.12'
 
       - name: 安装依赖
-        run: pip install -r requirements.txt pytest
+        run: pip install -r quant_system/requirements.txt pytest
 
       - name: 运行测试
         env:
           TZ: Asia/Shanghai
         run: |
           echo "===== CI 测试开始: $(date '+%Y-%m-%d %H:%M') ====="
-          python -m pytest tests/ -v --tb=short --color=yes
+          cd quant_system && python -m pytest tests/ -v --tb=short --color=yes
           echo "===== CI 测试完成: $(date '+%Y-%m-%d %H:%M') ====="
 
       - name: 测试摘要

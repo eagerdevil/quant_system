@@ -111,9 +111,10 @@ def compute_performance_metrics(equity_curve):
     avg_loss = float(np.mean(loss_diffs)) if len(loss_diffs) > 0 else 0.0
     profit_factor = avg_win / avg_loss if avg_loss > 0 else float('inf')
 
-    # 现金纪律
-    cash_below_700 = sum(1 for e in equity_curve if e["cash"] < 700)
-    days_with_cash_data = len([e for e in equity_curve if e["cash"] > 0])
+    # 现金纪律（满仓日 cash=0 同样计入分母，避免比例虚高）
+    cash_days = [e for e in equity_curve if "cash" in e]
+    cash_below_700 = sum(1 for e in cash_days if e["cash"] < 700)
+    days_with_cash_data = len(cash_days)
 
     return {
         "start_date": equity_curve[0]["date"],

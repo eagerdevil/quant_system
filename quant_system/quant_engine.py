@@ -264,7 +264,8 @@ def rsi(closes, n=14):
     avg_gain = np.mean(gains)
     avg_loss = np.mean(losses)
     if avg_loss == 0:
-        return 100.0
+        # 完全平坦（avg_gain==0）时为中性50，纯上涨时为100
+        return 50.0 if avg_gain == 0 else 100.0
     rs = avg_gain / avg_loss
     return float(100.0 - 100.0 / (1.0 + rs))
 
@@ -512,21 +513,16 @@ def calc_choppiness(closes, highs, lows, n=14):
 
     h_arr = _to_np(highs[-n:])
     l_arr = _to_np(lows[-n:])
-    c_arr = _to_np(closes[-(n+1):])
+    # 窗口内每一天的前一收盘价（含窗口外前一天的收盘，作为第0天的前一收盘）
+    prev_c = _to_np(closes[-(n+1):-1])
 
     window_high = float(np.max(h_arr))
     window_low = float(np.min(l_arr))
 
-    # True Range for last n periods
-    hl = h_arr[1:] - l_arr[1:] if len(h_arr) > 1 else h_arr - l_arr
-    hc_val = np.abs(h_arr[1:] - c_arr[:-n]) if len(c_arr) >= n + 1 and len(h_arr) > 1 else np.abs(h_arr - c_arr[-len(h_arr):])
-    lc_val = np.abs(l_arr[1:] - c_arr[:-n]) if len(c_arr) >= n + 1 and len(l_arr) > 1 else np.abs(l_arr - c_arr[-len(l_arr):])
-
-    # Pad or trim to same length
-    min_len = min(len(hl), len(hc_val), len(lc_val))
-    hl = hl[:min_len]
-    hc_val = hc_val[:min_len]
-    lc_val = lc_val[:min_len]
+    # True Range for last n periods: TR_i = max(H-L, |H-C_prev|, |L-C_prev|)
+    hl = h_arr - l_arr
+    hc_val = np.abs(h_arr - prev_c)
+    lc_val = np.abs(l_arr - prev_c)
 
     tr_sum = float(np.sum(np.maximum(np.maximum(hl, hc_val), lc_val)))
     if tr_sum == 0 or window_high == window_low:
@@ -928,7 +924,8 @@ def score_factors(indicators):
     elif div_type == "weak_rally":
         f16 = 5.0 - strength * 0.25
     elif div_type == "panic_sell":
-        f16 = 3.0 + strength * 0.2
+        # 恐慌抛售是负面信号：强度越大分越低（与其他负面信号方向一致）
+        f16 = 5.0 - strength * 0.2
     else:
         f16 = 5.0
     factors['F16_量价关系'] = round(float(np.clip(f16, 0.5, 8.0)), 1)
@@ -992,9 +989,21 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
     """
     # v7.2: 权重优先级: 手动指定 > 状态自适应 > CURRENT_WEIGHTS > DEFAULT_WEIGHTS
     if weights is None:
-        weights = get_regime_weights(CURRENT_WEIGHTS, regime)
-    if weights is None:
-        weights = DEFAULT_WEIGHTS
+        weights = get_regime_weights(CURRENT_WEIGHTS, regime)  # 从不返回None
+
+    # 数据不足(<30根K线)时返回兜底评分（E_回避），避免 IndexError/NaN 传播击穿主流程
+    if not closes or len(closes) < 30:
+        return {
+            "code": code, "name": name,
+            "score": 0, "technical_score": 0, "max_score": 100,
+            "grade": "E_回避", "price": 0.0,
+            "premium_info": {
+                "premium_pct": premium_pct, "penalty_multiplier": 1.0,
+                "warning": "K线数据不足，无法评分", "score_penalty": 0
+            },
+            "indicators": {}, "returns": {}, "vs_ma": {},
+            "factors": {}, "volume_divergence": {}
+        }
 
     indicators = compute_indicators(closes, highs, lows, volumes)
     factors = score_factors(indicators)
@@ -1262,9 +1271,7 @@ def score_all_etfs_cross_sectional(etf_data_dict, weights=None, regime=None, use
     v7.2: 支持regime自适应权重
     """
     if weights is None:
-        weights = get_regime_weights(CURRENT_WEIGHTS, regime)
-    if weights is None:
-        weights = DEFAULT_WEIGHTS
+        weights = get_regime_weights(CURRENT_WEIGHTS, regime)  # 从不返回None
 
     # Phase 1: 逐只计算绝对指标和因子得分
     raw_metrics = []
@@ -1526,15 +1533,13 @@ class MarketTiming:
         if self.hs300 and len(self.hs300) >= 20:
             ma20 = sma(self.hs300, 20)
             signals['S1_HS300_above_MA20'] = self.hs300[-1] > ma20
-        else:
-            signals['S1_HS300_above_MA20'] = False
+        # 数据不足时 S1 保持缺失（None），避免被当作"看跌"误触发强制压仓
 
         if self.hs300 and len(self.hs300) >= 61:
             ma60_now = sma(self.hs300, 60)
             ma60_prev = sma(self.hs300[:-1], 60)
             signals['S2_HS300_MA60_up'] = ma60_now > ma60_prev
-        else:
-            signals['S2_HS300_MA60_up'] = False
+        # 数据不足时 S2 保持缺失（None），避免被当作"看跌"误触发强制压仓
 
         nf_5d = sum(f.get("net_flow", 0) for f in self.north_flow[-5:]) if self.north_flow else 0
         signals['S3_NorthFlow_5d_positive'] = nf_5d > 0
@@ -1587,9 +1592,10 @@ class MarketTiming:
         base_position = min(base_position, pos_range[1])
         base_position = max(base_position, pos_range[0])
 
-        hs300_below_ma60 = not signals.get('S1_HS300_above_MA20', True)
-        ma60_down = not signals.get('S2_HS300_MA60_up', True)
-        force_cap = hs300_below_ma60 and ma60_down
+        # 仅当沪深300数据完整（信号真实存在）时才应用强制压仓，避免数据缺失误伤
+        hs300_below_ma20 = signals.get('S1_HS300_above_MA20') is False
+        ma60_down = signals.get('S2_HS300_MA60_up') is False
+        force_cap = hs300_below_ma20 and ma60_down
 
         if force_cap:
             base_position = min(base_position, 0.30)
@@ -1754,12 +1760,15 @@ class TradeDecider:
         if len(candidates) <= 1:
             return {c["code"]: 1.0 for c in candidates}
 
-        # 提取年化波动率（已经是小数形式，如0.25=25%）
+        # 提取年化波动率（小数形式，如0.25=25%）
+        # 生产数据流中 indicators 只有 volatility_pct（百分数），需兼容两种键
         vols = {}
         for c in candidates:
-            vol = c.get("indicators", {}).get("volatility", 0.25)
+            vol_raw = c.get("indicators", {}).get("volatility")
+            if vol_raw is None:
+                vol_raw = c.get("indicators", {}).get("volatility_pct", 25.0) / 100.0
             # 约束在合理范围
-            vols[c["code"]] = max(0.08, min(0.60, vol))
+            vols[c["code"]] = max(0.08, min(0.60, float(vol_raw)))
 
         # 反波动率权重
         inv_vols = {code: 1.0 / v for code, v in vols.items()}
@@ -1782,12 +1791,18 @@ class TradeDecider:
     def generate_plan(self, total_capital=None, max_single=0.25, max_industry=0.40):
         """生成明日操作计划
         total_capital: 总资产，默认从portfolio动态计算（现金+持仓市值）"""
+        def _holding_value(p, k):
+            """持仓市值；_开头的元数据键（_available_cash等）跳过"""
+            if k.startswith("_"):
+                return 0
+            return p.get("shares", 0) * p.get("current_price", p.get("cost", 0))
+
         # v7.0: 从portfolio动态计算总资产
         if total_capital is None:
             cash = self.portfolio.get("_available_cash", 0)
             invested = sum(
-                p.get("shares", 0) * p.get("current_price", p.get("cost", 0))
-                for p in self.portfolio.values() if isinstance(p, dict) and not str(p.get("shares", "")).startswith("_")
+                _holding_value(p, k)
+                for k, p in self.portfolio.items() if isinstance(p, dict)
             )
             total_capital = cash + invested
             if total_capital <= 0:
@@ -1795,8 +1810,8 @@ class TradeDecider:
         target_pos = self.timing["base_position"]
         target_amount = total_capital * target_pos
         current_invested = sum(
-            p.get("shares", 0) * p.get("current_price", p.get("cost", 0))
-            for p in self.portfolio.values() if isinstance(p, dict) and not str(p.get("shares", "")).startswith("_")
+            _holding_value(p, k)
+            for k, p in self.portfolio.items() if isinstance(p, dict)
         )
 
         top_n = max(5, len(self.scores) // 2)
@@ -1894,20 +1909,27 @@ class TradeDecider:
         # 买入建议 (v8.0: 凯利公式 × 波动率加权)
         available = total_capital - current_invested
 
+        # v3.1: 市场状态约束买入 — TREND_DOWN/CRISIS 禁止买入，CHOPPY 仅 A_强烈买入
+        regime_grade_min = self.timing.get("regime_buy_grade_min", "B_买入")
+        regime_blocks_buy = regime_grade_min is None
+        grade_thresholds = OPTIMIZED_PARAMS.get("grade_thresholds", {})
+        min_buy_score = grade_thresholds.get(regime_grade_min, 65) if regime_grade_min else float("inf")
+
         # v8.0: 先收集所有候选，计算波动率调整因子
         buy_candidates = []
-        for s in self.scores:
-            if len(buy_candidates) >= 6:  # 收集更多候选用于波动率比较
-                break
-            if s["code"] in self.portfolio:
-                continue
-            if s["score"] < 65:
-                continue
-            sortino_val = s.get("indicators", {}).get("sortino", 0.5)
-            kelly_pct = self._kelly_fraction(s["score"], sortino_val, max_single)
-            if kelly_pct <= 0:
-                continue
-            buy_candidates.append({**s, "_kelly_pct": kelly_pct, "_sortino": sortino_val})
+        if not regime_blocks_buy:
+            for s in self.scores:
+                if len(buy_candidates) >= 6:  # 收集更多候选用于波动率比较
+                    break
+                if s["code"] in self.portfolio:
+                    continue
+                if s["score"] < min_buy_score:
+                    continue
+                sortino_val = s.get("indicators", {}).get("sortino", 0.5)
+                kelly_pct = self._kelly_fraction(s["score"], sortino_val, max_single)
+                if kelly_pct <= 0:
+                    continue
+                buy_candidates.append({**s, "_kelly_pct": kelly_pct, "_sortino": sortino_val})
 
         # v8.0: 波动率调整因子
         vol_adjs = self._volatility_adjustments(buy_candidates)
@@ -1919,9 +1941,9 @@ class TradeDecider:
             kelly_pct = s["_kelly_pct"]
             sortino_val = s["_sortino"]
 
-            # v8.0: 凯利 × 波动率调整 = 最终仓位
+            # v8.0: 凯利 × 波动率调整 = 最终仓位（cap在单只上限，防止vol_adj突破max_single）
             vol_adj = vol_adjs.get(code, 1.0)
-            final_pct = kelly_pct * vol_adj
+            final_pct = min(kelly_pct * vol_adj, max_single)
 
             budget = total_capital * final_pct
             budget = min(budget, available * 0.5)  # 单次不超过可用资金50%

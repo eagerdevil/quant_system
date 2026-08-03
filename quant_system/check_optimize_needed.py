@@ -19,8 +19,11 @@
 import json, sys, os, io, logging
 from datetime import datetime, timedelta
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+def _fix_console_encoding():
+    """Windows控制台UTF-8适配（仅作为脚本运行时调用，避免污染库导入的全局流）"""
+    if hasattr(sys.stdout, "buffer"):
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -195,9 +198,11 @@ def main():
 
     if should_run:
         print(f"\n  → 触发优化！运行 optimizer.py")
-        # 输出标记供 workflow 读取
-        with open(os.environ.get("GITHUB_OUTPUT", "/dev/null"), "a") as f:
-            f.write("should_optimize=true\n")
+        # 输出标记供 workflow 读取（本地运行时 GITHUB_OUTPUT 未设置，跳过写入）
+        gh_output = os.environ.get("GITHUB_OUTPUT")
+        if gh_output:
+            with open(gh_output, "a") as f:
+                f.write("should_optimize=true\n")
         sys.exit(0)
     else:
         print(f"\n  → 跳过优化（条件不满足）")
@@ -206,4 +211,5 @@ def main():
 
 
 if __name__ == "__main__":
+    _fix_console_encoding()
     main()

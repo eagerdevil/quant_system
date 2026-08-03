@@ -15,6 +15,16 @@ TODAY = datetime.now().strftime("%Y%m%d")  # 保持向后兼容
 def get_today():
     """返回当前日期字符串 YYYYMMDD（每次调用实时计算）"""
     return datetime.now().strftime("%Y%m%d")
+
+def _to_float(v, default=0.0):
+    """安全转换数值；东财接口缺失值常返回 '-'/''/None，避免 TypeError/ValueError 击穿采集流程"""
+    try:
+        f = float(v)
+        if f != f:  # NaN
+            return default
+        return f
+    except (TypeError, ValueError):
+        return default
 MAX_RETRY = 3
 
 # K线字段索引（东方财富 push2his API 返回格式: date,open,close,high,low,volume,amount[,...]）
@@ -103,7 +113,7 @@ def fetch_json(url, timeout=10):
 def fetch_index_daily(code, days=120):
     """获取指数日K线（东方财富主 + 腾讯备用）"""
     market = "1" if code.startswith(("0","5","1")) else "0"
-    url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57&klt=101&fqt=0&end={TODAY}&lmt={days}"
+    url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57&klt=101&fqt=0&end={get_today()}&lmt={days}"
     data = fetch_json(url)
     if data and data.get("data"):
         klines = data["data"]["klines"]
@@ -146,7 +156,7 @@ def fetch_sw_industry_returns(days=60):
     result = {}
     for code, name in SW_INDUSTRY_CODES.items():
         market = "0" if code.startswith("8") else "1"
-        url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57&klt=101&fqt=0&end={TODAY}&lmt={days}"
+        url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57&klt=101&fqt=0&end={get_today()}&lmt={days}"
         data = fetch_json(url)
         if not data or not data.get("data"):
             continue
@@ -187,8 +197,8 @@ def fetch_north_bound_flow(days=5):
     today = datetime.now().strftime("%Y-%m-%d")
     if data and data.get("data"):
         d = data["data"]
-        sh_net = float(d.get("f170") or 0)  # 沪股通当日净买(亿)
-        sz_net = float(d.get("f172") or 0)  # 深股通当日净买(亿)
+        sh_net = _to_float(d.get("f170"))  # 沪股通当日净买(亿)
+        sz_net = _to_float(d.get("f172"))  # 深股通当日净买(亿)
         today_flow = (sh_net + sz_net)  # 已经是亿为单位
         # 尝试获取5日历史（push2his kline for 000001，f61可能是北向相关）
         try:
@@ -211,7 +221,13 @@ def fetch_north_bound_flow(days=5):
         t_url = "https://qt.gtimg.cn/q=ff_bk0479"
         t_resp = _simple_get(t_url, timeout=10)
         if t_resp:
-            t_text = t_resp.read().decode("gbk", errors="replace") if hasattr(t_resp, "read") else t_resp
+            # 兼容 urllib(有.read) 与 requests(.text) 两种响应对象
+            if hasattr(t_resp, "read"):
+                t_text = t_resp.read().decode("gbk", errors="replace")
+            elif isinstance(t_resp, str):
+                t_text = t_resp
+            else:
+                t_text = getattr(t_resp, "text", "") or ""
             if "~" in t_text:
                 t_parts = t_text.split("~")
                 for idx in [5, 4, 6]:
@@ -256,7 +272,7 @@ def fetch_margin_balance():
 # ============================================================
 def fetch_sector_fund_flow():
     """获取行业主力资金流向（申万一级）"""
-    url = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=15&po=1&np=1&fltt=2&fid=f62&fs=m:90+t2&fields=f12,f14,f62,f64,f66"
+    url = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=15&po=1&np=1&fltt=2&fid=f62&fs=m:90+t:2&fields=f12,f14,f62,f64,f66"
     data = fetch_json(url)
     if not data or not data.get("data"):
         return None
@@ -365,8 +381,11 @@ def fetch_market_breadth():
 
     # v7.1: 当limit_up/limit_down为None时（clist API失败），从涨跌比估算
     if limit_up is None or limit_down is None:
-        # 根据涨跌比估算涨跌停家数
-        up_ratio = (up_count or 2500) / max((up_count or 0) + (down_count or 0), 1)
+        # 根据涨跌比估算涨跌停家数（全部源失败时用中性默认，避免荒谬值污染情绪评分）
+        if up_count is None and down_count is None:
+            up_ratio = 0.5
+        else:
+            up_ratio = (up_count or 2500) / max((up_count or 0) + (down_count or 0), 1)
         if up_ratio > 0.65:
             limit_up = limit_up or 80 + int((up_ratio - 0.65) * 200)
             limit_down = limit_down or max(0, 15 - int((up_ratio - 0.65) * 30))
@@ -796,7 +815,7 @@ def fetch_etf_kline(code, days=250):
     """获取ETF日K线（东方财富主 + 腾讯备用）"""
     # 沪市ETF: 5xxxxx, 58xxxx; 深市ETF: 15xxxx, 16xxxx
     market = "1" if code.startswith(("5","58")) else "0"
-    url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59&klt=101&fqt=0&end={TODAY}&lmt={days}"
+    url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59&klt=101&fqt=0&end={get_today()}&lmt={days}"
     data = fetch_json(url)
     if data and data.get("data"):
         result = []
@@ -816,7 +835,7 @@ def fetch_stock_kline(code, days=250):
         market = "0"
     else:
         market = "0"
-    url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57&klt=101&fqt=1&end={TODAY}&lmt={days}"
+    url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57&klt=101&fqt=1&end={get_today()}&lmt={days}"
     data = fetch_json(url)
     if data and data.get("data"):
         result = []
@@ -840,19 +859,24 @@ def fetch_stock_realtime(code):
     data = fetch_json(url)
     if data and data.get("data"):
         d = data["data"]
-        price = d.get("f43", 0)
-        if price > 100:
-            price = price / 100
+        # 东财 push2: 价格/昨收为"分"单位(×100)，涨跌幅f170为"基点"(×100，如+5%→500)
+        # 统一 /100 并做 "-"/缺失 防护（此前 |涨跌幅|<0.1% 时直接返回原值，错100倍）
+        price = _to_float(d.get("f43")) / 100.0
+        high = _to_float(d.get("f44")) / 100.0
+        low = _to_float(d.get("f45")) / 100.0
+        open_ = _to_float(d.get("f46")) / 100.0
+        prev_close = _to_float(d.get("f60")) / 100.0
+        change_pct = _to_float(d.get("f170")) / 100.0
         return {
-            "price": price,
-            "high": d.get("f44", 0)/100 if d.get("f44", 0) > 100 else d.get("f44", 0),
-            "low": d.get("f45", 0)/100 if d.get("f45", 0) > 100 else d.get("f45", 0),
-            "open": d.get("f46", 0)/100 if d.get("f46", 0) > 100 else d.get("f46", 0),
-            "volume": d.get("f47", 0), "amount": d.get("f48", 0),
-            "change_pct": d.get("f170", 0)/100 if abs(d.get("f170", 0)) > 10 else d.get("f170", 0),
-            "prev_close": d.get("f60", 0)/100 if d.get("f60", 0) > 100 else d.get("f60", 0),
+            "price": round(price, 4),
+            "high": round(high, 4),
+            "low": round(low, 4),
+            "open": round(open_, 4),
+            "volume": _to_float(d.get("f47")), "amount": _to_float(d.get("f48")),
+            "change_pct": round(change_pct, 2),
+            "prev_close": round(prev_close, 4),
             "name": d.get("f58", ""), "code": d.get("f57", ""),
-            "market_cap": d.get("f20", 0), "float_cap": d.get("f21", 0)
+            "market_cap": _to_float(d.get("f20")), "float_cap": _to_float(d.get("f21"))
         }
     # 备用: 新浪API
     return _fetch_sina_realtime(code)
@@ -865,27 +889,35 @@ def fetch_etf_realtime(code):
     data = fetch_json(url)
     if data and data.get("data"):
         d = data["data"]
-        # 东方财富API：ETF价格统一以厘(1/1000元)返回，始终/1000
-        # 判断依据：f60(昨收) > 50 → 厘单位（A股ETF最高不超过10元/份，50是安全阈值）
-        _raw_prev = d.get("f60", 0)
-        _scale = 1000.0 if abs(_raw_prev) > 50 else 1.0
+        # 东方财富API：ETF价格统一以厘(1/1000元)返回
+        # 判断依据：f60/f43(厘值) > 50 → 厘单位（A股ETF最高不超过10元/份，50是安全阈值）
+        _raw_prev = _to_float(d.get("f60"))
+        _raw_price = _to_float(d.get("f43"))
+        _scale = 1000.0 if (_raw_prev > 50 or _raw_price > 50) else 1.0
 
-        # IOPV（实时估值，f169；部分QDII ETF返回无效值如-61）
-        raw_iopv = d.get("f169", 0)
-        iopv = raw_iopv / _scale if (raw_iopv and raw_iopv > 0) else None
+        price = _raw_price / _scale
 
-        # 涨跌幅（f170）：>1 → 基点单位(×100)，≤1 → 已为百分比
-        raw_chg = d.get("f170", 0)
-        change_pct = raw_chg / 100.0 if abs(raw_chg) > 1 else raw_chg
+        # IOPV（实时估值，f169；部分QDII ETF返回无效值如-61/9）
+        raw_iopv = _to_float(d.get("f169"))
+        iopv = None
+        if raw_iopv > 0:
+            cand_iopv = raw_iopv / _scale
+            # 合理性校验：IOPV 必须接近现价（偏差>30%视为垃圾值，避免10622%假溢价）
+            if price > 0 and abs(cand_iopv / price - 1) < 0.30:
+                iopv = cand_iopv
+
+        # 涨跌幅（f170 基点单位 ×100，如+1.2%→120）
+        raw_chg = _to_float(d.get("f170"))
+        change_pct = raw_chg / 100.0
 
         return {
-            "price": d.get("f43", 0) / _scale,
-            "high": d.get("f44", 0) / _scale,
-            "low": d.get("f45", 0) / _scale,
-            "open": d.get("f46", 0) / _scale,
-            "volume": d.get("f47", 0), "amount": d.get("f48", 0),
-            "change_pct": change_pct,
-            "prev_close": d.get("f60", 0) / _scale,
+            "price": round(price, 4),
+            "high": round(_to_float(d.get("f44")) / _scale, 4),
+            "low": round(_to_float(d.get("f45")) / _scale, 4),
+            "open": round(_to_float(d.get("f46")) / _scale, 4),
+            "volume": _to_float(d.get("f47")), "amount": _to_float(d.get("f48")),
+            "change_pct": round(change_pct, 2),
+            "prev_close": round(_raw_prev / _scale, 4),
             "name": d.get("f58", ""), "code": d.get("f57", ""),
             "iopv": iopv  # 实时估值（QDII ETF可能为None）
         }
@@ -966,7 +998,7 @@ def compute_etf_premium(code, current_price, nav_data=None):
         return {
             "premium_pct": round(premium, 2),
             "nav": round(rt["iopv"], 4),
-            "nav_date": TODAY,
+            "nav_date": get_today(),
             "data_source": "iopv",
             "is_qdii": is_qdii
         }
@@ -1058,7 +1090,7 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
 
     result = {
         "timestamp": datetime.now().isoformat(),
-        "date": TODAY
+        "date": get_today()
     }
 
     # 指数数据
@@ -1181,6 +1213,6 @@ if __name__ == "__main__":
     etfs = sys.argv[1:] if len(sys.argv) > 1 else list(KEY_ETFS.keys())[:10]
     data = collect_all_data(etfs)
     # Save to file
-    with open(os.path.join(SCRIPT_DIR, f"data_{TODAY}.json"), "w", encoding="utf-8") as f:
+    with open(os.path.join(SCRIPT_DIR, f"data_{get_today()}.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2, default=str)
-    print(f"[DATA ENGINE] 数据已保存到 data_{TODAY}.json")
+    print(f"[DATA ENGINE] 数据已保存到 data_{get_today()}.json")

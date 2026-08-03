@@ -1,0 +1,394 @@
+18:22:48 [INFO] 启动每日量化分析...
+18:22:48 [INFO] Step 1/4: 采集数据...
+18:22:48 [INFO] [DATA ENGINE] 开始采集数据...
+18:22:48 [INFO]   -> 指数日线...
+18:22:49 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:22:50 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:22:51 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:22:52 [DEBUG] Starting new HTTPS connection (1): web.ifzq.gtimg.cn:443
+18:22:52 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh000001,day,,,60,qfq HTTP/1.1" 200 None
+18:22:52 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:22:54 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:22:55 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:22:55 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz399001,day,,,60,qfq HTTP/1.1" 200 None
+18:22:55 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:22:57 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:22:58 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:22:58 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz399006,day,,,60,qfq HTTP/1.1" 200 None
+18:22:58 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:00 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:01 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:01 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh000300,day,,,60,qfq HTTP/1.1" 200 None
+18:23:01 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:03 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:04 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:04 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh000905,day,,,60,qfq HTTP/1.1" 200 None
+18:23:04 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:06 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:07 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:07 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh000688,day,,,60,qfq HTTP/1.1" 200 None
+18:23:07 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:09 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:10 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:10 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz399673,day,,,60,qfq HTTP/1.1" 200 None
+18:23:10 [INFO]   -> 宏观数据...
+18:23:10 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:12 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:13 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:13 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:14 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:16 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:16 [INFO]   -> 资金流向...
+18:23:16 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:17 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:18 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:18 [DEBUG] Starting new HTTPS connection (1): qt.gtimg.cn:443
+18:23:19 [DEBUG] https://qt.gtimg.cn:443 "GET /q=ff_bk0479 HTTP/1.1" 200 None
+18:23:19 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:20 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:22 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:22 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:23 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:25 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:25 [INFO]   [FALLBACK] 融资余额(指数估算): balance=15000亿 change=-90.0亿
+18:23:25 [INFO]   -> 市场情绪...
+18:23:25 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:26 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:27 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:27 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:29 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:30 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:30 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:32 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:33 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:33 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:34 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:36 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:36 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:37 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:39 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:39 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh000001,day,,,1,qfq HTTP/1.1" 200 None
+18:23:39 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:40 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:42 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:42 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz399001,day,,,1,qfq HTTP/1.1" 200 None
+18:23:42 [INFO]   [FALLBACK] 涨跌家数估算: 涨2178/跌2821 (指数变化-1.3%)
+18:23:42 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:44 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:45 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:45 [DEBUG] Starting new HTTPS connection (1): hq.sinajs.cn:443
+18:23:45 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh000001 HTTP/1.1" 200 136
+18:23:45 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sz399001 HTTP/1.1" 200 145
+18:23:45 [INFO]   [FALLBACK] 全市场成交额(Sina): 20258亿
+18:23:46 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:47 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:48 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:48 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:50 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:51 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:51 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:53 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:54 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:54 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:55 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:57 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:57 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:23:58 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:00 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:00 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh000001,day,,,1,qfq HTTP/1.1" 200 None
+18:24:00 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:01 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:03 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:03 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz399001,day,,,1,qfq HTTP/1.1" 200 None
+18:24:03 [INFO]   [FALLBACK] 涨跌家数估算: 涨2178/跌2821 (指数变化-1.3%)
+18:24:03 [INFO]   -> 机构资金追踪...
+18:24:03 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:04 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:05 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:06 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:07 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:08 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:08 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:10 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:11 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:11 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:13 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:14 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:14 [INFO]   -> ETF数据 (56只, 逐只模式)...
+18:24:14 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:16 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:17 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:17 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz159183,day,,,250,qfq HTTP/1.1" 200 None
+18:24:17 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:19 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:20 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:20 [DEBUG] Resetting dropped connection: hq.sinajs.cn
+18:24:20 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sz159183 HTTP/1.1" 200 168
+18:24:20 [INFO]     [1/56] 159183 新能源车ETF招商 - OK (86d)
+18:24:22 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:23 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:25 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:25 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh510300,day,,,250,qfq HTTP/1.1" 200 None
+18:24:25 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:26 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:27 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:27 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh510300 HTTP/1.1" 200 199
+18:24:27 [INFO]     [2/56] 510300 沪深300ETF华泰柏瑞 - OK (251d)
+18:24:29 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:30 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:32 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:32 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz159915,day,,,250,qfq HTTP/1.1" 200 None
+18:24:32 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:33 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:34 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:34 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sz159915 HTTP/1.1" 200 189
+18:24:34 [INFO]     [3/56] 159915 创业板ETF - OK (251d)
+18:24:36 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:38 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:39 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:39 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz159857,day,,,250,qfq HTTP/1.1" 200 None
+18:24:39 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:40 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:42 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:42 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sz159857 HTTP/1.1" 200 172
+18:24:42 [INFO]     [4/56] 159857 光伏ETF广发 - OK (250d)
+18:24:43 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:45 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:46 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:46 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh516020,day,,,250,qfq HTTP/1.1" 200 None
+18:24:46 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:48 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:49 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:49 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh516020 HTTP/1.1" 200 185
+18:24:49 [INFO]     [5/56] 516020 化工ETF华宝 - OK (250d)
+18:24:50 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:52 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:53 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:53 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh560800,day,,,250,qfq HTTP/1.1" 200 None
+18:24:53 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:55 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:56 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:56 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh560800 HTTP/1.1" 200 176
+18:24:56 [INFO]     [6/56] 560800 数字经济ETF - OK (250d)
+18:24:57 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:24:59 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:00 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:00 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh513520,day,,,250,qfq HTTP/1.1" 200 None
+18:25:00 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:02 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:03 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:03 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh513520 HTTP/1.1" 200 189
+18:25:03 [INFO]     [7/56] 513520 日经ETF - OK (250d)
+18:25:05 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:06 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:07 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:07 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh588050,day,,,250,qfq HTTP/1.1" 200 None
+18:25:07 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:09 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:10 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:10 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh588050 HTTP/1.1" 200 189
+18:25:10 [INFO]     [8/56] 588050 科创50ETF易方达 - OK (250d)
+18:25:12 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:13 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:14 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:14 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh512100,day,,,250,qfq HTTP/1.1" 200 None
+18:25:15 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:16 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:17 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:17 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh512100 HTTP/1.1" 200 192
+18:25:17 [INFO]     [9/56] 512100 中证1000ETF - OK (251d)
+18:25:19 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:20 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:21 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:21 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh513500,day,,,250,qfq HTTP/1.1" 200 None
+18:25:22 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:23 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:24 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:24 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh513500 HTTP/1.1" 200 189
+18:25:24 [INFO]     [10/56] 513500 标普500ETF - OK (251d)
+18:25:26 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:27 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:29 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:29 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh513050,day,,,250,qfq HTTP/1.1" 200 None
+18:25:29 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:30 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:32 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:32 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh513050 HTTP/1.1" 200 212
+18:25:32 [INFO]     [11/56] 513050 中概互联ETF - OK (250d)
+18:25:33 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:35 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:36 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:36 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz159326,day,,,250,qfq HTTP/1.1" 200 None
+18:25:36 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:38 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:39 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:39 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sz159326 HTTP/1.1" 200 188
+18:25:39 [INFO]     [12/56] 159326 电网设备ETF华夏 - OK (250d)
+18:25:40 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:42 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:43 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:43 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh588000,day,,,250,qfq HTTP/1.1" 200 None
+18:25:44 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:45 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:46 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:46 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh588000 HTTP/1.1" 200 202
+18:25:46 [INFO]     [13/56] 588000 科创50ETF - OK (251d)
+18:25:48 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:49 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:51 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:51 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh588200,day,,,250,qfq HTTP/1.1" 200 None
+18:25:51 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:52 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:53 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:54 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh588200 HTTP/1.1" 200 203
+18:25:54 [INFO]     [14/56] 588200 科创芯片ETF - OK (251d)
+18:25:55 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:56 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:58 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:58 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh515790,day,,,250,qfq HTTP/1.1" 200 None
+18:25:58 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:25:59 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:01 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:01 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh515790 HTTP/1.1" 200 202
+18:26:01 [INFO]     [15/56] 515790 光伏ETF - OK (250d)
+18:26:02 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:03 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:05 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:05 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz159611,day,,,250,qfq HTTP/1.1" 200 None
+18:26:05 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:06 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:08 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:08 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sz159611 HTTP/1.1" 200 185
+18:26:08 [INFO]     [16/56] 159611 电力ETF - OK (250d)
+18:26:09 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:10 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:12 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:12 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh512400,day,,,250,qfq HTTP/1.1" 200 None
+18:26:12 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:13 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:15 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:15 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh512400 HTTP/1.1" 200 198
+18:26:15 [INFO]     [17/56] 512400 有色ETF - OK (251d)
+18:26:16 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:17 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:19 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:19 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz159320,day,,,250,qfq HTTP/1.1" 200 None
+18:26:19 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:20 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:22 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:22 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sz159320 HTTP/1.1" 200 181
+18:26:22 [INFO]     [18/56] 159320 电网设备ETF广发 - OK (250d)
+18:26:23 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:25 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:26 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:26 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh512760,day,,,250,qfq HTTP/1.1" 200 None
+18:26:26 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:27 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:29 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:29 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh512760 HTTP/1.1" 200 192
+18:26:29 [INFO]     [19/56] 512760 芯片ETF国泰 - OK (251d)
+18:26:30 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:31 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:33 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:33 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh516950,day,,,250,qfq HTTP/1.1" 200 None
+18:26:33 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:34 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:36 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:36 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh516950 HTTP/1.1" 200 170
+18:26:36 [INFO]     [20/56] 516950 基建ETF - OK (250d)
+18:26:37 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:38 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:40 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:40 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz159992,day,,,250,qfq HTTP/1.1" 200 None
+18:26:40 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:41 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:43 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:43 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sz159992 HTTP/1.1" 200 183
+18:26:43 [INFO]     [21/56] 159992 创新药ETF - OK (250d)
+18:26:44 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:45 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:47 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:47 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz159732,day,,,250,qfq HTTP/1.1" 200 None
+18:26:47 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:48 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:50 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:50 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sz159732 HTTP/1.1" 200 181
+18:26:50 [INFO]     [22/56] 159732 消费电子ETF - OK (250d)
+18:26:51 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:52 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:54 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:54 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz159869,day,,,250,qfq HTTP/1.1" 200 None
+18:26:54 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:55 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:56 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:56 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sz159869 HTTP/1.1" 200 184
+18:26:56 [INFO]     [23/56] 159869 游戏ETF - OK (250d)
+18:26:58 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:26:59 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:01 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:01 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh512670,day,,,250,qfq HTTP/1.1" 200 None
+18:27:01 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:02 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:03 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:03 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh512670 HTTP/1.1" 200 189
+18:27:03 [INFO]     [24/56] 512670 国防ETF - OK (250d)
+18:27:05 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:06 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:07 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:07 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh512880,day,,,250,qfq HTTP/1.1" 200 None
+18:27:08 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:09 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:10 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:10 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh512880 HTTP/1.1" 200 199
+18:27:10 [INFO]     [25/56] 512880 证券ETF - OK (250d)
+18:27:12 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:13 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:14 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:14 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh512170,day,,,250,qfq HTTP/1.1" 200 None
+18:27:15 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:16 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:17 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:17 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh512170 HTTP/1.1" 200 203
+18:27:17 [INFO]     [26/56] 512170 医疗ETF - OK (251d)
+18:27:19 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:20 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:21 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:21 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh516160,day,,,250,qfq HTTP/1.1" 200 None
+18:27:21 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:23 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:24 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:24 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh516160 HTTP/1.1" 200 184
+18:27:24 [INFO]     [27/56] 516160 新能源ETF - OK (251d)
+18:27:26 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:27 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:29 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:29 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz159227,day,,,250,qfq HTTP/1.1" 200 None
+18:27:29 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:30 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:31 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:32 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sz159227 HTTP/1.1" 200 185
+18:27:32 [INFO]     [28/56] 159227 航空航天ETF华夏 - OK (250d)
+18:27:33 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:35 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:36 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:36 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz159516,day,,,250,qfq HTTP/1.1" 200 None
+18:27:36 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:38 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:39 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:39 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sz159516 HTTP/1.1" 200 199
+18:27:39 [INFO]     [29/56] 159516 半导体设备ETF - OK (250d)
+18:27:41 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:42 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:43 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:43 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sh510880,day,,,250,qfq HTTP/1.1" 200 None
+18:27:44 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:45 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:46 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:46 [DEBUG] https://hq.sinajs.cn:443 "GET /list=sh510880 HTTP/1.1" 200 194
+18:27:46 [INFO]     [30/56] 510880 红利ETF - OK (251d)
+18:27:48 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:50 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:52 [INFO]   [API ERROR] 第3次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:52 [DEBUG] https://web.ifzq.gtimg.cn:443 "GET /appstock/app/fqkline/get?param=sz159647,day,,,250,qfq HTTP/1.1" 200 None
+18:27:52 [INFO]   [API ERROR] 第1次尝试失败: RemoteDisconnected: Remote end closed connection without response
+18:27:54 [INFO]   [API ERROR] 第2次尝试失败: RemoteDisconnected: Remote end closed connection without response

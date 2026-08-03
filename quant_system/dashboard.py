@@ -16,8 +16,11 @@ import json, sys, os, io, logging
 
 logger = logging.getLogger(__name__)
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+def _fix_console_encoding():
+    """Windows控制台UTF-8适配（仅作为脚本运行时调用，避免污染库导入的全局流）"""
+    if hasattr(sys.stdout, "buffer"):
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 # ============================================================
 # HTML 模板
@@ -153,7 +156,7 @@ function fmtPct(n) { return (n>=0?'+':'') + n.toFixed(2) + '%'; }
 // ===== 净值曲线 =====
 (function equityCurve() {
   const eq = DATA.equity_curve;
-  const labels = eq.map(e => e.date.slice(4));
+  const labels = eq.map(e => e.date.slice(5));  // YYYY-MM-DD → MM-DD
   const navData = eq.map(e => e.nav);
   const benchData = eq.map(e => e.benchmark_nav);
   const initial = DATA.config.initial_capital;
@@ -187,7 +190,7 @@ function fmtPct(n) { return (n>=0?'+':'') + n.toFixed(2) + '%'; }
 // ===== 回撤曲线 =====
 (function drawdown() {
   const eq = DATA.equity_curve;
-  const labels = eq.map(e => e.date.slice(4));
+  const labels = eq.map(e => e.date.slice(5));  // YYYY-MM-DD → MM-DD
   let peak = eq[0].nav;
   const ddData = eq.map(e => {
     if (e.nav > peak) peak = e.nav;
@@ -261,7 +264,7 @@ function fmtPct(n) { return (n>=0?'+':'') + n.toFixed(2) + '%'; }
   const eq = DATA.equity_curve;
   const monthly = {};
   eq.forEach((e, i) => {
-    const m = e.date.slice(0, 6);
+    const m = e.date.slice(0, 7);  // YYYY-MM-DD → YYYY-MM（月份桶）
     if (!monthly[m]) monthly[m] = {first: e.nav, last: e.nav};
     monthly[m].last = e.nav;
   });
@@ -274,7 +277,7 @@ function fmtPct(n) { return (n>=0?'+':'') + n.toFixed(2) + '%'; }
       ? `rgba(63,185,80,${0.3 + intensity*0.7})`
       : `rgba(248,81,73,${0.3 + intensity*0.7})`;
     return `<div class="heat-cell" style="background:${bg}">
-      <div class="month">${m.slice(4)}月</div>
+      <div class="month">${m.slice(5)}月</div>
       <div class="ret" style="color:${ret>=0?'#3fb950':'#f85149'}">${fmtPct(ret)}</div>
     </div>`;
   }).join('');
@@ -373,6 +376,7 @@ def generate_from_backtest_result(result, output_path=None):
 # 主入口
 # ============================================================
 def main():
+    _fix_console_encoding()
     import argparse
     parser = argparse.ArgumentParser(description="量化仪表盘生成器")
     parser.add_argument("--input", default=None, help="回测JSON文件路径（默认自动查找最新）")

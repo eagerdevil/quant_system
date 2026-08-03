@@ -90,8 +90,11 @@ SINGLE_WEIGHT = SYSTEM_CONFIG['max_single_weight']
 # ============================================================
 def _cache_key(start_date, end_date, pool_keys):
     # 用全部代码的排序+hash避免碰撞（旧版只取前10个 → 不同子集可能碰撞）
+    # 注意: 必须用 hashlib 而非内置 hash() —— Python 内置 hash 按进程随机(PYTHONHASHSEED)，
+    #       跨进程运行永远算不出相同键，缓存形同虚设
+    import hashlib
     codes_str = "-".join(sorted(pool_keys))
-    codes_hash = abs(hash(codes_str)) % 10**8
+    codes_hash = hashlib.md5(codes_str.encode("utf-8")).hexdigest()[:8]
     return f"{start_date}_{end_date or 'now'}_{len(pool_keys)}etf_{codes_hash}"
 
 def _load_cache(cache_key):
@@ -138,10 +141,11 @@ def prepare_backtest_data(start_date, end_date=None, pool=None):
 
     logger.info(f"[回测] 拉取数据: {start_date} ~ {end_date}")
     try:
-        start_dt = datetime.strptime(start_date, "%Y%m%d")
+        # 兼容 YYYYMMDD 与 YYYY-MM-DD 两种格式（默认配置为 "2024-01-01"）
+        start_dt = datetime.strptime(str(start_date).replace("-", ""), "%Y%m%d")
         lookback_dt = start_dt - timedelta(days=400)
         total_days = (datetime.now() - lookback_dt).days + 50
-    except:
+    except (ValueError, TypeError):
         total_days = 600
 
     raw_etfs = {}
@@ -573,7 +577,11 @@ def generate_full_report(start_date=None, end_date=None, output_path=None):
     metrics = result["metrics"]
     equity = result["equity_curve"]
     trades = result["trades"]
-    benchmark = result.get("benchmark_navs", [])
+    # 基准净值在 equity_curve 每条记录的 benchmark_nav 字段中（run_backtest 无独立键）
+    benchmark = result.get("benchmark_navs") or [
+        {"date": e["date"], "nav": e["benchmark_nav"]}
+        for e in equity if e.get("benchmark_nav") is not None
+    ]
 
     # ===== 计算报表数据 =====
     # 年度收益
@@ -599,7 +607,12 @@ def generate_full_report(start_date=None, end_date=None, output_path=None):
 
     # 权益曲线JSON (for Chart.js)
     navs = [{"date": e["date"], "nav": round(e["nav"], 2)} for e in equity]
-    bench_navs = [{"date": e["date"], "nav": round(e["nav"], 2)} for e in benchmark] if benchmark else []
+    bench_navs = [{"date": b["date"], "nav": round(b["nav"], 2)} for b in benchmark] if benchmark else []
+    # 基准 dataset 预生成（为空时省略该条，避免JS语法错误导致整页图表不渲染）
+    bench_dataset_html = (
+        "{ label: '基准(沪深300)', data: bench.map(e => e.nav), "
+        "borderColor: '#8b949e', borderDash: [5,5], tension: 0.3, pointRadius: 0 }"
+    ) if bench_navs else ""
 
     # 交易汇总
     buy_count = len([t for t in trades if t["action"] == "BUY"])
@@ -707,7 +720,7 @@ new Chart(document.getElementById('equityChart'), {{
     labels: navs.map(e => e.date.slice(5)),
     datasets: [
       {{ label: '策略组合', data: navs.map(e => e.nav), borderColor: '#58a6ff', backgroundColor: 'rgba(88,166,255,0.1)', fill: true, tension: 0.3, pointRadius: 0 }},
-      {'{'} label: '基准(沪深300)', data: bench.map(e => e.nav), borderColor: '#8b949e', borderDash: [5,5], tension: 0.3, pointRadius: 0 {'}' if bench else ''}
+      {bench_dataset_html}
     ].filter(Boolean)
   }},
   options: {{

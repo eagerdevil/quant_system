@@ -770,27 +770,6 @@ def format_monte_carlo_section(mc_result):
     if mc_result["prob_loss_gt_5pct"] > 0.20:
         lines.append(f"  ⚠️ 损失>5%的概率达{mc_result['prob_loss_gt_5pct']:.0%}，建议降低仓位")
     return "\n".join(lines)
-    """格式化压力测试为文本板块"""
-    lines = []
-    lines.append(f"\n  {'─'*60}")
-    lines.append(f"  [历史压力测试] v7.3 — 5个极端场景回放")
-    lines.append(f"  {'─'*60}")
-
-    for sc in stress_result["scenarios"]:
-        bar_len = max(1, int(abs(sc["loss_pct"]) * 2))
-        bar = "█" * bar_len
-        lines.append(f"  {sc['verdict']} {sc['name']}: {sc['loss_pct']:+.1f}% ({sc['loss_amount']:+.0f}元) {bar}")
-        lines.append(f"     {sc['description']}")
-        # 贡献最大的持仓
-        ph = sorted(sc["per_holding"], key=lambda x: x["loss_contribution"])[:3]
-        ph_str = " | ".join(f"{p['name']}({p['shock_pct']:+.1f}%)" for p in ph if p["loss_contribution"] < -0.5)
-        if ph_str:
-            lines.append(f"     最大冲击: {ph_str}")
-
-    lines.append(f"\n  平均损失: {stress_result['average_loss_pct']:+.1f}% | "
-                f"最差场景: {stress_result['worst_scenario']['name']} ({stress_result['worst_scenario']['loss_pct']:+.1f}%)")
-    lines.append(f"  {stress_result['advice']}")
-    return "\n".join(lines)
 
 
 if __name__ == "__main__":

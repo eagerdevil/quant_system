@@ -674,16 +674,25 @@ def compute_benchmark_comparison(portfolio, index_data):
     report_dir = os.path.dirname(os.path.abspath(__file__))
     report_files = sorted(_glob(os.path.join(report_dir, "report_*.json")))
     if report_files:
-        earliest = report_files[0]
-        fname = os.path.basename(earliest)
-        start_date = fname.replace("report_", "").replace(".json", "")
-        try:
-            with open(earliest, 'r', encoding='utf-8') as f:
-                old_report = json.load(f)
-            old_port = old_report.get("portfolio", {})
-            portfolio_start_value = old_port.get("total_assets", 0)
-        except (json.JSONDecodeError, KeyError):
-            portfolio_start_value = 0
+        # 找第一个包含有效总资产的报告作为对比起点（旧版报告无portfolio字段，跳过）
+        for rf in report_files:
+            try:
+                with open(rf, 'r', encoding='utf-8') as f:
+                    old_report = json.load(f)
+                old_port = old_report.get("portfolio", {})
+                if isinstance(old_port, dict):
+                    val = old_port.get("total_assets", 0)
+                    if val and val > 0:
+                        fname = os.path.basename(rf)
+                        start_date = fname.replace("report_", "").replace(".json", "")
+                        portfolio_start_value = val
+                        break
+            except (json.JSONDecodeError, KeyError, OSError):
+                continue
+        if start_date is None:
+            # 全部报告无有效持仓数据：用最早报告的日期，起点值置0（后续不渲染对比结论）
+            fname = os.path.basename(report_files[0])
+            start_date = fname.replace("report_", "").replace(".json", "")
     else:
         start_date = datetime.now().strftime("%Y%m%d")
         portfolio_start_value = sum(
@@ -980,7 +989,7 @@ def main():
         logger.info("生成HTML报告并发送邮件...")
         try:
             html = generate_html_report(output)
-            send_email(html, email_pw)
+            send_email(html, email_pw, report_date=output.get("date"))
         except Exception as e:
             logger.error(f"邮件发送失败: {e}\n{traceback.format_exc()}")
     else:

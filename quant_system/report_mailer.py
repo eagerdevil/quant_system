@@ -65,8 +65,12 @@ def load_latest_report():
         path = os.path.join(REPORT_DIR, f"report_{yesterday}.json")
     if not os.path.exists(path):
         return None
-    with open(path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
+        logger.warning(f"[MAIL] 报告解析失败 {path}: {e}")
+        return None
 
 def _generate_speedview(report_data):
     """v8.0 P1-4: 30秒速览 — 邮件最顶部的精华摘要"""
@@ -96,7 +100,7 @@ def _generate_speedview(report_data):
         alerts = []
         if pnl <= -7:
             alerts.append(f"⚠️接近止损({pnl:.1f}%)")
-        if pnl <= -5:
+        elif pnl <= -5:
             alerts.append(f"⚠️亏损{pnl:.1f}%")
         if daily >= 3:
             alerts.append(f"🔥今日大涨{daily:+.1f}%")
@@ -253,44 +257,56 @@ def generate_html_report(report_data):
         <tr><td><b>持仓盈亏</b></td><td style="color:{pnl_color}">{total_pnl:+.2f}元 ({total_pnl_pct:+.2f}%)</td><td><b>今日盈亏</b></td><td style="color:{daily_color}">{total_daily_pnl:+.2f}元</td></tr>
         </table></div>'''
 
-    # v8.0: 基准对比
+    # v8.0: 基准对比（组合收益字段缺失时显示"数据不足"，避免误报"跑输基准"）
     benchmark = report_data.get("benchmark", {})
     if benchmark and benchmark.get("benchmark_start"):
         bm = benchmark
-        pf_ret = bm.get("portfolio_return", 0)
+        pf_ret = bm.get("portfolio_return")
         bm_ret = bm.get("benchmark_return", 0)
-        excess = bm.get("excess_return", 0)
-        beat = bm.get("beat_benchmark", False)
-        beat_color = "#00ff88" if beat else "#ff4757"
-        beat_icon = "✅" if beat else "❌"
-        beat_text = "跑赢基准" if beat else "跑输基准"
-        excess_color = "#00ff88" if excess > 0 else "#ff4757"
+        excess = bm.get("excess_return")
+        beat = bm.get("beat_benchmark")
+        has_pf_compare = pf_ret is not None and bm.get("portfolio_start_value", 0) > 0
 
+        if has_pf_compare:
+            beat_color = "#00ff88" if beat else "#ff4757"
+            beat_icon = "✅" if beat else "❌"
+            beat_text = "跑赢基准" if beat else "跑输基准"
+            excess_color = "#00ff88" if excess > 0 else "#ff4757"
+            pf_color = "#00ff88" if pf_ret > 0 else "#ff4757"
+            pf_html = f'<td style="color:{pf_color}">{pf_ret:+.2%}</td>'
+            excess_html = f'<td style="color:{excess_color};font-weight:bold">{excess:+.2%}</td>'
+            conclusion_html = (f'<tr><td colspan="4" style="text-align:center;padding-top:10px;'
+                               f'color:{beat_color};font-size:16px;font-weight:bold">'
+                               f'{beat_icon} {beat_text} — {bm.get("message", "")}</td></tr>')
+        else:
+            pf_html = '<td style="color:#999">数据不足</td>'
+            excess_html = '<td style="color:#999">-</td>'
+            conclusion_html = ('<tr><td colspan="4" style="text-align:center;padding-top:10px;'
+                               'color:#ffa502;font-size:14px">'
+                               '⚠️ 历史持仓数据不完整，暂无法计算组合收益对比（仅展示沪深300走势）</td></tr>')
+
+        bm_color = "#00ff88" if bm_ret > 0 else "#ff4757"
         html += f'''<div class="card"><h2>基准对比 — 组合 vs 沪深300</h2>
         <table style="font-size:14px">
         <tr>
           <td style="width:20%"><b>对比起点</b></td>
           <td style="width:30%">{bm.get("start_date","?")}</td>
           <td style="width:20%"><b>起始沪深300</b></td>
-          <td style="width:30%">{bm.get("benchmark_start","?"):.2f}点</td>
+          <td style="width:30%">{bm.get("benchmark_start", 0):.2f}点</td>
         </tr>
         <tr>
           <td><b>组合收益</b></td>
-          <td style="color:{'#00ff88' if pf_ret > 0 else '#ff4757'}">{pf_ret:+.2%}</td>
+          {pf_html}
           <td><b>当前沪深300</b></td>
-          <td>{bm.get("benchmark_end","?"):.2f}点</td>
+          <td>{bm.get("benchmark_end", 0):.2f}点</td>
         </tr>
         <tr>
           <td><b>沪深300收益</b></td>
-          <td style="color:{'#00ff88' if bm_ret > 0 else '#ff4757'}">{bm_ret:+.2%}</td>
+          <td style="color:{bm_color}">{bm_ret:+.2%}</td>
           <td><b>超额收益</b></td>
-          <td style="color:{excess_color};font-weight:bold">{excess:+.2%}</td>
+          {excess_html}
         </tr>
-        <tr>
-          <td colspan="4" style="text-align:center;padding-top:10px;color:{beat_color};font-size:16px;font-weight:bold">
-            {beat_icon} {beat_text} — {bm.get('message', '')}
-          </td>
-        </tr>
+        {conclusion_html}
         </table></div>'''
 
     # 持仓明细
@@ -400,8 +416,10 @@ def generate_html_report(report_data):
     """
     return html
 
-def send_email(report_html, password):
-    """发送邮件报告"""
+def send_email(report_html, password, report_date=None):
+    """发送邮件报告
+    report_date: 报告日期（YYYYMMDD 或 YYYY-MM-DD），缺省时用今天
+    """
     if not password:
         logger.warning("[MAIL] 未提供邮箱授权码，跳过发送")
         return False
@@ -411,7 +429,11 @@ def send_email(report_html, password):
         from email.utils import formataddr
 
         msg = MIMEMultipart('alternative')
-        msg['Subject'] = Header(f"A股量化日报 - {datetime.now().strftime('%Y.%m.%d')}", 'utf-8')
+        if report_date:
+            date_str = str(report_date).replace('-', '.')
+        else:
+            date_str = datetime.now().strftime('%Y.%m.%d')
+        msg['Subject'] = Header(f"A股量化日报 - {date_str}", 'utf-8')
         msg['From'] = formataddr(('A股量化系统', SMTP_CONFIG['user']))
         msg['To'] = SMTP_CONFIG['user']
 
@@ -503,12 +525,17 @@ def generate_wechat_markdown(report_data):
     lines.append(f"总资产: **{total_assets:.2f}元** | 总市值: {port.get('total_value', 0):.2f}元 | 可用: {port.get('available_cash', 0):.2f}元")
     lines.append(f"持仓盈亏: {pnl_emoji} {total_pnl:+.2f}元 ({port.get('total_pnl_pct', 0):+.2f}%) | 今日盈亏: {daily_emoji} {total_daily_pnl:+.2f}元")
 
-    # v8.0: 基准对比
+    # v8.0: 基准对比（组合收益缺失时提示数据不足，避免误报"跑输基准"）
     benchmark = report_data.get("benchmark", {})
     if benchmark and benchmark.get("benchmark_start"):
         bm = benchmark
-        beat_icon = "✅" if bm.get("beat_benchmark") else "❌"
-        lines.append(f"*基准对比*: 组合 {bm.get('portfolio_return', 0):+.2%} vs 沪深300 {bm.get('benchmark_return', 0):+.2%} | 超额 {bm.get('excess_return', 0):+.2%} {beat_icon}")
+        pf_ret = bm.get("portfolio_return")
+        if pf_ret is not None and bm.get("portfolio_start_value", 0) > 0:
+            beat_icon = "✅" if bm.get("beat_benchmark") else "❌"
+            lines.append(f"*基准对比*: 组合 {pf_ret:+.2%} vs 沪深300 {bm.get('benchmark_return', 0):+.2%} | 超额 {bm.get('excess_return', 0):+.2%} {beat_icon}")
+        else:
+            lines.append("*基准对比*: 历史持仓数据不完整，暂无法计算组合收益（沪深300同期 "
+                         f"{bm.get('benchmark_return', 0):+.2%}）")
     lines.append("")
 
     # ══════════════════════════════════════
@@ -804,7 +831,7 @@ if __name__ == "__main__":
         report = load_latest_report()
         if report:
             html = generate_html_report(report)
-            send_email(html, password)
+            send_email(html, password, report_date=report.get("date"))
         else:
             print("[MAIL] 无可用报告")
     else:

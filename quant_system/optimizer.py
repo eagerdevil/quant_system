@@ -56,65 +56,47 @@ QDII_ETFS = {"513100", "159659", "513500", "159941", "513050", "159866", "513300
 # ============================================================
 # v4.0: 扩展搜索空间
 # ============================================================
+# grade_thresholds / adx_trend_threshold 不参与 IC 目标函数
+# （evaluate_params 只评估 factor_weights + premium_* 对评分的影响）。
+# 若将它们随机搜索，赢家参数里这两个值只是"随机附带值"，会被当作优化
+# 结果写进生产（quant_engine 的 OPTIMIZED_PARAMS）——即"假优化"。
+# 因此固定为默认值，仅保留人工配置能力（load_current_config 读文件值）。
+DEFAULT_GRADE_THRESHOLDS = {"A_强烈买入": 78, "B_买入": 65, "C_观察": 55, "D_谨慎": 42}
+DEFAULT_ADX_THRESHOLD = 22.0
+
+
 def random_params():
     """
-    生成随机参数向量（v4.0: 权重+阈值+惩罚曲线）
+    生成随机参数向量（v4.0: 权重+惩罚曲线）
     返回: {
         "factor_weights": {F1: 1.2, ...},
-        "grade_thresholds": {A:78, B:65, C:55, D:42},
+        "grade_thresholds": {A:78, B:65, C:55, D:42},  # 固定，不参与搜索
         "premium_steepness": 0.06,
         "premium_threshold": 2.0,
-        "adx_trend_threshold": 22
+        "adx_trend_threshold": 22  # 固定，不参与搜索
     }
     """
     return {
         "factor_weights": {
             k: round(random.uniform(0.5, 2.0), 2) for k in FACTOR_NAMES
         },
-        "grade_thresholds": _random_thresholds(),
+        "grade_thresholds": dict(DEFAULT_GRADE_THRESHOLDS),
         "premium_steepness": round(random.uniform(0.04, 0.10), 3),
         "premium_threshold": round(random.uniform(1.0, 3.5), 1),
-        "adx_trend_threshold": round(random.uniform(18.0, 28.0), 1)
+        "adx_trend_threshold": DEFAULT_ADX_THRESHOLD
     }
 
 
-def _random_thresholds():
-    """生成合理的等级阈值（严格递减）"""
-    A = random.randint(72, 82)
-    B = random.randint(60, A - 3)
-    C = random.randint(48, B - 3)
-    D = random.randint(35, C - 3)
-    return {"A_强烈买入": A, "B_买入": B, "C_观察": C, "D_谨慎": D}
-
-
 def perturb_params(base, scale=0.10):
-    """在基准参数附近随机扰动"""
+    """在基准参数附近随机扰动（grade_thresholds/adx_trend_threshold 不扰动）"""
     new_weights = {}
     for k in FACTOR_NAMES:
         w = base["factor_weights"][k] * (1.0 + random.uniform(-scale, scale))
         new_weights[k] = round(max(0.3, min(2.5, w)), 2)
 
-    new_thresholds = {}
-    old_th = base["grade_thresholds"]
-    keys = ["A_强烈买入", "B_买入", "C_观察", "D_谨慎"]
-    for i, k in enumerate(keys):
-        delta = random.randint(-2, 2)
-        new_val = old_th[k] + delta
-        # 保持递减
-        if i > 0: new_val = min(new_val, new_thresholds[keys[i-1]] - 2)
-        if i < len(keys) - 1 and k in base["grade_thresholds"]:
-            pass  # handled by next iteration
-        new_thresholds[k] = new_val
-    # 第二轮修正递减性
-    for i in range(len(keys)-1, 0, -1):
-        if new_thresholds[keys[i]] >= new_thresholds[keys[i-1]]:
-            new_thresholds[keys[i]] = new_thresholds[keys[i-1]] - 2
-    for k in keys:
-        new_thresholds[k] = max(20, min(90, new_thresholds[k]))
-
     return {
         "factor_weights": new_weights,
-        "grade_thresholds": new_thresholds,
+        "grade_thresholds": dict(base["grade_thresholds"]),  # 无IC目标，不扰动
         "premium_steepness": round(
             max(0.03, min(0.12,
                 base["premium_steepness"] * (1.0 + random.uniform(-scale, scale))
@@ -123,8 +105,7 @@ def perturb_params(base, scale=0.10):
             max(0.5, min(4.0,
                 base["premium_threshold"] + random.uniform(-0.5, 0.5)
             )), 1),
-        "adx_trend_threshold": max(15, min(30,
-            base["adx_trend_threshold"] + random.randint(-3, 3)))
+        "adx_trend_threshold": float(base["adx_trend_threshold"])  # 无IC目标，不扰动
     }
 
 
@@ -280,15 +261,13 @@ def load_current_config():
         if "factor_weights" not in config:
             config["factor_weights"] = dict(DEFAULT_WEIGHTS)
         if "grade_thresholds" not in config:
-            config["grade_thresholds"] = {
-                "A_强烈买入": 78, "B_买入": 65, "C_观察": 55, "D_谨慎": 42
-            }
+            config["grade_thresholds"] = dict(DEFAULT_GRADE_THRESHOLDS)
         if "premium_steepness" not in config:
             config["premium_steepness"] = 0.07
         if "premium_threshold" not in config:
             config["premium_threshold"] = 2.5
         if "adx_trend_threshold" not in config:
-            config["adx_trend_threshold"] = 22
+            config["adx_trend_threshold"] = DEFAULT_ADX_THRESHOLD
         if "meta" not in config:
             config["meta"] = {"version": 0, "last_optimized": "", "ic_score": 0.0}
         return config
@@ -296,10 +275,10 @@ def load_current_config():
         return {
             "meta": {"version": 0, "last_optimized": "", "ic_score": 0.0},
             "factor_weights": dict(DEFAULT_WEIGHTS),
-            "grade_thresholds": {"A_强烈买入": 78, "B_买入": 65, "C_观察": 55, "D_谨慎": 42},
+            "grade_thresholds": dict(DEFAULT_GRADE_THRESHOLDS),
             "premium_steepness": 0.07,
             "premium_threshold": 2.5,
-            "adx_trend_threshold": 22
+            "adx_trend_threshold": DEFAULT_ADX_THRESHOLD
         }
 
 
@@ -310,7 +289,7 @@ def current_params_from_config(config):
         "grade_thresholds": config.get("grade_thresholds", {}),
         "premium_steepness": config.get("premium_steepness", 0.07),
         "premium_threshold": config.get("premium_threshold", 2.5),
-        "adx_trend_threshold": config.get("adx_trend_threshold", 22)
+        "adx_trend_threshold": config.get("adx_trend_threshold", DEFAULT_ADX_THRESHOLD)
     }
 
 
@@ -708,10 +687,10 @@ def main():
 
     baseline_params = {
         "factor_weights": dict(DEFAULT_WEIGHTS),
-        "grade_thresholds": {"A_强烈买入": 78, "B_买入": 65, "C_观察": 55, "D_谨慎": 42},
+        "grade_thresholds": dict(DEFAULT_GRADE_THRESHOLDS),
         "premium_steepness": 0.07,
         "premium_threshold": 2.5,
-        "adx_trend_threshold": 22
+        "adx_trend_threshold": DEFAULT_ADX_THRESHOLD
     }
     baseline_ic_train = evaluate_params(baseline_params, train_data)
     current_ic_train = evaluate_params(current_params, train_data)
@@ -840,21 +819,20 @@ def main():
         arrow = "↑↑" if diff > 0.3 else ("↑" if diff > 0.05 else ("↓↓" if diff < -0.3 else ("↓" if diff < -0.05 else " ·")))
         logger.info(f"  {k:<16s} {old_w:6.2f} {new_w:6.2f}  {diff:+5.2f} {arrow}")
 
-    # 阈值变化
-    logger.info(f"\n  [等级阈值变化]")
+    # 阈值变化（固定参数：不参与IC优化，仅展示当前值，避免被误认为优化结果）
+    logger.info(f"\n  [等级阈值] (固定参数，不参与IC优化)")
     for k in ["A_强烈买入", "B_买入", "C_观察", "D_谨慎"]:
-        old_t = current_params["grade_thresholds"].get(k, 0)
-        new_t = final_params["grade_thresholds"].get(k, 0)
-        logger.info(f"  {k:<12s}: {old_t:3d} → {new_t:3d}  ({new_t-old_t:+d})")
+        t = final_params["grade_thresholds"].get(k, 0)
+        logger.info(f"  {k:<12s}: {t:3d}")
 
     # 溢价惩罚参数
     logger.info(f"\n  [溢价惩罚曲线]")
     logger.info(f"  陡峭度: {current_params['premium_steepness']:.3f} → {final_params['premium_steepness']:.3f}")
     logger.info(f"  阈值:   {current_params['premium_threshold']:.1f}% → {final_params['premium_threshold']:.1f}%")
 
-    # ADX
-    logger.info(f"\n  [ADX趋势阈值]")
-    logger.info(f"  {current_params['adx_trend_threshold']} → {final_params['adx_trend_threshold']}")
+    # ADX（固定参数：不参与IC优化，仅展示当前值）
+    logger.info(f"\n  [ADX趋势阈值] (固定参数，不参与IC优化)")
+    logger.info(f"  {final_params['adx_trend_threshold']}")
 
     # ================================================================
     # 保存 + 进化日志
@@ -900,11 +878,8 @@ def main():
                 if abs(final_params["factor_weights"].get(k, 1.0) -
                        current_params["factor_weights"].get(k, 1.0)) > 0.03
             ),
-            "thresholds_changed": sum(
-                1 for k in ["A_强烈买入", "B_买入", "C_观察", "D_谨慎"]
-                if final_params["grade_thresholds"].get(k, 0) !=
-                   current_params["grade_thresholds"].get(k, 0)
-            ),
+            # 等级阈值不再参与优化（固定参数），恒为0
+            "thresholds_changed": 0,
             "premium_curve_changed": (
                 abs(final_params["premium_steepness"] - current_params["premium_steepness"]) > 0.003
             )
