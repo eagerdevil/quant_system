@@ -13,3 +13,6 @@ email_config.json
 # 报告文件（本地存档即可，不必上传）
 report_*.json
 review_*.txt
+
+# 运行日志（本地存档即可，不必上传）
+logs/
