@@ -718,12 +718,19 @@ def compute_benchmark_comparison(portfolio, index_data):
             fname = os.path.basename(report_files[0])
             start_date = fname.replace("report_", "").replace(".json", "")
     else:
+        # v7.6: 无历史报告(GitHub Actions环境, report被gitignore)时,
+        # 起点用累计投入本金(Σdeposit), 而非当前资产 — 否则收益恒为0且出入金无法修正
         start_date = datetime.now().strftime("%Y%m%d")
-        portfolio_start_value = sum(
-            h.get("shares", 0) * h.get("cost", 0)
-            for k, h in portfolio.items()
-            if isinstance(h, dict) and "shares" in h and k != "_available_cash"
-        ) + portfolio.get("_available_cash", 0)
+        total_deposit = sum(cf.get("amount", 0) for cf in (portfolio.get("_cash_flows", []) or [])
+                            if cf.get("type") == "deposit")
+        if total_deposit > 0:
+            portfolio_start_value = total_deposit
+        else:
+            portfolio_start_value = sum(
+                h.get("shares", 0) * h.get("cost", 0)
+                for k, h in portfolio.items()
+                if isinstance(h, dict) and "shares" in h and k != "_available_cash"
+            ) + portfolio.get("_available_cash", 0)
 
     # 获取沪深300指数数据
     benchmark_start = None
@@ -750,7 +757,8 @@ def compute_benchmark_comparison(portfolio, index_data):
         "benchmark_start": benchmark_start,
         "benchmark_end": benchmark_end,
         "benchmark_return": benchmark_return,
-        "benchmark_name": "沪深300 (000300)"
+        "benchmark_name": "沪深300 (000300)",
+        "has_history": bool(report_files)  # v7.6: 是否有历史报告(影响出入金修正口径)
     }
 
 
@@ -977,13 +985,18 @@ def main():
         # v7.6: 修正 — 期间提现/入金不算盈亏, 加回净出金后再算收益率
         # (原口径把提现2000算成亏损, 曾误报组合-56.2%)
         cash_flows = portfolio.get("_cash_flows", []) or []
-        # 只调整起点之后的出入金: 起点前的投入是本金(含在起始值里), 不能重复扣减
-        bm_start = benchmark.get("start_date", "")
-        withdraw_after = sum(cf.get("amount", 0) for cf in cash_flows
-                             if cf.get("type") == "withdraw" and str(cf.get("date", "")) >= bm_start)
-        deposit_after = sum(cf.get("amount", 0) for cf in cash_flows
-                            if cf.get("type") == "deposit" and str(cf.get("date", "")) > bm_start)
-        net_outflow = withdraw_after - deposit_after
+        # v7.6: 有历史报告→只调整起点后的出入金; 无历史(GitHub环境)→全部提现加回
+        # (无历史时起点=累计投入本金, 所有提现都发生在起点之后)
+        if benchmark.get("has_history"):
+            bm_start = benchmark.get("start_date", "")
+            withdraw_after = sum(cf.get("amount", 0) for cf in cash_flows
+                                 if cf.get("type") == "withdraw" and str(cf.get("date", "")) >= bm_start)
+            deposit_after = sum(cf.get("amount", 0) for cf in cash_flows
+                                if cf.get("type") == "deposit" and str(cf.get("date", "")) > bm_start)
+            net_outflow = withdraw_after - deposit_after
+        else:
+            net_outflow = sum(cf.get("amount", 0) for cf in cash_flows
+                              if cf.get("type") == "withdraw")
         adjusted_assets = port_summary["total_assets"] + net_outflow
         portfolio_return = adjusted_assets / benchmark["portfolio_start_value"] - 1.0
         benchmark["portfolio_return"] = round(portfolio_return, 4)
