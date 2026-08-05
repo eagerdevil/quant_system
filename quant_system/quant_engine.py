@@ -936,9 +936,14 @@ def score_factors(indicators):
 # ============================================================
 # 综合因子评分（ETF级别）— v2.0 支持自适应权重
 # ============================================================
-def _apply_premium_penalty(technical_score, premium_pct):
+def _apply_premium_penalty(technical_score, premium_pct, history=None):
     """
     溢价惩罚函数 — 修正量化模型对QDII ETF溢价的盲区
+    history: compute_etf_premium_history 返回值（可选）。
+             有历史数据时，在绝对水平惩罚基础上叠加历史维度：
+             1) 历史高分位（当前溢价处自身历史高位）→ 加罚
+             2) 折价且历史低位 → 安全垫微加分
+             3) 近10日均溢价明显高于全窗口（快速扩大）→ 加罚
     """
     if premium_pct is None:
         return technical_score, 1.0, "QDII溢价数据缺失，无法评估溢价风险"
@@ -947,19 +952,45 @@ def _apply_premium_penalty(technical_score, premium_pct):
     steepness = OPTIMIZED_PARAMS.get("premium_steepness", 0.07)
 
     if premium_pct < premium_threshold:
-        return technical_score, 1.0, None
-
-    excess = premium_pct - premium_threshold
-    if premium_pct <= 5.0:
-        multiplier = 1.0 - excess * steepness
-    elif premium_pct <= 8.0:
-        base_loss = (5.0 - premium_threshold) * steepness
-        multiplier = max(0.50, 1.0 - base_loss - (premium_pct - 5.0) * steepness * 1.3)
+        multiplier = 1.0
     else:
-        base_loss = (5.0 - premium_threshold) * steepness + 3.0 * steepness * 1.3
-        multiplier = max(0.45, 1.0 - base_loss - (premium_pct - 8.0) * steepness * 1.6)
+        excess = premium_pct - premium_threshold
+        if premium_pct <= 5.0:
+            multiplier = 1.0 - excess * steepness
+        elif premium_pct <= 8.0:
+            base_loss = (5.0 - premium_threshold) * steepness
+            multiplier = max(0.50, 1.0 - base_loss - (premium_pct - 5.0) * steepness * 1.3)
+        else:
+            base_loss = (5.0 - premium_threshold) * steepness + 3.0 * steepness * 1.3
+            multiplier = max(0.45, 1.0 - base_loss - (premium_pct - 8.0) * steepness * 1.6)
 
-    multiplier = round(multiplier, 4)
+    # === 历史溢价维度（v7.5，8/5新增）：分位数 + 趋势 ===
+    hist_note = None
+    if history and history.get("has_history"):
+        percentile = history.get("percentile")
+        trend_gap = history.get("trend_gap")
+        median = history.get("median")
+        trend_10d = history.get("trend_10d")
+
+        # 1) 历史高分位：当前溢价处自身历史高位 → 回归风险大，加罚
+        if percentile is not None and percentile >= 90:
+            multiplier *= 0.94
+            hist_note = f"🚨 历史分位{percentile:.0f}%（中枢{median}%），溢价处自身极高位"
+        elif percentile is not None and percentile >= 75:
+            multiplier *= 0.98
+            hist_note = f"⚠️ 历史分位{percentile:.0f}%（中枢{median}%），偏高"
+        # 2) 折价且历史低位：安全垫机会，微加分
+        elif percentile is not None and percentile < 25 and premium_pct < 0:
+            multiplier = min(1.02, multiplier * 1.02)
+            hist_note = f"💚 历史分位{percentile:.0f}%（中枢{median}%），折价低位"
+
+        # 3) 溢价快速扩大（近10日均溢价 - 全窗口 > 1.5pp）→ 加罚
+        if trend_gap is not None and trend_gap > 1.5:
+            multiplier *= 0.97
+            gap_note = f"⚠️ 近10日溢价{trend_10d}%快速扩大（{trend_gap:+.1f}pp）"
+            hist_note = f"{hist_note}；{gap_note}" if hist_note else gap_note
+
+        multiplier = max(0.40, round(multiplier, 4))
 
     if premium_pct > 8:
         warning = f"🚨 溢价{premium_pct:.1f}%极度危险！市价远超净值，面临停牌+溢价回归双重风险"
@@ -969,6 +1000,9 @@ def _apply_premium_penalty(technical_score, premium_pct):
         warning = f"⚡ 溢价{premium_pct:.1f}%，略高于安全线，关注溢价收敛趋势"
     else:
         warning = None
+
+    if hist_note:
+        warning = f"{warning}；{hist_note}" if warning else hist_note
 
     adjusted = round(technical_score * multiplier)
     return adjusted, multiplier, warning

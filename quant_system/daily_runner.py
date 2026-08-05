@@ -49,7 +49,7 @@ from data_engine import (
     fetch_market_breadth, fetch_total_volume,
     fetch_north_bound_flow, fetch_margin_balance, fetch_etf_kline,
     fetch_etf_realtime, get_all_index_data,
-    fetch_etf_fund_nav, compute_etf_premium,
+    fetch_etf_fund_nav, compute_etf_premium, compute_etf_premium_history,
     compute_market_sentiment, fetch_sw_industry_returns
 )
 from quant_engine import (
@@ -294,6 +294,15 @@ def analyze_watchlist_etf(s, timing, portfolio, kline_data=None):
         reasons_avoid.append(f"🚨 ETF溢价{premium_info['premium_pct']:.1f}%！溢价回归将直接亏损{premium_info['premium_pct']:.1f}%")
     elif premium_info.get("premium_pct") is not None and premium_info["premium_pct"] > 3:
         reasons_avoid.append(f"⚠️ ETF溢价{premium_info['premium_pct']:.1f}%，偏高需等待回落")
+    # 历史溢价风险（v7.5，8/5新增 — 结合历史各时期溢价）
+    hist = premium_info.get("history") or {}
+    if hist.get("has_history") and hist.get("percentile") is not None:
+        if hist["percentile"] >= 90:
+            reasons_avoid.append(f"🚨 溢价处自身历史{hist['percentile']:.0f}%分位（中枢{hist['median']}%），回归风险大")
+        elif hist["percentile"] >= 75 and premium_info.get("premium_pct", 0) > 0:
+            reasons_avoid.append(f"⚠️ 溢价处历史{hist['percentile']:.0f}%分位（中枢{hist['median']}%），偏高需等回落")
+        elif hist["percentile"] < 25 and premium_info.get("premium_pct", 0) < 0:
+            reasons_buy.append(f"💚 折价{abs(premium_info['premium_pct']):.1f}%且处历史{hist['percentile']:.0f}%低位，安全垫充足")
 
     # 买入条件
     if ind["rsi"] <= 58 and ind["consecutive_up"] <= 2:
@@ -509,6 +518,10 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
             lines.append(f"    ⚡ 溢价{p_info['premium_pct']:.1f}% → 技术分{tech_score}扣至{analysis['score']}分")
         elif p_info.get("premium_pct") is not None and p_info["premium_pct"] < -1:
             lines.append(f"    💚 折价{abs(p_info['premium_pct']):.1f}%，低于净值买入")
+        # 历史溢价（v7.5，8/5新增）
+        hist_p = p_info.get("history") or {}
+        if hist_p.get("has_history"):
+            lines.append(f"    历史溢价: 中枢{hist_p.get('median')}% | 分位{hist_p.get('percentile')}% | 近10日均{hist_p.get('trend_10d')}%")
         stop_pct_h = analysis.get("stop_pct", -5)
         stop_method_h = analysis.get("stop_method", "固定")
         lines.append(f"    止损线:{analysis['stop_loss']:.3f}({stop_pct_h:+.1f}% {stop_method_h}) | 止盈线:{analysis['take_profit']:.3f}")
@@ -563,6 +576,11 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
 
         lines.append(f"  {action_label} {s['name']}({s['code']}) | 评分{s['score']}分 | 现价{s['price']:.4f}")
         lines.append(f"    RSI:{analysis['rsi']:.0f} | 连涨:{analysis['consecutive_up']}天 | 5日:{analysis['r5d']:+.1f}% | 20日:{analysis['r20d']:+.1f}%")
+        # 历史溢价（v7.5，8/5新增 — 跨境ETF结合历史各时期溢价）
+        p_info_w = s.get("premium_info", {})
+        hist_w = p_info_w.get("history") or {}
+        if hist_w.get("has_history"):
+            lines.append(f"    溢价{hist_w.get('current')}% | 历史中枢{hist_w.get('median')}% | 分位{hist_w.get('percentile')}% | 近10日均{hist_w.get('trend_10d')}%")
         for r in analysis.get("reasons_buy", []):
             lines.append(f"    [+] {r}")
         for r in analysis.get("reasons_avoid", []):
@@ -823,7 +841,15 @@ def main():
             # 溢价惩罚：在截面调整后的技术分上再应用
             blended_tech = result["blended_technical"]
             if premium_pct is not None:
-                adjusted_score, multiplier, warning = _apply_premium_penalty(blended_tech, premium_pct)
+                # v7.5 (8/5): 跨境/QDII 结合历史各时期溢价评分 — 历史分位+趋势
+                premium_history = None
+                if premium_info.get("is_qdii"):
+                    premium_history = compute_etf_premium_history(code, kline)
+                    premium_info["history"] = premium_history
+                    if premium_history.get("has_history"):
+                        premium_pct = premium_history.get("current")  # 与历史序列对齐
+                adjusted_score, multiplier, warning = _apply_premium_penalty(
+                    blended_tech, premium_pct, premium_history)
                 result["score"] = adjusted_score
                 result["premium_multiplier"] = multiplier
                 result["premium_warning"] = warning

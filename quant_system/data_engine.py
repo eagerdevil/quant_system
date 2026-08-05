@@ -1034,6 +1034,106 @@ def compute_etf_premium(code, current_price, nav_data=None):
         "data_source": "assumed_zero",
         "is_qdii": False
     }
+
+
+def fetch_etf_nav_history(code, days=80):
+    """
+    获取ETF最近N个交易日历史净值（天天基金API，T+1公布）
+    注意: 接口单页最多返回20条，需分页拉取
+    返回: {date: nav} 字典（date格式 YYYY-MM-DD）或 None
+    """
+    try:
+        result = {}
+        page = 1
+        remaining = days
+        while remaining > 0 and page <= 10:
+            url = (f"https://api.fund.eastmoney.com/f10/lsjz?callback=&fundCode={code}"
+                   f"&pageIndex={page}&pageSize=20")
+            req = urllib.request.Request(url, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "Referer": "https://fundf10.eastmoney.com/",
+            })
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+            lsjz_list = data.get("Data", {}).get("LSJZList", [])
+            if not lsjz_list:
+                break
+            for item in lsjz_list:
+                nav = float(item.get("DWJZ", 0))
+                if nav > 0:
+                    result[item.get("FSRQ", "")] = nav
+            page += 1
+            remaining -= len(lsjz_list)
+        return result or None
+    except Exception as e:
+        logger.info(f"  [NAV HIST ERROR] {code}: {e}")
+        return None
+
+
+def compute_etf_premium_history(code, kline, days=60):
+    """
+    计算历史溢价序列及统计特征（价格K线 vs 历史官方净值，按日期对齐）
+    溢价 = 收盘价/当日净值 - 1（历史净值T+1公布，为估算值；IOPV更准但无历史）
+
+    返回:
+    {
+        "has_history": bool,
+        "series": [{"date":..., "premium":...}, ...],   # 升序，最多days日
+        "current": float,      # 最新溢价%
+        "median": float,       # 历史溢价中位数%（中枢）
+        "mean": float,         # 历史均值%
+        "max": float,          # 历史最大溢价%
+        "percentile": float,   # 当前溢价在历史样本中的百分位 0-100
+        "trend_10d": float,    # 近10日平均溢价%
+        "trend_60d": float,    # 全窗口平均溢价%
+        "trend_gap": float,    # 近10日-全窗口（>0溢价扩大, <0收敛）
+        "n": int,
+    }
+    """
+    nav_hist = fetch_etf_nav_history(code, days=days + 20)
+    if not nav_hist:
+        return {"has_history": False}
+
+    series = []
+    for k in kline:
+        d = k.get("date", "")
+        if len(d) == 8 and d.isdigit():
+            d = f"{d[:4]}-{d[4:6]}-{d[6:8]}"  # K线 YYYYMMDD → 净值 YYYY-MM-DD
+        nav = nav_hist.get(d)
+        close = k.get("close")
+        if nav and close:
+            series.append({"date": d, "premium": round((close / nav - 1) * 100, 2)})
+
+    if len(series) < 10:
+        return {"has_history": False, "n": len(series)}
+
+    series = series[-days:]
+    prem_values = [s["premium"] for s in series]
+    current = prem_values[-1]
+    n = len(prem_values)
+
+    # 当前溢价在历史中的百分位（< current 的样本占比）
+    percentile = round(sum(1 for p in prem_values if p < current) / n * 100, 1)
+
+    trend_10d = round(sum(prem_values[-10:]) / min(10, n), 2)
+    trend_60d = round(sum(prem_values) / n, 2)
+
+    import statistics
+    return {
+        "has_history": True,
+        "series": series,
+        "current": current,
+        "median": round(statistics.median(prem_values), 2),
+        "mean": round(sum(prem_values) / n, 2),
+        "max": round(max(prem_values), 2),
+        "percentile": percentile,
+        "trend_10d": trend_10d,
+        "trend_60d": trend_60d,
+        "trend_gap": round(trend_10d - trend_60d, 2),
+        "n": n,
+    }
+
+
 def calc_fear_index():
     """计算恐慌指数：今日下跌家数 / 总家数"""
     breadth = fetch_market_breadth()
