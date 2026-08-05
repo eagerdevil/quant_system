@@ -16,3 +16,7 @@ review_*.txt
 
 # 运行日志（本地存档即可，不必上传）
 logs/
+
+# 数据缓存(本地存档, 不必上传)
+kline_cache/
+backtest_cache/

@@ -48,7 +48,7 @@ def test_quant_compute():
     assert ind["rsi"] is not None
     assert ind["volatility"] >= 0
     f = score_factors(ind)
-    assert len(f) == 16
+    assert len(f) == 18  # v7.6: F17换手率分位 + F18份额申赎
     result = score_etf_comprehensive("000001","test",c,h,l,v)
     assert "score" in result
     a = adx(c,h,l)

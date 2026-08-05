@@ -60,25 +60,10 @@ CACHE_TTL_HOURS = 6
 # ============================================================
 # 回测配置
 # ============================================================
-BACKTEST_POOL = {
-    "510300": "沪深300ETF",
-    "510500": "中证500ETF",
-    "159915": "创业板ETF",
-    "588000": "科创50ETF",
-    "512880": "证券ETF",
-    "512760": "芯片ETF国泰",
-    "515070": "人工智能ETF华夏",
-    "512670": "国防ETF",
-    "512400": "有色ETF",
-    "512170": "医疗ETF",
-    "512890": "红利低波ETF",
-    "159928": "消费ETF",
-    "513100": "纳指ETF国泰",
-    "518850": "黄金ETF华夏",
-    "159183": "新能源车ETF招商",
-    "159659": "纳斯达克100ETF招商",
-    "562500": "机器人ETF华夏",
-}
+# v7.6: 池子从手工17只 → 全量KEY_ETFS(60只, 覆盖宽基/行业/QDII/策略)
+# 旧版手工选池存在幸存者偏差: 只含当前存活且被关注的ETF, 历史表现差/已退市的
+# 不在池中, 回测收益虚高。全量池让回测覆盖更真实的横截面(上市日由数据自动处理)。
+BACKTEST_POOL = dict(KEY_ETFS)
 
 DEFAULT_START = "2024-01-01"
 DEFAULT_CAPITAL = 100000
@@ -237,7 +222,80 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
     logger.info(f"[回测] 开始: {equity_days[0]} ~ {equity_days[-1]} ({len(equity_days)}天)")
     logger.info(f"[回测] 初始资金: ¥{initial_capital:,.0f}")
 
+    # v7.6 (8/5): 消除前视偏差 — T日收盘计算信号 → T+1日开盘价执行
+    # pending: [{code, name, action, shares, reason}]，每个T日信号层生成，次日执行层用开盘价成交
+    pending = []
+
+    def _bar_on(code, date):
+        """取某ETF在指定日期的K线（无数据返回None，停牌跳过）"""
+        edata = valid_etfs.get(code)
+        if not edata:
+            return None
+        for k in edata["klines"]:
+            if k["date"] == date:
+                return k
+        return None
+
+    def _execute_pending(today):
+        """执行层（T+1）：按昨日信号用今日开盘价成交；先卖后买"""
+        nonlocal cash
+        if not pending:
+            return
+        # 先执行全部卖出（止损/排名），再执行买入，保证卖出回笼资金可用于当日买入
+        for p in sorted(pending, key=lambda x: 0 if x["action"] == "BUY" else 1):
+            code = p["code"]
+            bar = _bar_on(code, today)
+            if bar is None or bar.get("open", 0) <= 0:
+                logger.info(f"[回测] {today} {code} 无有效开盘价，跳过{p['action']}({p['reason']})")
+                continue
+            exec_price = bar["open"]
+
+            if p["action"] != "BUY":
+                pos = holdings.get(code)
+                if pos is None:
+                    continue
+                sell_shares = min(p["shares"], pos["shares"])
+                sell_amount, _ = trade_cost(sell_shares, exec_price, is_buy=False)
+                cash += sell_amount
+                pnl_pct = (exec_price / pos["cost"] - 1) * 100
+                trades_log.append({
+                    "date": today, "code": code, "name": pos["name"],
+                    "action": p["action"], "price": exec_price,
+                    "shares": sell_shares, "amount": round(sell_amount, 2),
+                    "pnl_pct": round(pnl_pct, 1), "reason": p["reason"]
+                })
+                if sell_shares >= pos["shares"]:
+                    del holdings[code]
+                else:
+                    pos["shares"] -= sell_shares
+            else:
+                # BUY: 防止止损当日重买回（P0修复: 已计划卖出的代码不进入买入候选，此处再兜底一次）
+                if code in holdings:
+                    continue
+                buy_shares = p["shares"]
+                cost_with_fee, _ = trade_cost(buy_shares, exec_price, is_buy=True)
+                if cost_with_fee > cash:
+                    affordable = int(cash / (exec_price * (1 + COMMISSION_RATE) + exec_price * SLIPPAGE_BPS / 10000) / 100) * 100
+                    if affordable < 100:
+                        continue
+                    buy_shares = affordable
+                    cost_with_fee, _ = trade_cost(buy_shares, exec_price, is_buy=True)
+                if buy_shares < 100:
+                    continue
+                cash -= cost_with_fee
+                holdings[code] = {"shares": buy_shares, "cost": exec_price, "name": p["name"], "price": exec_price}
+                trades_log.append({
+                    "date": today, "code": code, "name": p["name"],
+                    "action": "BUY", "price": exec_price, "shares": buy_shares,
+                    "amount": round(cost_with_fee, 2), "reason": p["reason"]
+                })
+        pending.clear()
+
     for day_idx, today in enumerate(equity_days):
+        # ===== 执行层: 先执行昨日生成的计划（T+1开盘价成交）=====
+        _execute_pending(today)
+
+        # ===== 信号层: 用今日收盘数据计算信号 =====
         etf_scores = []
         for code, edata in valid_etfs.items():
             all_dates = [k["date"] for k in edata["klines"]]
@@ -302,9 +360,12 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
         etf_scores.sort(key=lambda x: x["score"], reverse=True)
         top_codes = set(s["code"] for s in etf_scores[:MAX_HOLDINGS])
 
-        # === 止损检查（v7.2新增）===
-        # 在所有卖出逻辑之前，先检查止损条件
+        # === 信号层-止损检查（v7.2）: 生成T+1卖出计划 ===
+        # 已计划卖出的代码集合：防止同一持仓同日生成重复卖出计划、以及止损后当日重买回
+        sold_codes = set()
         for code in list(holdings.keys()):
+            if code in sold_codes:
+                continue
             pos = holdings[code]
             current_price = next((s["price"] for s in etf_scores if s["code"] == code), pos.get("price", pos["cost"]))
             pnl_pct = (current_price / pos["cost"] - 1) * 100
@@ -334,37 +395,30 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
                     stop_reason = f"评分E级({score_data['score']}分)+浮亏{pnl_pct:.1f}%"
 
             if should_stop:
-                sell_amount, sell_fee = trade_cost(pos["shares"], current_price, is_buy=False)
-                cash += sell_amount
-                trades_log.append({
-                    "date": today, "code": code, "name": pos["name"],
-                    "action": "STOP_LOSS", "price": current_price,
-                    "shares": pos["shares"], "amount": round(sell_amount, 2),
-                    "pnl_pct": round(pnl_pct, 1),
-                    "reason": stop_reason
+                sold_codes.add(code)
+                pending.append({
+                    "code": code, "name": pos["name"], "action": "STOP_LOSS",
+                    "shares": pos["shares"], "reason": stop_reason
                 })
-                del holdings[code]
 
-        # 卖出（评分排名下滑）
+        # 卖出（评分排名下滑）→ 生成T+1卖出计划
         for code in list(holdings.keys()):
+            if code in sold_codes:
+                continue
             if code not in top_codes:
                 pos = holdings[code]
-                sell_price = next((s["price"] for s in etf_scores if s["code"] == code), pos["cost"])
-                sell_amount, sell_fee = trade_cost(pos["shares"], sell_price, is_buy=False)
-                cash += sell_amount
-                pnl_pct = (sell_price / pos["cost"] - 1) * 100
-                trades_log.append({
-                    "date": today, "code": code, "name": pos["name"],
-                    "action": "SELL", "price": sell_price,
-                    "shares": pos["shares"], "amount": round(sell_amount, 2),
-                    "reason": f"得分排名下滑 (浮盈{pnl_pct:+.1f}%)"
+                pnl_pct = (pos["price"] / pos["cost"] - 1) * 100
+                sold_codes.add(code)
+                pending.append({
+                    "code": code, "name": pos["name"], "action": "SELL",
+                    "shares": pos["shares"], "reason": f"得分排名下滑 (浮盈{pnl_pct:+.1f}%)"
                 })
-                del holdings[code]
 
-        # 买入
-        needed_holdings = MAX_HOLDINGS - len(holdings)
+        # 买入 → 生成T+1买入计划（排除已计划卖出的代码，修复止损当日重买回）
+        needed_holdings = MAX_HOLDINGS - len(holdings) + len(sold_codes)
         if needed_holdings > 0:
-            buy_candidates = [s for s in etf_scores[:MAX_HOLDINGS] if s["code"] not in holdings]
+            buy_candidates = [s for s in etf_scores[:MAX_HOLDINGS]
+                              if s["code"] not in holdings and s["code"] not in sold_codes]
             if buy_candidates:
                 inv_vols = [1.0 / max(s.get("volatility", 0.20), 0.05) for s in buy_candidates]
                 total_inv_vol = sum(inv_vols)
@@ -384,19 +438,9 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
                 shares = int(budget / price / 100) * 100
                 if shares < 100:
                     continue
-                cost_with_fee, fee = trade_cost(shares, price, is_buy=True)
-                if cost_with_fee > cash:
-                    affordable = int(cash / (price * (1 + COMMISSION_RATE) + price * SLIPPAGE_BPS / 10000) / 100) * 100
-                    if affordable < 100:
-                        continue
-                    shares = affordable
-                    cost_with_fee, fee = trade_cost(shares, price, is_buy=True)
-                cash -= cost_with_fee
-                holdings[candidate["code"]] = {"shares": shares, "cost": price, "name": candidate["name"], "price": price}
-                trades_log.append({
-                    "date": today, "code": candidate["code"], "name": candidate["name"],
-                    "action": "BUY", "price": price, "shares": shares,
-                    "amount": round(cost_with_fee, 2),
+                pending.append({
+                    "code": candidate["code"], "name": candidate["name"],
+                    "action": "BUY", "shares": shares,
                     "reason": f"评分{candidate['score']}分 排名TOP{MAX_HOLDINGS}"
                 })
 

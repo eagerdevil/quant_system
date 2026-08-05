@@ -32,7 +32,7 @@ _K_DATE, _K_OPEN, _K_CLOSE, _K_HIGH, _K_LOW, _K_VOL, _K_AMT = range(7)
 
 
 def _parse_kline(k_str):
-    """安全解析单根K线字符串，返回 {date, open, close, high, low, volume, amount}"""
+    """安全解析单根K线字符串，返回 {date, open, close, high, low, volume, amount, turnover}"""
     parts = k_str.split(",")
     if len(parts) < 7:
         return None
@@ -45,6 +45,8 @@ def _parse_kline(k_str):
             "low": float(parts[_K_LOW]),
             "volume": float(parts[_K_VOL]),
             "amount": float(parts[_K_AMT]) if len(parts) > _K_AMT else 0.0,
+            # v7.6: 换手率(%) — f61字段(索引10), 仅ETF K线请求该字段, 缺失时0.0
+            "turnover": float(parts[10]) if len(parts) > 10 else 0.0,
         }
     except (ValueError, IndexError):
         return None
@@ -89,11 +91,11 @@ INDEX_CODES = {
     "399673": "创业板50"
 }
 
-def fetch_json(url, timeout=10):
+def fetch_json(url, timeout=10, retries=MAX_RETRY):
     # 东方财富API预检失败 → 直接跳过快失败，节省时间
     if not _EASTMONEY_OK and "eastmoney.com" in url:
         return None
-    for attempt in range(MAX_RETRY):
+    for attempt in range(retries):
         try:
             req = urllib.request.Request(url, headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
@@ -106,25 +108,102 @@ def fetch_json(url, timeout=10):
                 return json.loads(resp.read())
         except Exception as e:
             logger.info(f"  [API ERROR] 第{attempt+1}次尝试失败: {type(e).__name__}: {e}")
-            if attempt < MAX_RETRY - 1:
+            if attempt < retries - 1:
                 time.sleep(1.2)  # 逐只间隔1.2秒
     return None
 
+# ============================================================
+# v7.6: K线增量缓存 — 每天全量重拉10分钟 → 增量1-2天
+# 缓存按代码存储, 含数据最后日期; 限流时用缓存降级(滞后≤1-2天)
+# ============================================================
+KLINE_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kline_cache")
+
+def _kline_cache_path(code):
+    return os.path.join(KLINE_CACHE_DIR, f"{code}.json")
+
+def _load_kline_cache(code):
+    """读取K线缓存, 返回 (klines, last_date) 或 (None, None)"""
+    try:
+        with open(_kline_cache_path(code), 'r', encoding='utf-8') as f:
+            d = json.load(f)
+        klines = d.get("klines", [])
+        return klines, (klines[-1]["date"] if klines else "")
+    except (OSError, json.JSONDecodeError, KeyError, IndexError):
+        return None, None
+
+def _save_kline_cache(code, klines):
+    """保存K线缓存(仅K线, 不覆盖实时数据)"""
+    if not klines:
+        return
+    try:
+        os.makedirs(KLINE_CACHE_DIR, exist_ok=True)
+        with open(_kline_cache_path(code), 'w', encoding='utf-8') as f:
+            json.dump({"code": code, "klines": klines,
+                       "last_date": klines[-1]["date"], "updated": get_today()}, f)
+    except OSError:
+        pass
+
+def _merge_klines(cached, fresh):
+    """按日期合并去重, 新数据覆盖旧数据, 保持时间升序"""
+    if not cached:
+        return fresh
+    by_date = {k["date"]: k for k in cached}
+    for k in fresh:
+        by_date[k["date"]] = k
+    return [by_date[d] for d in sorted(by_date)]
+
+def _fetch_kline_with_cache(code, url, days, fallback_fn):
+    """
+    通用增量缓存逻辑 (v7.6):
+    1. 有缓存且最后日期==今天 → 直接用缓存(0请求)
+    2. 有缓存 → 增量拉最近10根合并(1次请求); 失败→用缓存降级(标记stale)
+    3. 无缓存 → 全量拉取并落缓存
+    """
+    cached, last_date = _load_kline_cache(code)
+    today = get_today()
+    # 周末必休市: 直接用缓存(零请求)
+    if cached and datetime.now().weekday() >= 5:
+        return cached
+    if cached and last_date == today:
+        return cached  # 当日数据已缓存, 零请求
+
+    if cached:
+        # 增量: 只拉最近10根, 单次重试(限流时快速放弃用缓存降级)
+        inc_url = url.replace(f"lmt={days}", "lmt=10")
+        data = fetch_json(inc_url, timeout=8, retries=1)
+        fresh = []
+        if data and data.get("data") and data["data"].get("klines"):
+            for k in data["data"]["klines"]:
+                p = _parse_kline(k)
+                if p:
+                    fresh.append(p)
+        if fresh:
+            merged = _merge_klines(cached, fresh)
+            _save_kline_cache(code, merged)
+            return merged
+        # 增量失败: 缓存降级(数据滞后, 记录日志)
+        logger.info(f"  [缓存降级] {code} 增量更新失败, 用缓存(截至{last_date})")
+        return cached
+
+    # 无缓存: 全量拉取(东财主源 → 备用源)
+    data = fetch_json(url)
+    klines = []
+    if data and data.get("data") and data["data"].get("klines"):
+        for k in data["data"]["klines"]:
+            p = _parse_kline(k)
+            if p:
+                klines.append(p)
+    if not klines and fallback_fn:
+        klines = fallback_fn(code, days) or []
+    if klines:
+        _save_kline_cache(code, klines)
+    return klines
+
 def fetch_index_daily(code, days=120):
-    """获取指数日K线（东方财富主 + 腾讯备用）"""
+    """获取指数日K线（东方财富主 + 腾讯备用 + v7.6增量缓存）"""
     market = "1" if code.startswith(("0","5","1")) else "0"
     url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57&klt=101&fqt=0&end={get_today()}&lmt={days}"
-    data = fetch_json(url)
-    if data and data.get("data"):
-        klines = data["data"]["klines"]
-        result = []
-        for k in klines:
-            parsed = _parse_kline(k)
-            if parsed:
-                result.append(parsed)
-        return result
-    # 备用: 腾讯API
-    return _fetch_sina_index(code, days)
+    return _fetch_kline_with_cache(code, url, days, _fetch_sina_index)
 
 def get_all_index_data(days=120):
     """获取所有主要指数日线"""
@@ -151,15 +230,25 @@ SW_INDUSTRY_CODES = {
     "801890": "机械设备"
 }
 
-def fetch_sw_industry_returns(days=60):
-    """获取申万行业指数收益率"""
+def fetch_sw_industry_returns(days=60, max_fail=6):
+    """
+    获取申万行业指数收益率
+    v7.6: 连续失败max_fail次即放弃返回部分结果 — 修复东财限流时28个串行请求
+    每个失败3次重试, 全失败曾让每日任务卡死10+分钟
+    """
     result = {}
+    fail_streak = 0
     for code, name in SW_INDUSTRY_CODES.items():
         market = "0" if code.startswith("8") else "1"
         url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57&klt=101&fqt=0&end={get_today()}&lmt={days}"
         data = fetch_json(url)
         if not data or not data.get("data"):
+            fail_streak += 1
+            if fail_streak >= max_fail:
+                logger.info(f"  [降级] 申万行业接口连续失败{fail_streak}次, 跳过行业轮动(行业加成本轮不生效)")
+                break
             continue
+        fail_streak = 0
         closes = [float(k.split(",")[2]) for k in data["data"]["klines"]]
         result[code] = {"name": name, "closes": closes}
     return result
@@ -189,59 +278,51 @@ def fetch_shibor():
 # 4. 资金流向数据
 # ============================================================
 def fetch_north_bound_flow(days=5):
-    """获取北向资金净买入（v7.1: push2实时 + push2his历史 + Sina备用）"""
-    # v7.1: push2实时接口获取当日北向资金
-    # f169=沪股通累计净买额(亿) f170=沪股通当日净买额(亿) f171=深股通累计 f172=深股通当日
-    url_real = "https://push2.eastmoney.com/api/qt/stock/get?secid=1.000001&fields=f169,f170,f171,f172"
-    data = fetch_json(url_real)
-    today = datetime.now().strftime("%Y-%m-%d")
-    if data and data.get("data"):
-        d = data["data"]
-        sh_net = _to_float(d.get("f170"))  # 沪股通当日净买(亿)
-        sz_net = _to_float(d.get("f172"))  # 深股通当日净买(亿)
-        today_flow = (sh_net + sz_net)  # 已经是亿为单位
-        # 尝试获取5日历史（push2his kline for 000001，f61可能是北向相关）
-        try:
-            hist_url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.000001&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&klt=101&fqt=1&lmt={days+1}"
-            hist_data = fetch_json(hist_url)
-            if hist_data and hist_data.get("data") and hist_data["data"].get("klines"):
-                result = []
-                for k in hist_data["data"]["klines"][-days:]:
-                    parts = k.split(",")
-                    result.append({"date": parts[0], "net_flow": today_flow})  # 用当日值近似
-                if result:
-                    return result
-        except Exception:
-            pass
-        # 退而求其次：返回今日数据
-        return [{"date": today, "net_flow": today_flow}]
+    """
+    获取沪深股通（北向）资金数据（v7.6, 8/5重写 — 移除假数据）
 
-    # v7.0 fallback: Tencent（备用源）
-    try:
-        t_url = "https://qt.gtimg.cn/q=ff_bk0479"
-        t_resp = _simple_get(t_url, timeout=10)
-        if t_resp:
-            # 兼容 urllib(有.read) 与 requests(.text) 两种响应对象
-            if hasattr(t_resp, "read"):
-                t_text = t_resp.read().decode("gbk", errors="replace")
-            elif isinstance(t_resp, str):
-                t_text = t_resp
-            else:
-                t_text = getattr(t_resp, "text", "") or ""
-            if "~" in t_text:
-                t_parts = t_text.split("~")
-                for idx in [5, 4, 6]:
-                    if idx < len(t_parts):
-                        try:
-                            flow = float(t_parts[idx]) / 1e8
-                            if abs(flow) < 1000:
-                                logger.info(f"  [FALLBACK] 北向资金(Tencent): {flow:.1f}亿")
-                                return [{"date": today, "net_flow": flow}]
-                        except (ValueError, IndexError):
-                            continue
-    except Exception as e:
-        logger.info(f"  [FALLBACK] 北向资金备用源失败: {e}")
-    return None
+    重要背景：自2024-08-19起，沪深交易所停止披露北向资金当日/历史净买额，
+    市场上任何声称"北向净买XX亿"的实时数据均为伪造或估算。
+    本函数不再造假（旧版用上证指数K线冒充5日历史、腾讯板块资金流冒充北向），
+    改为返回仍真实披露的「沪深股通成交额」（东财数据中心 RPT_MUTUAL_DEAL_HISTORY）。
+
+    Returns:
+        [{date, deal_amt(亿), net_flow: None, north_active: bool}] 或 None
+        net_flow 恒为 None（停披露），north_active 供S3信号替代净买额使用。
+    """
+    url = (
+        "https://datacenter-web.eastmoney.com/api/data/v1/get?"
+        "reportName=RPT_MUTUAL_DEAL_HISTORY&columns=ALL"
+        f"&pageNumber=1&pageSize={max(days + 2, 12)}&sortColumns=TRADE_DATE&sortTypes=-1"
+        "&filter=(MUTUAL_TYPE%3D%22003%22)"
+    )
+    data = fetch_json(url, timeout=15)
+    if not data or not data.get("result") or not data["result"].get("data"):
+        return None
+
+    result = []
+    for row in data["result"]["data"]:
+        deal_amt = _to_float(row.get("DEAL_AMT"), 0.0)  # 单位: 百万元
+        if deal_amt <= 0:
+            continue
+        result.append({
+            "date": str(row.get("TRADE_DATE", ""))[:10],
+            "deal_amt": round(deal_amt / 100.0, 1),  # 百万元 → 亿元
+            "net_flow": None,  # 2024-08-19起官方停披露净买额，不再伪造
+        })
+    result = result[:days]
+    if not result:
+        return None
+
+    # 标注成交活跃度：最新5日均成交 vs 前5日均（供S3信号替代净买额）
+    recent = [r["deal_amt"] for r in result]
+    recent_avg = sum(recent) / len(recent)
+    if len(result) >= 10:
+        prev_avg = sum(r["deal_amt"] for r in result[5:10]) / 5.0
+        result[-1]["north_active"] = recent_avg > prev_avg
+    else:
+        result[-1]["north_active"] = None  # 历史不足，中性
+    return result
 
 def fetch_market_fund_flow():
     """获取全市场主力资金流向"""
@@ -303,19 +384,27 @@ def fetch_dragon_tiger():
     return result
 
 def fetch_etf_flow_top():
-    """获取ETF份额变化TOP（机构申购赎回动向）"""
-    url = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=10&po=1&np=1&fltt=2&fid=f146&fs=b:MK0021&fields=f12,f14,f146,f147"
+    """
+    获取ETF份额申赎动向（v7.6改造: 同时返回净流入TOP/净流出TOP, 供F18因子）
+    f146=份额变化(排序字段), f147=资金流向
+    Returns: {"inflow": [{code,name,share_change,flow}...10], "outflow": [...]} 或 None
+    """
+    url = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=40&po=1&np=1&fltt=2&fid=f146&fs=b:MK0021&fields=f12,f14,f146,f147"
     data = fetch_json(url)
     if not data or not data.get("data"):
         return None
-    result = []
-    for d in data["data"].get("diff", [])[:10]:
-        result.append({
-            "code": d.get("f12",""), "name": d.get("f14",""),
-            "share_change": d.get("f146", 0),  # 份额变化
-            "flow": d.get("f147", 0)  # 资金流向
-        })
-    return result
+    inflow, outflow = [], []
+    for d in data["data"].get("diff", []):
+        chg = _to_float(d.get("f146"))
+        item = {"code": d.get("f12",""), "name": d.get("f14",""),
+                "share_change": chg, "flow": _to_float(d.get("f147"))}
+        if chg > 0 and len(inflow) < 10:
+            inflow.append(item)
+        elif chg < 0 and len(outflow) < 10:
+            outflow.append(item)
+        if len(inflow) >= 10 and len(outflow) >= 10:
+            break
+    return {"inflow": inflow, "outflow": outflow}
 
 def fetch_north_bound_top():
     """获取北向资金重仓行业流向"""
@@ -458,6 +547,32 @@ def fetch_total_volume():
         logger.info(f"  [FALLBACK] 成交额备用源失败: {e}")
     return 0
 
+def fetch_total_volume_history(days=60):
+    """
+    获取全市场历史成交额序列(亿) — 上证指数+深证成指K线 amount(f57) 之和
+    v7.6 (8/5): 供S4信号动态分位阈值使用（替代固定2万亿死线）
+    失败/限流时返回 []，调用方降级为固定阈值。
+    """
+    merged = {}
+    for secid in ("1.000001", "0.399001"):
+        url = (f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={secid}"
+               f"&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
+               f"&klt=101&fqt=0&lmt={days}")
+        data = fetch_json(url, timeout=12)
+        if not data or not data.get("data") or not data["data"].get("klines"):
+            continue
+        for k in data["data"]["klines"]:
+            parts = k.split(",")
+            if len(parts) > 7:
+                try:
+                    merged[parts[0]] = merged.get(parts[0], 0.0) + float(parts[6]) / 1e8  # f57成交额(元)→亿
+                except ValueError:
+                    continue
+    if not merged:
+        return []
+    seq = [{"date": d, "amount": round(merged[d], 1)} for d in sorted(merged)]
+    return seq[-days:]
+
 # ============================================================
 # 5b. 市场情绪综合指标 (v5.0)
 # ============================================================
@@ -522,19 +637,18 @@ def compute_market_sentiment(breadth, total_volume, north_flow_5d=None):
         adj -= 7
     score += adj * 0.20
 
-    # 4. 北向资金 (权重: 15%)
+    # 4. 沪深股通成交活跃度 (权重: 15%) — v7.6: 北向净买额2024/8停披露，以成交额替代
+    # 阈值按2026年常态(1500-2200亿/日)标定
     if north_flow_5d is not None:
-        signals["北向5日(亿)"] = round(north_flow_5d, 1)
-        if north_flow_5d > 100:
-            adj = 15
-        elif north_flow_5d > 30:
-            adj = 8
-        elif north_flow_5d > -30:
-            adj = 0
-        elif north_flow_5d > -100:
-            adj = -8
+        signals["沪深股通5日均成交(亿)"] = round(north_flow_5d, 1)
+        if north_flow_5d > 2200:
+            adj = 8   # 放量活跃，资金参与度高
+        elif north_flow_5d > 1500:
+            adj = 4   # 正常活跃
+        elif north_flow_5d > 1000:
+            adj = 0   # 中性
         else:
-            adj = -15
+            adj = -6  # 低迷，资金观望
     else:
         adj = 0
     score += adj * 0.15
@@ -823,20 +937,12 @@ def _fetch_sina_index(code, days=120):
     return result
 
 def fetch_etf_kline(code, days=250):
-    """获取ETF日K线（东方财富主 + 腾讯备用）"""
+    """获取ETF日K线（东方财富主 + 腾讯备用 + v7.6增量缓存）"""
     # 沪市ETF: 5xxxxx, 58xxxx; 深市ETF: 15xxxx, 16xxxx
     market = "1" if code.startswith(("5","58")) else "0"
-    url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59&klt=101&fqt=0&end={get_today()}&lmt={days}"
-    data = fetch_json(url)
-    if data and data.get("data"):
-        result = []
-        for k in data["data"]["klines"]:
-            parsed = _parse_kline(k)
-            if parsed:
-                result.append(parsed)
-        return result
-    # 备用: 腾讯API
-    return _fetch_tencent_kline(code, days)
+    # v7.6: fields2加f60/f61(涨跌额/换手率), 供F17换手率分位因子
+    url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&klt=101&fqt=0&end={get_today()}&lmt={days}"
+    return _fetch_kline_with_cache(code, url, days, _fetch_tencent_kline)
 
 def fetch_stock_kline(code, days=250):
     """获取个股日K线（支持股票和ETF，东方财富主 + 腾讯备用）"""
@@ -846,17 +952,9 @@ def fetch_stock_kline(code, days=250):
         market = "0"
     else:
         market = "0"
-    url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57&klt=101&fqt=1&end={get_today()}&lmt={days}"
-    data = fetch_json(url)
-    if data and data.get("data"):
-        result = []
-        for k in data["data"]["klines"]:
-            parsed = _parse_kline(k)
-            if parsed:
-                result.append(parsed)
-        return result
-    # 备用: 腾讯API
-    return _fetch_tencent_kline(code, days)
+    # v7.6: fields2加f60/f61(换手率, 供股票F17因子) + 增量缓存
+    url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&klt=101&fqt=1&end={get_today()}&lmt={days}"
+    return _fetch_kline_with_cache(code, url, days, _fetch_tencent_kline)
 
 def fetch_stock_realtime(code):
     """获取个股/ETF实时行情（东方财富主 + 新浪备用）"""
@@ -901,10 +999,38 @@ def fetch_etf_realtime(code):
     if data and data.get("data"):
         d = data["data"]
         # 东方财富API：ETF价格统一以厘(1/1000元)返回
-        # 判断依据：f60/f43(厘值) > 50 → 厘单位（A股ETF最高不超过10元/份，50是安全阈值）
+        # v7.6: 原判断(f60>50→厘)在f60缺失时_scale=1 → 价格放大1000倍。
+        # 改为多条件投票确定单位:
+        #   1) 恒等式投票: 现价≈昨收×(1+涨跌幅)，选误差最小的尺度
+        #   2) 高低价一致性: 现价>最高价说明尺度错误
+        #   3) 价格区间: A股ETF现价合理区间0.1~100元
         _raw_prev = _to_float(d.get("f60"))
         _raw_price = _to_float(d.get("f43"))
-        _scale = 1000.0 if (_raw_prev > 50 or _raw_price > 50) else 1.0
+        raw_high = _to_float(d.get("f44"))
+        raw_chg = _to_float(d.get("f170"))
+
+        def _pick_scale():
+            if _raw_prev > 0 and _raw_price > 0:
+                best_s, best_err = None, None
+                for s in (1000.0, 100.0, 1.0):
+                    if raw_high > 0 and _raw_price / s > raw_high / s:
+                        continue  # 现价>最高价 → 尺度错误
+                    est = _raw_prev / s * (1 + raw_chg / 10000.0)  # 由昨收反推现价
+                    if est <= 0:
+                        continue
+                    err = abs(_raw_price / s - est) / est
+                    if best_err is None or err < best_err:
+                        best_s, best_err = s, err
+                if best_s is not None and best_err < 0.15:  # 误差<15%才可信
+                    return best_s
+            if _raw_price > 0:
+                # 无昨收/投票不信任: 用价格区间判断（A股ETF现价0.1~100元）
+                for s in (1000.0, 100.0, 1.0):
+                    p = _raw_price / s
+                    if 0.1 <= p <= 100:
+                        return s
+            return 1000.0  # 兜底: 东财push2对ETF以厘返回
+        _scale = _pick_scale()
 
         price = _raw_price / _scale
 
@@ -1232,6 +1358,7 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
     logger.info("  -> 市场情绪...")
     result["breadth"] = fetch_market_breadth()
     result["total_volume"] = fetch_total_volume()
+    result["volume_history"] = fetch_total_volume_history(60)  # v7.6: S4动态分位
     result["fear_index"] = calc_fear_index()
 
     # 机构资金追踪（新增）

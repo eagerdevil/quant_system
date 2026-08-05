@@ -1,4 +1,8 @@
 {
-  "_comment": "当前持仓: 空仓(全现金) | 沪深300ETF于8/5清仓@4.708",
-  "_available_cash": 1786.00
+  "_comment": "当前持仓: 空仓(全现金) | 沪深300ETF于8/5清仓@4.708 | 收益口径已修正: 提现不算亏损",
+  "_available_cash": 1786.00,
+  "_cash_flows": [
+    {"date": "20260625", "type": "deposit", "amount": 4000, "note": "初始投入"},
+    {"date": "20260715", "type": "withdraw", "amount": 2000, "note": "提现用于生活(日期为估算, 可校正)"}
+  ]
 }

@@ -65,13 +65,21 @@ def compute_equity_curve(reports):
     return curve
 
 
-def compute_performance_metrics(equity_curve):
-    """计算核心绩效指标"""
+def compute_performance_metrics(equity_curve, net_outflow=0.0, per_point_adjust=None):
+    """
+    计算核心绩效指标
+    net_outflow: v7.6 期间净出金(提现-入金)，提现不算亏损，加回后再算收益
+    per_point_adjust: v7.6 逐日调整量列表(与equity_curve等长)，用于回撤等逐点指标
+    """
     if len(equity_curve) < 2:
         return {"error": "数据不足，至少需要2天"}
 
     assets = [e["total_assets"] for e in equity_curve]
     pnls = [e["total_pnl"] for e in equity_curve]
+
+    # v7.6: 剔除期间出入金 — 原口径把提现算成亏损(-56.2%假象)
+    if per_point_adjust:
+        assets = [a + adj for a, adj in zip(assets, per_point_adjust)]
 
     # 累计收益
     start_assets = assets[0]
@@ -79,14 +87,15 @@ def compute_performance_metrics(equity_curve):
     total_return = (end_assets / start_assets - 1) if start_assets > 0 else 0
     total_pnl = end_assets - start_assets
 
-    # 最大回撤
+    # 最大回撤 (v7.6: 用调整后净值序列, 剔除提现导致的假回撤)
     peak = assets[0]
     max_dd = 0
     max_dd_date = ""
-    for e in equity_curve:
-        if e["total_assets"] > peak:
-            peak = e["total_assets"]
-        dd = (peak - e["total_assets"]) / peak if peak > 0 else 0
+    for i, e in enumerate(equity_curve):
+        val = assets[i] if i < len(assets) else e["total_assets"]
+        if val > peak:
+            peak = val
+        dd = (peak - val) / peak if peak > 0 else 0
         if dd > max_dd:
             max_dd = dd
             max_dd_date = e["date"]
@@ -262,7 +271,31 @@ def generate_performance_summary(report_dir=None):
         return "暂无历史报告数据"
 
     equity = compute_equity_curve(reports)
-    metrics = compute_performance_metrics(equity)
+    # v7.6: 期间净出金(提现不算亏损) — 从portfolio.json读取
+    net_outflow = 0.0
+    per_point_adjust = None
+    try:
+        pf_path = os.path.join(report_dir, "portfolio.json")
+        if os.path.exists(pf_path):
+            with open(pf_path, 'r', encoding='utf-8') as f:
+                pf = json.load(f)
+            flows = pf.get("_cash_flows", []) or []
+            # 逐点调整: 每个报告日+截至该日已发生的净出金(提现不算亏损)
+            # 语义: 若期间无提现, 账户此刻价值=总资产+已提现金额
+            # 注意: 起点当日及之前的deposit是本金(已含在起始值), 不重复扣减
+            start_d = equity[0]["date"] if equity else ""
+            def adj_at(date):
+                wa = sum(cf.get("amount", 0) for cf in flows
+                         if cf.get("type") == "withdraw" and str(cf.get("date", "")) <= str(date))
+                da = sum(cf.get("amount", 0) for cf in flows
+                         if cf.get("type") == "deposit" and str(cf.get("date", "")) > start_d
+                         and str(cf.get("date", "")) < str(date))
+                return wa - da
+            per_point_adjust = [adj_at(e["date"]) for e in equity]
+            net_outflow = per_point_adjust[-1] if per_point_adjust else 0.0
+    except (OSError, json.JSONDecodeError):
+        per_point_adjust = None
+    metrics = compute_performance_metrics(equity, net_outflow, per_point_adjust)
     accuracy = compute_score_accuracy(reports)
 
     lines = []

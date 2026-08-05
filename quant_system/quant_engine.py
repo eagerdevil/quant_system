@@ -28,7 +28,9 @@ FACTOR_MAX = {
     "F7_成交量": 6, "F8_回调": 10, "F9_Sortino": 6,
     "F10_MaxDD": 6, "F11_布林带": 6, "F12_多周期": 6,
     "F13_均线排列": 4, "F14_长期": 4, "F15_夏普": 6,
-    "F16_量价关系": 8  # v3.0 新增：量价背离检测
+    "F16_量价关系": 8,  # v3.0 新增：量价背离检测
+    "F17_换手率分位": 6,  # v7.6 新增：换手率60日分位
+    "F18_份额申赎": 8   # v7.6 新增：机构份额净流入/净流出TOP
 }
 FACTOR_NAMES = list(FACTOR_MAX.keys())
 DEFAULT_WEIGHTS = {k: 1.0 for k in FACTOR_NAMES}
@@ -152,7 +154,8 @@ def get_regime_weights(base_weights=None, regime=None):
 # ============================================================
 SYSTEM_CONFIG = {
     # --- 大盘择时 ---
-    "volume_active_threshold": 20000,    # 成交额阈值(亿)，低于此值视为缩量
+    "volume_active_threshold": 20000,    # 成交额阈值(亿) — v7.6: 仅作无历史数据时的降级线
+    "volume_active_percentile": 70,      # v7.6: 成交额活跃分位数(当日成交额>近60日70%分位=活跃)
     "limit_down_danger": 20,             # 跌停家数警戒线
     "margin_lookback": 5,                # 融资余额回看天数
     # --- 技术指标 ---
@@ -786,11 +789,12 @@ def classify_market_regime(index_closes, index_highs=None, index_lows=None,
 # ============================================================
 # 模块3b: 因子计算（导出供 optimizer 使用）
 # ============================================================
-def compute_indicators(closes, highs, lows, volumes):
+def compute_indicators(closes, highs, lows, volumes, turnover=None):
     """
     计算所有原始指标。
     输入: ETF的价格序列（按时间升序）
     输出: 指标字典，可直接传给 score_factors()
+    turnover: 换手率序列(%, v7.6新增, F17因子用), None=数据缺失
     """
     cur = closes[-1]
 
@@ -821,6 +825,14 @@ def compute_indicators(closes, highs, lows, volumes):
     pm20 = pma(closes, 20)
     pm60 = pma(closes, 60) if len(closes) >= 60 else pm20
 
+    # v7.6: 换手率60日分位 (F17因子) — 数据不足或缺失时None, F17给中性分
+    turnover_rank = None
+    if turnover:
+        tv = [float(t) for t in turnover if t is not None and float(t) > 0]
+        if len(tv) >= 20:
+            cur_t = tv[-1]
+            turnover_rank = float(sum(1 for t in tv if t < cur_t) / len(tv) * 100)
+
     return {
         "rsi": rsi_now, "dif": dif, "dea": dea, "hist": hist,
         "volatility": vol, "max_drawdown": maxdd, "sharpe": shp,
@@ -831,6 +843,7 @@ def compute_indicators(closes, highs, lows, volumes):
         "vol_ratio_5d": v_ratio, "vol_ratio_10d": v_ratio_10,
         "pma5": pm5, "pma10": pm10, "pma20": pm20, "pma60": pm60,
         "price": cur,
+        "turnover_pct_rank": turnover_rank,  # v7.6: F17因子
         "volume_divergence": detect_volume_price_divergence(closes, volumes)
     }
 
@@ -863,11 +876,13 @@ def _continuous_score(value, factor_name):
     return None  # 此因子不使用连续映射
 
 
-def score_factors(indicators):
+def score_factors(indicators, regime=None, flow_signal=0):
     """
-    v7.2: 将原始指标转换为16个因子得分（连续映射 + 少数离散因子）。
+    v7.2: 将原始指标转换为18个因子得分（连续映射 + 少数离散因子）。
     输入: compute_indicators() 的输出
     输出: {F1_趋势强度: 7.3, F2_动量: 6.8, ...}  # 现在返回浮点数
+    regime: 市场状态(TREND_UP/CHOPPY/TREND_DOWN/CRISIS)，None=未知(默认震荡口径)
+    flow_signal: v7.6 ETF份额申赎信号 +1=机构净流入TOP/-1=净流出TOP/0=无(F18因子)
     """
     factors = {}
     ind = indicators
@@ -877,8 +892,11 @@ def score_factors(indicators):
     r120 = ind["r120d"]
 
     # F1: 趋势强度(0-10) — 基于MACD DIF/Hist幅度 + MA排列
-    dif_mag = np.tanh(ind["dif"] * 80)      # DIF → [-1, 1]
-    hist_mag = np.tanh(ind["hist"] * 400)    # Hist → [-1, 1]
+    # v7.6: DIF/Hist按价格归一化(原tanh(dif*80)对1-3元低价ETF立即饱和,所有ETF≈9分无区分度)
+    # 标定: DIF≈价格0.5% → tanh(1.5)=0.91(强趋势); ≈0.1% → tanh(0.3)=0.29(弱)
+    price_n = max(float(ind.get("price", 1.0)), 0.01)
+    dif_mag = np.tanh(ind["dif"] / price_n * 100 * 3)    # 归一化DIF% → [-1, 1]
+    hist_mag = np.tanh(ind["hist"] / price_n * 100 * 6)  # 归一化Hist% → [-1, 1]
     f1_base = 5.0 + dif_mag * 3.5 + hist_mag * 1.5
     if ind["ma_alignment"] >= 2:
         f1_base += 0.8
@@ -892,8 +910,13 @@ def score_factors(indicators):
     factors['F6_低波动']   = round(_continuous_score(ind["volatility"] * 100, "F6_低波动"), 1)
     factors['F7_成交量']   = round(_continuous_score(ind["vol_ratio_5d"], "F7_成交量"), 1)
 
-    # F8: 回调质量(0-10) — 连续化：连跌加分，连涨扣分
-    f8 = 5.0 + ind["consecutive_down"] * 1.5 - ind["consecutive_up"] * 1.0
+    # F8: 回调质量(0-10) — v7.6: 按市场状态反转方向
+    # TREND_UP(趋势市): 连涨=强势应加分, 连跌=动能衰减预警减分
+    # 其余/未知(震荡/下跌/危机): 连跌=超跌回调加分(与F3反转互补), 连涨=追高风险减分
+    if regime == "TREND_UP":
+        f8 = 5.0 + ind["consecutive_up"] * 1.2 - ind["consecutive_down"] * 0.8
+    else:
+        f8 = 5.0 + ind["consecutive_down"] * 1.5 - ind["consecutive_up"] * 1.0
     factors['F8_回调'] = round(float(np.clip(f8, 1.0, 10.0)), 1)
 
     factors['F9_Sortino']  = round(_continuous_score(ind["sortino"], "F9_Sortino"), 1)
@@ -929,6 +952,25 @@ def score_factors(indicators):
     else:
         f16 = 5.0
     factors['F16_量价关系'] = round(float(np.clip(f16, 0.5, 8.0)), 1)
+
+    # F17: 换手率分位(0-6) — v7.6新增: 当日换手率处于近60日分位
+    # 高分位=放量资金关注(与F7短期量比互补, 中长期视角); 低分位=冷清
+    tr = ind.get("turnover_pct_rank")
+    if tr is None:
+        f17 = 3.0  # 数据缺失, 中性
+    else:
+        f17 = 3.0 + (tr - 50) / 50 * 2.5  # 分位50→3.0, 100→5.5, 0→0.5
+    factors['F17_换手率分位'] = round(float(np.clip(f17, 0.5, 6.0)), 1)
+
+    # F18: 份额申赎(0-8) — v7.6新增: 机构净申购TOP加分/净赎回TOP减分
+    # 份额增加=聪明钱申购, 是最可靠的底部/加速信号之一
+    if flow_signal > 0:
+        f18 = 6.8
+    elif flow_signal < 0:
+        f18 = 2.8
+    else:
+        f18 = 5.0
+    factors['F18_份额申赎'] = round(float(f18), 1)
 
     return factors
 
@@ -1010,16 +1052,18 @@ def _apply_premium_penalty(technical_score, premium_pct, history=None):
 
 def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
                              north_flow_5d=None, industry_return=None,
-                             weights=None, premium_pct=None, regime=None):
+                             weights=None, premium_pct=None, regime=None,
+                             turnover=None):
     """
-    16因子综合评分系统 + 溢价惩罚 + v7.2市场状态自适应权重
+    18因子综合评分系统 + 溢价惩罚 + v7.2市场状态自适应权重
 
     Args:
-        code, name: ETF标识
+        code, name: ETF/个股标识
         closes, highs, lows, volumes: OHLCV序列
         weights: 手动指定权重（优先级最高）
         premium_pct: QDII ETF溢价率
         regime: 市场状态 (TREND_UP/CHOPPY/TREND_DOWN/CRISIS) 用于自适应权重
+        turnover: v7.6 换手率序列(F17因子), 个股/ETF均可传入
     """
     # v7.2: 权重优先级: 手动指定 > 状态自适应 > CURRENT_WEIGHTS > DEFAULT_WEIGHTS
     if weights is None:
@@ -1039,8 +1083,8 @@ def score_etf_comprehensive(code, name, closes, highs, lows, volumes,
             "factors": {}, "volume_divergence": {}
         }
 
-    indicators = compute_indicators(closes, highs, lows, volumes)
-    factors = score_factors(indicators)
+    indicators = compute_indicators(closes, highs, lows, volumes, turnover)  # v7.6: 个股换手率F17
+    factors = score_factors(indicators, regime)  # v7.6: F8按市场状态反转方向
 
     weighted_sum = sum(factors[k] * weights.get(k, 1.0) for k in FACTOR_NAMES)
     max_weighted = sum(FACTOR_MAX[k] * weights.get(k, 1.0) for k in FACTOR_NAMES)
@@ -1299,10 +1343,12 @@ def compute_cross_sectional_adjustment_neutralized(raw_metrics_list):
     return adjustments
 
 
-def score_all_etfs_cross_sectional(etf_data_dict, weights=None, regime=None, use_neutralized=True):
+def score_all_etfs_cross_sectional(etf_data_dict, weights=None, regime=None, use_neutralized=True,
+                                    etf_flow_map=None):
     """
     v5.0: 批量评分 + 横截面比较融合
     v7.2: 支持regime自适应权重
+    etf_flow_map: v7.6 {code: +1/-1/0} 机构份额申赎信号(F18因子), 无则None
     """
     if weights is None:
         weights = get_regime_weights(CURRENT_WEIGHTS, regime)  # 从不返回None
@@ -1317,9 +1363,10 @@ def score_all_etfs_cross_sectional(etf_data_dict, weights=None, regime=None, use
         highs = [k["high"] for k in kline]
         lows = [k["low"] for k in kline]
         volumes = [k["volume"] for k in kline]
+        turnovers = [k.get("turnover", 0) for k in kline]  # v7.6: F17因子
 
-        indicators = compute_indicators(closes, highs, lows, volumes)
-        factors = score_factors(indicators)
+        indicators = compute_indicators(closes, highs, lows, volumes, turnovers)
+        factors = score_factors(indicators, regime, (etf_flow_map or {}).get(code, 0))  # v7.6: F8/F18
 
         weighted_sum = sum(factors[k] * weights.get(k, 1.0) for k in FACTOR_NAMES)
         max_weighted = sum(FACTOR_MAX[k] * weights.get(k, 1.0) for k in FACTOR_NAMES)
@@ -1549,7 +1596,8 @@ def get_etf_industry_momentum(code, industry_rotation):
 class MarketTiming:
     """市场择时信号"""
 
-    def __init__(self, index_data, north_flow, total_vol, breadth, margin):
+    def __init__(self, index_data, north_flow, total_vol, breadth, margin, volume_history=None,
+                 bond_yield=None):
         self.hs300 = None
         self.hs300_highs = None
         self.hs300_lows = None
@@ -1560,6 +1608,8 @@ class MarketTiming:
             self.hs300_lows = [d.get("low", d["close"] * 0.995) for d in data]
 
         self.north_flow = north_flow or []
+        self.volume_history = volume_history or []  # v7.6: 全市场历史成交额序列
+        self.bond_yield = bond_yield  # v7.6: 10Y国债收益率(流动性环境, S7信号)
         self.total_vol = total_vol or 0
         self.breadth = breadth or {}
         self.margin = margin or {}
@@ -1579,16 +1629,52 @@ class MarketTiming:
             signals['S2_HS300_MA60_up'] = ma60_now > ma60_prev
         # 数据不足时 S2 保持缺失（None），避免被当作"看跌"误触发强制压仓
 
-        nf_5d = sum(f.get("net_flow", 0) for f in self.north_flow[-5:]) if self.north_flow else 0
-        signals['S3_NorthFlow_5d_positive'] = nf_5d > 0
+        # S3 (v7.6): 北向净买额2024-08-19起停披露 → 改用沪深股通成交活跃度(5日均 vs 前5日均)
+        # 数据缺失时置None(中性不计)，不再像旧版判False压制仓位
+        nf_5d = None
+        flows = self.north_flow[-5:] if self.north_flow else []
+        if flows and flows[0].get("deal_amt") is not None:
+            amts = [f.get("deal_amt", 0) for f in flows]
+            nf_5d = round(sum(amts) / len(amts), 1)  # 5日均成交额(亿)
+            prev_flows = self.north_flow[-10:-5]
+            if len(prev_flows) >= 3:
+                prev_avg = sum(f.get("deal_amt", 0) for f in prev_flows) / len(prev_flows)
+                signals['S3_NorthFlow_5d_positive'] = nf_5d > prev_avg
+            else:
+                signals['S3_NorthFlow_5d_positive'] = None  # 历史不足，中性
+        else:
+            signals['S3_NorthFlow_5d_positive'] = None  # 数据缺失，中性
 
-        signals['S4_Volume_active'] = self.total_vol > SYSTEM_CONFIG['volume_active_threshold']
+        # S4 (v7.6): 成交额活跃度改动态分位 — 当日成交额 vs 近60日分布(70分位)
+        # 旧固定2万亿死线在2026年A股常态1.2-1.6万亿下恒False，长期压制仓位
+        vol_hist = getattr(self, "volume_history", None) or []
+        if self.total_vol and len(vol_hist) >= 20:
+            amts = [v.get("amount", 0) for v in vol_hist]
+            percentile = float(sum(1 for a in amts if a < self.total_vol)) / len(amts) * 100
+            signals['S4_Volume_active'] = percentile >= SYSTEM_CONFIG['volume_active_percentile']
+        elif self.total_vol:
+            signals['S4_Volume_active'] = self.total_vol > SYSTEM_CONFIG['volume_active_threshold']  # 降级
+        else:
+            signals['S4_Volume_active'] = None  # 数据缺失，中性
 
         ld = self.breadth.get("limit_down")
-        signals['S5_LimitDown_low'] = ld < SYSTEM_CONFIG['limit_down_danger'] if ld is not None else False
+        # S5: 跌停家数缺失时置None(中性)，不误判为"跌停多"压仓
+        signals['S5_LimitDown_low'] = (ld < SYSTEM_CONFIG['limit_down_danger']) if ld is not None else None
 
-        margin_change = self.margin.get("change", 0)
-        signals['S6_Margin_increasing'] = margin_change > 0
+        # S6: 融资余额缺失时置None(中性)
+        if self.margin:
+            signals['S6_Margin_increasing'] = self.margin.get("change", 0) > 0
+        else:
+            signals['S6_Margin_increasing'] = None
+
+        # S7 (v7.6): 10Y国债收益率 — 流动性环境信号(股债性价比降级版)
+        # 收益率<1.5%=流动性宽松利好权益(+1); 1.5~2.2%中性; 缺失→None
+        by = self.bond_yield
+        by_val = by.get("yield") if isinstance(by, dict) else None
+        if by_val is not None:
+            signals['S7_Bond_low'] = by_val < 1.5
+        else:
+            signals['S7_Bond_low'] = None  # 数据缺失, 中性
 
         return signals, nf_5d
 
@@ -1644,7 +1730,8 @@ class MarketTiming:
             "signal_detail": signals,
             "base_position": round(base_position, 2),
             "force_capped": force_cap,
-            "north_flow_5d": round(nf_5d, 1),
+            # v7.6: north_flow_5d 语义=沪深股通5日均成交额(亿)，缺失时为None
+            "north_flow_5d": round(nf_5d, 1) if nf_5d is not None else None,
             "advice": self._position_text(base_position, bull_count, force_cap),
             "regime": regime_result["regime"],
             "regime_name": MARKET_REGIME.get(regime_result["regime"], regime_result["regime"]),
@@ -1859,7 +1946,8 @@ class TradeDecider:
         sell_list = []
         hold_list = []
 
-        # 卖出判断
+        # 卖出判断 (v7.6: 止损线跟随市场状态regime_stop_loss，CHOPPY=-5%/TREND_UP=-8%)
+        stop_pct = self.timing.get("regime_stop_loss", -0.08) * 100  # 转百分数
         for code, pos in self.portfolio.items():
             if code.startswith("_"):
                 continue
@@ -1915,19 +2003,20 @@ class TradeDecider:
                         "reason": f"追踪止盈(20日+{r20d:.1f}%→5日{r5d:.1f}%)"
                     })
             # v7.0: 接近止损+评分恶化 组合卖出
-            elif -8 < pnl_pct <= -5 and score_data["score"] < 55:
+            elif stop_pct < pnl_pct <= stop_pct + 3 and score_data["score"] < 55:
                 sell_list.append({
                     "code": code, "name": pos.get("name", code), "action": "SELL",
                     "shares": pos["shares"], "price": current_price,
                     "pnl_pct": round(pnl_pct, 1),
-                    "reason": f"接近止损({pnl_pct:.1f}%)+评分偏低({score_data['score']})"
+                    "reason": f"接近止损({pnl_pct:.1f}%>{stop_pct:.0f}%)+评分偏低({score_data['score']})"
                 })
-            # 止损触发
-            elif pnl_pct <= -8:
+            # 止损触发 (v7.6: 用regime止损，CHOPPY=-5%/TREND_UP=-8%)
+            elif pnl_pct <= stop_pct:
                 sell_list.append({
                     "code": code, "name": pos.get("name", code), "action": "SELL",
                     "shares": pos["shares"], "price": current_price,
-                    "pnl_pct": round(pnl_pct, 1), "reason": "止损触发"
+                    "pnl_pct": round(pnl_pct, 1),
+                    "reason": f"止损触发({stop_pct:.0f}%)"
                 })
             # 评分下滑（D或以下）
             elif score_data["score"] < 42:
@@ -1953,6 +2042,19 @@ class TradeDecider:
         grade_thresholds = OPTIMIZED_PARAMS.get("grade_thresholds", {})
         min_buy_score = grade_thresholds.get(regime_grade_min, 65) if regime_grade_min else float("inf")
 
+        # v7.6: 行业集中度检查 — 单行业持仓市值不得超过 max_industry 比例
+        def _industry_of(code):
+            return (ETF_INDUSTRY_MAP.get(code) or [None])[0]
+
+        industry_value = {}
+        for k, v in self.portfolio.items():
+            if k.startswith("_") or not isinstance(v, dict):
+                continue
+            ind = _industry_of(k)
+            val = v.get("shares", 0) * v.get("current_price", v.get("cost", 0))
+            industry_value[ind] = industry_value.get(ind, 0) + val
+        max_industry_value = max_industry * total_capital
+
         # v8.0: 先收集所有候选，计算波动率调整因子
         buy_candidates = []
         if not regime_blocks_buy:
@@ -1960,6 +2062,10 @@ class TradeDecider:
                 if len(buy_candidates) >= 6:  # 收集更多候选用于波动率比较
                     break
                 if s["code"] in self.portfolio:
+                    continue
+                # v7.6: 行业集中度上限（max_industry参数此前从未生效）
+                ind = _industry_of(s["code"])
+                if ind and industry_value.get(ind, 0) >= max_industry_value:
                     continue
                 if s["score"] < min_buy_score:
                     continue
@@ -1972,8 +2078,13 @@ class TradeDecider:
         # v8.0: 波动率调整因子
         vol_adjs = self._volatility_adjustments(buy_candidates)
 
+        # P0修复: 跟踪本次计划已占用的资金，防止多只买入超支（原bug: available永不更新，3只各买50%可超支150%）
+        spent = 0.0
+        # v7.6: 启用 max_total_holdings（此前参数定义了从未执行）
+        holdings_count = sum(1 for k, v in self.portfolio.items() if not k.startswith("_") and isinstance(v, dict))
+        max_holdings = SYSTEM_CONFIG.get("max_total_holdings", 5)
         for s in buy_candidates:
-            if len(buy_list) >= 3:
+            if len(buy_list) + holdings_count >= max_holdings:
                 break
             code = s["code"]
             kelly_pct = s["_kelly_pct"]
@@ -1984,13 +2095,17 @@ class TradeDecider:
             final_pct = min(kelly_pct * vol_adj, max_single)
 
             budget = total_capital * final_pct
-            budget = min(budget, available * 0.5)  # 单次不超过可用资金50%
+            budget = min(budget, (available - spent) * 0.5)  # 单次不超过剩余可用资金50%
             price = s.get("price", 0)
             if price <= 0:
                 continue
             shares = int(budget / price / 100) * 100
             if shares < 100:
                 continue
+            # 若剩余可用资金已不足1手，停止买入
+            if (available - spent) < price * 100:
+                break
+            spent += shares * price
 
             # 构建理由
             reasons = [s.get("grade", "")]
@@ -2050,8 +2165,10 @@ def compute_factor_ic_ranking(etf_data_dict, lookback=40, min_etfs=5):
         highs = np.array([k["high"] for k in kline[-lookback-25:]], dtype=np.float64)
         lows = np.array([k["low"] for k in kline[-lookback-25:]], dtype=np.float64)
         volumes = np.array([k["volume"] for k in kline[-lookback-25:]], dtype=np.float64)
+        turnovers = [k.get("turnover", 0) for k in kline[-lookback-25:]]  # v7.6: F17因子
         etf_list.append({"code": code, "name": edata.get("name", code),
-                         "closes": closes, "highs": highs, "lows": lows, "volumes": volumes})
+                         "closes": closes, "highs": highs, "lows": lows, "volumes": volumes,
+                         "turnovers": turnovers})
 
     if len(etf_list) < min_etfs:
         return []
@@ -2074,7 +2191,7 @@ def compute_factor_ic_ranking(etf_data_dict, lookback=40, min_etfs=5):
             v = e["volumes"][:t+1].tolist()
 
             try:
-                indicators = compute_indicators(c, h, l, v)
+                indicators = compute_indicators(c, h, l, v, e.get("turnovers", [])[:t+1])
                 factors = score_factors(indicators)
                 # 未来15日收益率（标准化后0-1范围，便于计算IC）
                 fwd_ret = (e["closes"][t+15] / e["closes"][t] - 1.0) if t+15 < len(e["closes"]) else 0.0

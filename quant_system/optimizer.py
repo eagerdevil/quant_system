@@ -439,7 +439,7 @@ def compute_factor_correlation(precomputed):
 # v8.0: 滚动窗口样本外验证 (Walk-Forward Cross Validation)
 # ============================================================
 def walk_forward_cv(precomputed, best_params, current_params, baseline_params,
-                     n_windows=5, train_days=120, test_days=20):
+                     n_windows=5, train_days=120, test_days=20, min_start=0):
     """
     P0-1: 滚动窗口 Walk-Forward 交叉验证。
 
@@ -451,6 +451,11 @@ def walk_forward_cv(precomputed, best_params, current_params, baseline_params,
     2. 每个窗口: train [t_i, t_i+train_days], test [t_i+train_days, t_i+train_days+test_days]
     3. 在每个窗口的测试集上计算IC
     4. 报告: 平均OOS IC ± std, 正IC窗口比例, 因子级稳定性
+
+    v7.6 泄漏修复: 新增 min_start 参数 — 窗口测试段起点不得早于 min_start。
+    此前WFCV窗口均匀分布在全程, 早窗口测试段落在主切分前70%训练集内,
+    而优化参数正是在前70%上拟合的 → OOS分数虚高。现在测试段全部落在
+    主切分测试集(参数未见过)之后。
 
     返回: {
         "windows": [{train_range, test_range, n_train, n_test, ic, ...}, ...],
@@ -472,10 +477,19 @@ def walk_forward_cv(precomputed, best_params, current_params, baseline_params,
         logger.info(f"  [WARNING] 数据点不足({n_total} < {window_size*2})，回退到单窗口验证")
         n_windows = 1
 
-    # 计算窗口起始位置（均匀分布在整个时间范围内）
-    max_start = n_total - window_size
+    # v7.6 泄漏修复: 窗口测试段起点不得早于min_start(主切分测试集起点=参数未见过数据)
+    min_start = max(int(min_start), 0)
+    max_test_start = n_total - test_days
+    if min_start >= max_test_start:
+        logger.warning(f"  [WARNING] min_start={min_start} ≥ 可用测试空间{max_test_start}，WFCV跳过(数据不足)")
+        return {
+            "windows": [], "mean_oos_ic": None, "std_oos_ic": None,
+            "positive_rate": None, "note": "WFCV跳过: 主测试集起点之后空间不足"
+        }
+
+    # 测试段起点均匀分布且全部 ≥ min_start（窗口间测试段不重叠，步进=test_days）
     if n_windows > 1:
-        step = max(1, max_start // (n_windows - 1))
+        step = max(test_days, (max_test_start - min_start) // (n_windows - 1))
     else:
         step = 0
 
@@ -488,15 +502,18 @@ def walk_forward_cv(precomputed, best_params, current_params, baseline_params,
     factor_oos_ics = {k: [] for k in FACTOR_NAMES}
 
     for w in range(n_windows):
-        start = min(w * step, max_start)
-        train_end = start + train_days
-        test_end = min(train_end + test_days, n_total)
+        start = min(min_start + w * step, max_test_start)
+        test_end = min(start + test_days, n_total)
+        # 窗口训练段用于过拟合差距参照(ic_best_train)，可落在拟合数据内；
+        # 窗口测试段必须完全在参数拟合数据之外（start >= min_start 已保证）
+        train_start = max(0, start - train_days)
+        if train_start >= start:
+            continue  # 训练段为空(窗口起点为0), 无法计算过拟合差距, 跳过
+        window_train = precomputed[train_start:start]
+        window_test = precomputed[start:test_end]
 
-        if test_end - train_end < 10:
+        if len(window_test) < 10:
             continue  # 测试集太小
-
-        window_train = precomputed[start:train_end]
-        window_test = precomputed[train_end:test_end]
 
         train_date_range = (window_train[0].get('date','?'), window_train[-1].get('date','?'))
         test_date_range = (window_test[0].get('date','?'), window_test[-1].get('date','?'))
@@ -760,7 +777,8 @@ def main():
     # ================================================================
     wfcv_result = walk_forward_cv(
         precomputed, refine_best_params, current_params, baseline_params,
-        n_windows=5, train_days=120, test_days=20
+        n_windows=5, train_days=120, test_days=20,
+        min_start=split_idx  # v7.6: 泄漏修复 — 测试段不早于主切分测试集起点
     )
 
     # ================================================================

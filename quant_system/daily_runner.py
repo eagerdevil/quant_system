@@ -71,6 +71,7 @@ from performance_tracker import generate_performance_summary
 TODAY = datetime.now().strftime("%Y%m%d")
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# ============================================================
 def load_portfolio(filepath=None):
     """加载当前持仓，包含可用资金。
     优先使用指定文件，其次 portfolio.json，最后报错。
@@ -408,12 +409,13 @@ def format_institutional_flow(all_data):
         for s in dt[:5]:
             lines.append(f"    {s['name']}({s['code']}) : {s['inst_net']:+.0f}万")
 
-    # ETF份额增长
+    # ETF份额申赎 (v7.6: 结构改为 {inflow, outflow})
     ef = all_data.get("etf_flow")
     if ef:
-        lines.append(f"  机构增持ETF:")
-        for s in ef[:5]:
-            lines.append(f"    {s['name']}({s['code']}) : 份额变化{s['share_change']:+.0f}")
+        for s in (ef.get("inflow") or [])[:5]:
+            lines.append(f"  🟢 机构净申购: {s['name']}({s['code']}) 份额+{s['share_change']:+.0f}")
+        for s in (ef.get("outflow") or [])[:5]:
+            lines.append(f"  🔴 机构净赎回: {s['name']}({s['code']}) 份额{s['share_change']:+.0f}")
 
     # 北向行业偏好
     nb = all_data.get("north_top")
@@ -452,7 +454,11 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
         lines.append(f"    {icon} {label}")
     if timing['force_capped']:
         lines.append(f"  [WARNING] 强制限制生效: 仓位上限30%")
-    lines.append(f"  北向资金5日累计: {timing.get('north_flow_5d', 'N/A'):.1f}亿元")
+    nf_5d = timing.get("north_flow_5d")
+    if nf_5d is not None:
+        lines.append(f"  沪深股通5日均成交: {nf_5d:.1f}亿元(北向净买额2024/8起停披露,以成交活跃度替代)")
+    else:
+        lines.append("  沪深股通成交数据缺失(中性处理)")
     # v5.0: 市场情绪
     sentiment = timing.get("sentiment", {})
     if sentiment:
@@ -822,7 +828,14 @@ def main():
         industry_rotation = compute_industry_rotation_score(industry_data, n_days=20)
 
         # v5.0: 批量评分 + 横截面比较 + v7.2: regime自适应权重
-        batch_scores = score_all_etfs_cross_sectional(etf_data, regime=pre_regime)
+        # v7.6: ETF份额申赎信号 → F18因子
+        flow_map = {}
+        etf_flow = all_data.get("etf_flow") or {}
+        for s in (etf_flow.get("inflow") or []):
+            flow_map[s["code"]] = 1
+        for s in (etf_flow.get("outflow") or []):
+            flow_map[s["code"]] = -1
+        batch_scores = score_all_etfs_cross_sectional(etf_data, regime=pre_regime, etf_flow_map=flow_map)
 
         scores = []
         for result in batch_scores:
@@ -890,7 +903,8 @@ def main():
         highs = [k["high"] for k in kline]
         lows = [k["low"] for k in kline]
         volumes = [k["volume"] for k in kline]
-        result = score_etf_comprehensive(code, sdata["name"], closes, highs, lows, volumes)
+        turnovers = [k.get("turnover", 0) for k in kline]  # v7.6: 个股换手率F17
+        result = score_etf_comprehensive(code, sdata["name"], closes, highs, lows, volumes, turnover=turnovers)
         result["is_stock"] = True
         stock_scores.append(result)
 
@@ -902,7 +916,9 @@ def main():
             all_data.get("north_bound", []),
             all_data.get("total_volume", 0),
             all_data.get("breadth", {}),
-            all_data.get("margin", {})
+            all_data.get("margin", {}),
+            volume_history=all_data.get("volume_history", []),  # v7.6: S4动态分位
+            bond_yield=all_data.get("bond_yield")  # v7.6: S7流动性信号
         )
         timing_result = timing_engine.position_advice()
     except Exception as e:
@@ -918,6 +934,32 @@ def main():
     )
     timing_result["sentiment"] = sentiment
 
+    # v7.6: 组合级回撤熔断 — 从历史报告权益曲线计算近期峰值回撤, 超限强制降仓
+    try:
+        from performance_tracker import load_history, compute_equity_curve
+        hist_reports = load_history(OUTPUT_DIR, days=90)
+        hist_curve = compute_equity_curve(hist_reports)
+        hist_assets = [e["total_assets"] for e in hist_curve if e.get("total_assets", 0) > 0]
+        if len(hist_assets) >= 5:
+            dd_peak = max(hist_assets)
+            dd_now = hist_assets[-1]
+            dd_pct = (dd_now / dd_peak - 1) * 100
+            if dd_pct <= -15:
+                timing_result["base_position"] = min(timing_result["base_position"], 0.10)
+                timing_result["circuit_breaker"] = {"triggered": True, "level": "L2_重仓回撤",
+                                                    "drawdown_pct": round(dd_pct, 2), "cap_position": 0.10}
+                logger.warning(f"  [熔断L2] 组合回撤{dd_pct:.1f}%≤-15%，仓位强制降至10%")
+            elif dd_pct <= -10:
+                timing_result["base_position"] = min(timing_result["base_position"], 0.30)
+                timing_result["circuit_breaker"] = {"triggered": True, "level": "L1_中度回撤",
+                                                    "drawdown_pct": round(dd_pct, 2), "cap_position": 0.30}
+                logger.warning(f"  [熔断L1] 组合回撤{dd_pct:.1f}%≤-10%，仓位强制降至30%")
+            else:
+                timing_result["circuit_breaker"] = {"triggered": False,
+                                                    "drawdown_pct": round(dd_pct, 2)}
+    except Exception as e:
+        logger.info(f"  [熔断] 回撤计算失败(忽略): {e}")
+
     # 4. 生成决策
     logger.info("Step 4/4: 生成决策...")
     portfolio = load_portfolio(portfolio_file)
@@ -932,19 +974,32 @@ def main():
     # v8.0: 基准对比
     benchmark = compute_benchmark_comparison(portfolio, all_data.get("indices", {}))
     if port_summary.get("total_assets", 0) > 0 and benchmark.get("portfolio_start_value", 0) > 0:
-        portfolio_return = port_summary["total_assets"] / benchmark["portfolio_start_value"] - 1.0
+        # v7.6: 修正 — 期间提现/入金不算盈亏, 加回净出金后再算收益率
+        # (原口径把提现2000算成亏损, 曾误报组合-56.2%)
+        cash_flows = portfolio.get("_cash_flows", []) or []
+        # 只调整起点之后的出入金: 起点前的投入是本金(含在起始值里), 不能重复扣减
+        bm_start = benchmark.get("start_date", "")
+        withdraw_after = sum(cf.get("amount", 0) for cf in cash_flows
+                             if cf.get("type") == "withdraw" and str(cf.get("date", "")) >= bm_start)
+        deposit_after = sum(cf.get("amount", 0) for cf in cash_flows
+                            if cf.get("type") == "deposit" and str(cf.get("date", "")) > bm_start)
+        net_outflow = withdraw_after - deposit_after
+        adjusted_assets = port_summary["total_assets"] + net_outflow
+        portfolio_return = adjusted_assets / benchmark["portfolio_start_value"] - 1.0
         benchmark["portfolio_return"] = round(portfolio_return, 4)
+        benchmark["net_cash_outflow"] = round(net_outflow, 2)
         benchmark["excess_return"] = round(portfolio_return - benchmark.get("benchmark_return", 0), 4)
         benchmark["beat_benchmark"] = benchmark["excess_return"] > 0
         # 生成对比消息
+        adj_note = f" (净出金{net_outflow:+.0f}元已剔除)" if abs(net_outflow) > 1 else ""
         if benchmark["beat_benchmark"]:
             benchmark["message"] = (
-                f"组合 {portfolio_return:+.2%} vs 沪深300 {benchmark['benchmark_return']:+.2%}，"
+                f"组合 {portfolio_return:+.2%}{adj_note} vs 沪深300 {benchmark['benchmark_return']:+.2%}，"
                 f"超额 {benchmark['excess_return']:+.2%} ✅ 跑赢基准"
             )
         else:
             benchmark["message"] = (
-                f"组合 {portfolio_return:+.2%} vs 沪深300 {benchmark['benchmark_return']:+.2%}，"
+                f"组合 {portfolio_return:+.2%}{adj_note} vs 沪深300 {benchmark['benchmark_return']:+.2%}，"
                 f"落后 {benchmark['excess_return']:+.2%} ❌ 跑输基准"
             )
     logger.info(f"  [基准对比] {benchmark.get('message', '数据不足')}")
@@ -955,7 +1010,11 @@ def main():
 
     report = format_report(plan, scores, timing_result, portfolio, all_data, stock_scores, port_summary)
     report += inst_flow_section
-    print(report)
+    # v7.6: Windows GBK终端打印emoji会UnicodeEncodeError导致报告不保存 — 加固
+    try:
+        print(report)
+    except UnicodeEncodeError:
+        logger.info("[输出] 终端编码不支持全文打印(报告仍会保存)")
 
     # 保存结果
     output = {

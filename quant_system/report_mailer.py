@@ -183,6 +183,11 @@ def generate_html_report(report_data):
     scores = report_data.get("scores", [])
     port = report_data.get("portfolio", {})  # 账户概览数据
 
+    # v7.6: 止损/止盈与决策引擎统一 — 用regime止损（CHOPPY=-5%/TREND_UP=-8%），不再写死-5%
+    regime_stop = timing.get("regime_stop_loss", -0.08)
+    stop_mult = 1 + regime_stop
+    stop_label = f"{regime_stop * 100:.0f}%"
+
     # 关注列表
     watchlist = [s for s in scores if s.get("is_watchlist") and not s.get("is_holding")]
     holding_scores = [s for s in scores if s.get("is_holding")]
@@ -353,7 +358,7 @@ def generate_html_report(report_data):
     if buy_list:
         html += '<div class="card"><h2>买入建议</h2><table><tr><th>标的</th><th>数量</th><th>价格</th><th>金额</th><th>止损</th><th>止盈</th><th>理由</th></tr>'
         for b in buy_list:
-            sl = round(b["price"]*0.95, 3); tp = round(b["price"]*1.08, 3)
+            sl = round(b["price"]*stop_mult, 3); tp = round(b["price"]*1.08, 3)  # v7.6: 止损用regime止损
             reasons = "; ".join(b.get("reasons", [])[:2])
             html += f'<tr><td class="buy">{b["name"]}<br><small>{b["code"]}</small></td><td>{b["shares"]}股</td><td>{b["price"]:.3f}</td><td>{b["amount"]:.0f}元</td><td class="limit">{sl:.3f}</td><td style="color:#00ff88">{tp:.3f}</td><td style="font-size:11px">{reasons}</td></tr>'
         html += '</table></div>'
@@ -375,8 +380,8 @@ def generate_html_report(report_data):
             html += f'<b style="color:{act_color}">{act_text}</b> <b>{s["name"]}</b> <small>({s["code"]})</small> | {score}分 | RSI:{rsi:.0f} | 现价:{s["price"]:.4f}<br>'
             html += f'<small>5日:{ret.get("r5d",0):+.1f}% | 20日:{ret.get("r20d",0):+.1f}% | 60日:{ret.get("r60d",0):+.1f}% | 连涨:{ind.get("consecutive_up",0)}天</small>'
             if action == "buy":
-                sl = round(s["price"]*0.95,4); tp = round(s["price"]*1.08,4)
-                html += f'<br><small>止损:{sl:.4f}(-5%) | 止盈:{tp:.4f}(+8%)</small>'
+                sl = round(s["price"]*stop_mult,4); tp = round(s["price"]*1.08,4)  # v7.6: 止损用regime止损
+                html += f'<br><small>止损:{sl:.4f}({stop_label}) | 止盈:{tp:.4f}(+8%)</small>'
             html += '</div>'
         html += '</div>'
 
@@ -574,7 +579,9 @@ def generate_wechat_markdown(report_data):
     if buy_list:
         lines.append(f"### 买入建议 ({len(buy_list)}只)")
         for b in buy_list:
-            sl = round(b["price"]*0.95, 3)
+            # v7.6: 止损用regime止损，与决策引擎统一
+            w_stop = timing.get("regime_stop_loss", -0.08)
+            sl = round(b["price"]*(1+w_stop), 3)
             tp = round(b["price"]*1.08, 3)
             reasons = "; ".join(b.get("reasons", [])[:2])
             lines.append(f"- 🟢 **{b['name']}**({b['code']}) {b['shares']}股 @{b['price']:.3f} | 止损{sl:.3f} 止盈{tp:.3f}")
