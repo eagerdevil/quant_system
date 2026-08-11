@@ -421,9 +421,10 @@ def generate_html_report(report_data):
     """
     return html
 
-def send_email(report_html, password, report_date=None):
+def send_email(report_html, password, report_date=None, subject=None):
     """发送邮件报告
     report_date: 报告日期（YYYYMMDD 或 YYYY-MM-DD），缺省时用今天
+    subject: 邮件主题，缺省时用"A股量化日报 - {date}"（模拟盘传入自定义主题）
     """
     if not password:
         logger.warning("[MAIL] 未提供邮箱授权码，跳过发送")
@@ -438,7 +439,10 @@ def send_email(report_html, password, report_date=None):
             date_str = str(report_date).replace('-', '.')
         else:
             date_str = datetime.now().strftime('%Y.%m.%d')
-        msg['Subject'] = Header(f"A股量化日报 - {date_str}", 'utf-8')
+        if subject:
+            msg['Subject'] = Header(subject, 'utf-8')
+        else:
+            msg['Subject'] = Header(f"A股量化日报 - {date_str}", 'utf-8')
         msg['From'] = formataddr(('A股量化系统', SMTP_CONFIG['user']))
         msg['To'] = SMTP_CONFIG['user']
 

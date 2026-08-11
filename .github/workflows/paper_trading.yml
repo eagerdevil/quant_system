@@ -1,0 +1,88 @@
+name: 模拟盘日报
+
+# 由 cron-job.org 每天18:10北京时间触发（与实盘日报18:04错开, 避开数据抓取高峰）
+# 模拟盘与实盘完全隔离: 只读写 portfolio_paper.json / report_paper_*.json, 不触碰实盘持仓
+# GitHub Actions 无状态 → 模拟盘状态靠 git 提交回推持久化（.gitignore 已放行 !report_paper_*.json）
+on:
+  workflow_dispatch:
+
+# 防止并发运行导致 git push 冲突
+concurrency:
+  group: paper-trading
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  paper-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装依赖
+        run: pip install -r quant_system/requirements.txt
+
+      - name: 拉取最新状态（仅快进，拒绝合并冲突）
+        run: |
+          git pull origin main --ff-only || {
+            echo "git pull --ff-only 失败，可能存在远程冲突。"
+            echo "请手动检查后重新触发。"
+            exit 1
+          }
+
+      - name: 运行模拟盘
+        env:
+          TZ: Asia/Shanghai
+          QQMAIL_AUTH_CODE: ${{ secrets.QQMAIL_AUTH_CODE }}
+        run: |
+          echo "===== 模拟盘开始: $(date '+%Y-%m-%d %H:%M') ====="
+          cd quant_system && python paper_trading.py 2>&1
+          echo "===== 模拟盘完成: $(date '+%Y-%m-%d %H:%M') ====="
+
+      - name: 提交模拟盘状态
+        env:
+          TZ: Asia/Shanghai
+        run: |
+          cd quant_system
+          if git diff --quiet portfolio_paper.json && \
+             git diff --quiet --cached portfolio_paper.json && \
+             [ -z "$(git ls-files --others --exclude-standard portfolio_paper.json report_paper_*.json)" ]; then
+            echo "状态未变更，跳过提交"
+            exit 0
+          fi
+
+          echo "检测到模拟盘状态更新，提交变更..."
+          git config user.name "Quant Paper Bot"
+          git config user.email "paper-bot@github.com"
+
+          DATE=$(date '+%Y%m%d')
+          NAV=$(python -c "import json,glob; fs=sorted(glob.glob('report_paper_*.json')); d=json.load(open(fs[-1],encoding='utf-8')) if fs else {}; print(d.get('account',{}).get('total_assets',0))" 2>/dev/null || echo 0)
+          RET=$(python -c "import json,glob; fs=sorted(glob.glob('report_paper_*.json')); d=json.load(open(fs[-1],encoding='utf-8')) if fs else {}; print(d.get('account',{}).get('total_return_pct',0))" 2>/dev/null || echo 0)
+
+          git add portfolio_paper.json report_paper_*.json
+          git commit -m "paper(trade): 模拟盘日报 ${DATE} 净值${NAV} 累计${RET}%"
+
+          git push origin HEAD || {
+            echo "push失败，rebase重试一次"
+            git pull --rebase || exit 1
+            git push origin HEAD || exit 1
+          }
+          echo "模拟盘状态已推送 ✓"
+
+      - name: 上传模拟盘报告（可选，留作存档）
+        uses: actions/upload-artifact@v4
+        with:
+          name: paper-report-${{ github.run_id }}
+          path: quant_system/report_paper_*.json
+          retention-days: 7

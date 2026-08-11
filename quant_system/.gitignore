@@ -13,6 +13,9 @@ email_config.json
 # 报告文件（本地存档即可，不必上传）
 report_*.json
 review_*.txt
+# 模拟盘报告必须入库（Actions 无状态，靠 git 持久化状态）— 否定规则必须跟在 report_*.json 之后
+!report_paper_*.json
+!portfolio_paper.json
 
 # 运行日志（本地存档即可，不必上传）
 logs/

@@ -17,20 +17,22 @@ logger = logging.getLogger(__name__)
 TODAY = datetime.now().strftime("%Y%m%d")
 
 
-def load_history(report_dir, days=90):
-    """加载历史报告，返回按日期排序的列表"""
+def load_history(report_dir, days=90, prefix="report_"):
+    """加载历史报告，返回按日期排序的列表
+    prefix: 报告文件前缀（实盘"report_"，模拟盘"report_paper_"），缺省保持实盘行为
+    """
     reports = []
     if not os.path.isdir(report_dir):
         return reports
 
     for fname in sorted(os.listdir(report_dir)):
-        if not fname.startswith("report_") or not fname.endswith(".json"):
+        if not fname.startswith(prefix) or not fname.endswith(".json"):
             continue
         path = os.path.join(report_dir, fname)
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            date_str = fname.replace("report_", "").replace(".json", "")
+            date_str = fname.replace(prefix, "").replace(".json", "")
             data["_date"] = date_str
             reports.append(data)
         except (json.JSONDecodeError, KeyError):

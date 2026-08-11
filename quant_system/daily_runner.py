@@ -681,7 +681,7 @@ def is_rest_day():
 # ================================================================
 # v8.0: 基准对比 — 组合 vs 沪深300全收益
 # ================================================================
-def compute_benchmark_comparison(portfolio, index_data):
+def compute_benchmark_comparison(portfolio, index_data, report_prefix="report_"):
     """
     P0-2: 计算组合与沪深300全收益的对比。
 
@@ -696,7 +696,7 @@ def compute_benchmark_comparison(portfolio, index_data):
 
     from glob import glob as _glob
     report_dir = os.path.dirname(os.path.abspath(__file__))
-    report_files = sorted(_glob(os.path.join(report_dir, "report_*.json")))
+    report_files = sorted(_glob(os.path.join(report_dir, f"{report_prefix}*.json")))
     if report_files:
         # 找第一个包含有效总资产的报告作为对比起点（旧版报告无portfolio字段，跳过）
         for rf in report_files:
@@ -708,7 +708,7 @@ def compute_benchmark_comparison(portfolio, index_data):
                     val = old_port.get("total_assets", 0)
                     if val and val > 0:
                         fname = os.path.basename(rf)
-                        start_date = fname.replace("report_", "").replace(".json", "")
+                        start_date = fname.replace(report_prefix, "").replace(".json", "")
                         portfolio_start_value = val
                         break
             except (json.JSONDecodeError, KeyError, OSError):
@@ -716,7 +716,7 @@ def compute_benchmark_comparison(portfolio, index_data):
         if start_date is None:
             # 全部报告无有效持仓数据：用最早报告的日期，起点值置0（后续不渲染对比结论）
             fname = os.path.basename(report_files[0])
-            start_date = fname.replace("report_", "").replace(".json", "")
+            start_date = fname.replace(report_prefix, "").replace(".json", "")
     else:
         # v7.6: 无历史报告(GitHub Actions环境, report被gitignore)时,
         # 起点用累计投入本金(Σdeposit), 而非当前资产 — 否则收益恒为0且出入金无法修正
