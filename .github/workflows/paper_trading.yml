@@ -85,9 +85,9 @@ jobs:
           print(f"[manifest] docs/data/ 已同步 {len(reports)} 份报告 + 账户状态")
           EOF
 
-          # 2) 状态变更检测 (从仓库根跑, 覆盖 portfolio/报告/manifest)
+          # 2) 状态变更检测 (从仓库根跑, 覆盖 portfolio/报告/manifest/站点数据)
           cd "$GITHUB_WORKSPACE"
-          if git diff --quiet -- quant_system/portfolio_paper.json && \
+          if git diff --quiet -- quant_system/portfolio_paper.json docs/data/ && \
              [ -z "$(git ls-files --others --exclude-standard quant_system/portfolio_paper.json quant_system/report_paper_*.json docs/data/)" ]; then
             echo "状态未变更，跳过提交"
             exit 0
