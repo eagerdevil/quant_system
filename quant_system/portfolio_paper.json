@@ -33,7 +33,7 @@
       "code": "510880",
       "name": "红利ETF",
       "action": "BUY",
-      "shares": 5500,
+      "shares": 27800,
       "signal_date": "20260812",
       "retries": 0,
       "reason": ""
@@ -42,7 +42,7 @@
       "code": "513800",
       "name": "日本东证指数ETF南方",
       "action": "BUY",
-      "shares": 7200,
+      "shares": 36300,
       "signal_date": "20260812",
       "retries": 0,
       "reason": ""
