@@ -1,0 +1,51 @@
+{
+  "_comment": "模拟盘虚拟账户（与 portfolio.json 完全隔离）| 初始资金10万 | 由 paper_trading.py 每日18:10自动运行",
+  "_initial_capital": 500000.0,
+  "_available_cash": 500000.0,
+  "_cash_flows": [
+    {
+      "date": "20260812",
+      "type": "deposit",
+      "amount": 500000.0,
+      "note": "模拟盘初始资金(50万)"
+    }
+  ],
+  "_pending": [
+    {
+      "code": "512800",
+      "name": "银行ETF",
+      "action": "BUY",
+      "shares": 25900,
+      "signal_date": "20260812",
+      "retries": 0,
+      "reason": ""
+    },
+    {
+      "code": "515650",
+      "name": "消费50ETF富国",
+      "action": "BUY",
+      "shares": 11600,
+      "signal_date": "20260812",
+      "retries": 0,
+      "reason": ""
+    },
+    {
+      "code": "510880",
+      "name": "红利ETF",
+      "action": "BUY",
+      "shares": 27800,
+      "signal_date": "20260812",
+      "retries": 0,
+      "reason": ""
+    },
+    {
+      "code": "513800",
+      "name": "日本东证指数ETF南方",
+      "action": "BUY",
+      "shares": 36300,
+      "signal_date": "20260812",
+      "retries": 0,
+      "reason": ""
+    }
+  ]
+}

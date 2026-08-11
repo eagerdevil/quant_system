@@ -54,10 +54,15 @@ jobs:
         env:
           TZ: Asia/Shanghai
         run: |
-          # 1) 由今日报告生成监控站 manifest (docs/data/reports.json)
+          # 1) 同步数据到站点目录并生成 manifest
+          #    Pages 从 /docs 发布只含 docs/ 内容 → 数据文件必须复制进 docs/data/
           cd quant_system
           python - <<'EOF'
-          import json, glob, os
+          import json, glob, os, shutil
+          os.makedirs('../docs/data', exist_ok=True)
+          for f in sorted(glob.glob('report_paper_*.json')) + ['portfolio_paper.json']:
+              if os.path.exists(f):
+                  shutil.copy(f, os.path.join('../docs/data', f))
           reports = []
           for f in sorted(glob.glob('report_paper_*.json')):
               try:
@@ -67,7 +72,7 @@ jobs:
               b = d.get('benchmark', {}) or {}
               reports.append({
                   'date': str(d.get('date') or os.path.basename(f)[13:21]),
-                  'file': os.path.basename(f),
+                  'file': f'data/{os.path.basename(f)}',   # 相对站点根(docs/)
                   'updated_at': str(d.get('timestamp') or ''),
                   'total_assets': d.get('account', {}).get('total_assets', 0),
                   'total_return_pct': d.get('account', {}).get('total_return_pct', 0),
@@ -75,16 +80,15 @@ jobs:
                   'excess_return': round((b.get('excess_return') or 0) * 100, 2),
                   'beat_benchmark': bool(b.get('beat_benchmark', False)),
               })
-          os.makedirs('../docs/data', exist_ok=True)
           json.dump({'reports': reports}, open('../docs/data/reports.json', 'w', encoding='utf-8'),
                     ensure_ascii=False, indent=1)
-          print(f"[manifest] docs/data/reports.json 已更新, {len(reports)} 份报告")
+          print(f"[manifest] docs/data/ 已同步 {len(reports)} 份报告 + 账户状态")
           EOF
 
           # 2) 状态变更检测 (从仓库根跑, 覆盖 portfolio/报告/manifest)
           cd "$GITHUB_WORKSPACE"
           if git diff --quiet -- quant_system/portfolio_paper.json && \
-             [ -z "$(git ls-files --others --exclude-standard quant_system/portfolio_paper.json quant_system/report_paper_*.json docs/data/reports.json)" ]; then
+             [ -z "$(git ls-files --others --exclude-standard quant_system/portfolio_paper.json quant_system/report_paper_*.json docs/data/)" ]; then
             echo "状态未变更，跳过提交"
             exit 0
           fi
@@ -97,7 +101,7 @@ jobs:
           NAV=$(python -c "import json,glob; fs=sorted(glob.glob('quant_system/report_paper_*.json')); d=json.load(open(fs[-1],encoding='utf-8')) if fs else {}; print(d.get('account',{}).get('total_assets',0))" 2>/dev/null || echo 0)
           RET=$(python -c "import json,glob; fs=sorted(glob.glob('quant_system/report_paper_*.json')); d=json.load(open(fs[-1],encoding='utf-8')) if fs else {}; print(d.get('account',{}).get('total_return_pct',0))" 2>/dev/null || echo 0)
 
-          git add quant_system/portfolio_paper.json quant_system/report_paper_*.json docs/data/reports.json
+          git add quant_system/portfolio_paper.json quant_system/report_paper_*.json docs/data/
           git commit -m "paper(trade): 模拟盘日报 ${DATE} 净值${NAV} 累计${RET}%"
 
           git push origin HEAD || {
