@@ -50,7 +50,7 @@ from performance_tracker import load_history, compute_equity_curve
 
 TODAY = datetime.now().strftime("%Y%m%d")
 PAPER_PORTFOLIO_FILE = os.path.join(OUTPUT_DIR, "portfolio_paper.json")
-INITIAL_CAPITAL = 100000.0   # 虚拟初始资金
+INITIAL_CAPITAL = 500000.0   # 虚拟初始资金
 MAX_PENDING_RETRY = 2        # 连续2个交易日无开盘价则放弃该笔计划
 REPORT_PREFIX = "report_paper_"
 

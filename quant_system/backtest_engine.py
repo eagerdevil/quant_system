@@ -242,7 +242,8 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
         if not pending:
             return
         # 先执行全部卖出（止损/排名），再执行买入，保证卖出回笼资金可用于当日买入
-        for p in sorted(pending, key=lambda x: 0 if x["action"] == "BUY" else 1):
+        # 8/12修复: 原排序 BUY=0/SELL=1 是先买后卖，与注释矛盾（模拟盘 paper_trading.py 已按 SELL-first 实现）
+        for p in sorted(pending, key=lambda x: 0 if x["action"] != "BUY" else 1):
             code = p["code"]
             bar = _bar_on(code, today)
             if bar is None or bar.get("open", 0) <= 0:

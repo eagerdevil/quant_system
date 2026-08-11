@@ -1,13 +1,13 @@
 {
   "_comment": "模拟盘虚拟账户（与 portfolio.json 完全隔离）| 初始资金10万 | 由 paper_trading.py 每日18:10自动运行",
-  "_initial_capital": 100000.0,
-  "_available_cash": 100000.0,
+  "_initial_capital": 500000.0,
+  "_available_cash": 500000.0,
   "_cash_flows": [
     {
       "date": "20260812",
       "type": "deposit",
-      "amount": 100000.0,
-      "note": "模拟盘初始资金"
+      "amount": 500000.0,
+      "note": "模拟盘初始资金(50万)"
     }
   ],
   "_pending": [
