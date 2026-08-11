@@ -50,14 +50,41 @@ jobs:
           cd quant_system && python paper_trading.py 2>&1
           echo "===== 模拟盘完成: $(date '+%Y-%m-%d %H:%M') ====="
 
-      - name: 提交模拟盘状态
+      - name: 生成监控站 manifest + 提交模拟盘状态
         env:
           TZ: Asia/Shanghai
         run: |
+          # 1) 由今日报告生成监控站 manifest (docs/data/reports.json)
           cd quant_system
-          if git diff --quiet portfolio_paper.json && \
-             git diff --quiet --cached portfolio_paper.json && \
-             [ -z "$(git ls-files --others --exclude-standard portfolio_paper.json report_paper_*.json)" ]; then
+          python - <<'EOF'
+          import json, glob, os
+          reports = []
+          for f in sorted(glob.glob('report_paper_*.json')):
+              try:
+                  d = json.load(open(f, encoding='utf-8'))
+              except Exception:
+                  continue
+              b = d.get('benchmark', {}) or {}
+              reports.append({
+                  'date': str(d.get('date') or os.path.basename(f)[13:21]),
+                  'file': os.path.basename(f),
+                  'updated_at': str(d.get('timestamp') or ''),
+                  'total_assets': d.get('account', {}).get('total_assets', 0),
+                  'total_return_pct': d.get('account', {}).get('total_return_pct', 0),
+                  'benchmark_return': round((b.get('benchmark_return') or 0) * 100, 2),
+                  'excess_return': round((b.get('excess_return') or 0) * 100, 2),
+                  'beat_benchmark': bool(b.get('beat_benchmark', False)),
+              })
+          os.makedirs('../docs/data', exist_ok=True)
+          json.dump({'reports': reports}, open('../docs/data/reports.json', 'w', encoding='utf-8'),
+                    ensure_ascii=False, indent=1)
+          print(f"[manifest] docs/data/reports.json 已更新, {len(reports)} 份报告")
+          EOF
+
+          # 2) 状态变更检测 (从仓库根跑, 覆盖 portfolio/报告/manifest)
+          cd "$GITHUB_WORKSPACE"
+          if git diff --quiet -- quant_system/portfolio_paper.json && \
+             [ -z "$(git ls-files --others --exclude-standard quant_system/portfolio_paper.json quant_system/report_paper_*.json docs/data/reports.json)" ]; then
             echo "状态未变更，跳过提交"
             exit 0
           fi
@@ -67,10 +94,10 @@ jobs:
           git config user.email "paper-bot@github.com"
 
           DATE=$(date '+%Y%m%d')
-          NAV=$(python -c "import json,glob; fs=sorted(glob.glob('report_paper_*.json')); d=json.load(open(fs[-1],encoding='utf-8')) if fs else {}; print(d.get('account',{}).get('total_assets',0))" 2>/dev/null || echo 0)
-          RET=$(python -c "import json,glob; fs=sorted(glob.glob('report_paper_*.json')); d=json.load(open(fs[-1],encoding='utf-8')) if fs else {}; print(d.get('account',{}).get('total_return_pct',0))" 2>/dev/null || echo 0)
+          NAV=$(python -c "import json,glob; fs=sorted(glob.glob('quant_system/report_paper_*.json')); d=json.load(open(fs[-1],encoding='utf-8')) if fs else {}; print(d.get('account',{}).get('total_assets',0))" 2>/dev/null || echo 0)
+          RET=$(python -c "import json,glob; fs=sorted(glob.glob('quant_system/report_paper_*.json')); d=json.load(open(fs[-1],encoding='utf-8')) if fs else {}; print(d.get('account',{}).get('total_return_pct',0))" 2>/dev/null || echo 0)
 
-          git add portfolio_paper.json report_paper_*.json
+          git add quant_system/portfolio_paper.json quant_system/report_paper_*.json docs/data/reports.json
           git commit -m "paper(trade): 模拟盘日报 ${DATE} 净值${NAV} 累计${RET}%"
 
           git push origin HEAD || {
