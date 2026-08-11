@@ -14,11 +14,20 @@ const dateFmt = d => d.length === 8 ? `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice
 let manifest = null;
 let navChart = null;
 
-async function fetchJSON(path) {
-  const r = await fetch(path, { cache: "no-store" });
-  if (!r.ok) throw new Error(`HTTP ${r.status}: ${path}`);
-  return r.json();
+async function fetchJSON(paths) {
+  if (!Array.isArray(paths)) paths = [paths];
+  let lastErr;
+  for (const p of paths) {
+    try {
+      const r = await fetch(p, { cache: "no-store" });
+      if (r.ok) return r.json();
+      lastErr = new Error(`HTTP ${r.status}: ${p}`);
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr;
 }
+// 数据文件路径: 线上站点根=仓库docs/ (用 quant_system/ 前缀); 本地开发模式=仓库根 (用 ../quant_system/ 前缀)
+const DATA_PATH = f => [`quant_system/${f}`, `../quant_system/${f}`];
 
 async function load() {
   const btn = document.getElementById("btn-refresh");
@@ -26,7 +35,7 @@ async function load() {
   try {
     manifest = await fetchJSON("data/reports.json");
     const latest = manifest.reports && manifest.reports.length ? manifest.reports[manifest.reports.length - 1] : null;
-    const report = latest ? await fetchJSON(`../quant_system/${latest.file}`) : null;
+    const report = latest ? await fetchJSON(DATA_PATH(latest.file)) : null;
     render(report, latest);
     document.getElementById("status-badge").textContent = "已连接 · 自动更新";
     document.getElementById("status-badge").className = "badge ok";
@@ -37,7 +46,7 @@ async function load() {
     badge.className = "badge warn";
     // 尝试直接读账户状态(首次部署、manifest尚未生成时兜底)
     try {
-      const pf = await fetchJSON("../quant_system/portfolio_paper.json");
+      const pf = await fetchJSON(DATA_PATH("portfolio_paper.json"));
       renderMinimal(pf);
     } catch (_) { /* 数据还不存在 */ }
   } finally {
@@ -165,7 +174,7 @@ async function toggleDetail(item, r) {
   const old = document.querySelector(".report-detail");
   if (old) old.remove();
   try {
-    const rep = await fetchJSON(`../quant_system/${r.file}`);
+    const rep = await fetchJSON(DATA_PATH(r.file));
     const detail = document.createElement("div");
     detail.className = "report-detail";
     // 文本版报告 + 关键结构化信息
