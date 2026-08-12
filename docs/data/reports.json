@@ -3,11 +3,11 @@
   {
    "date": "20260812",
    "file": "data/report_paper_20260812.json",
-   "updated_at": "2026-08-12T06:06:55.460324",
+   "updated_at": "2026-08-12T18:13:55.920592",
    "total_assets": 500000.0,
    "total_return_pct": 0.0,
-   "benchmark_return": -3.9,
-   "excess_return": 3.9,
+   "benchmark_return": -3.29,
+   "excess_return": 3.29,
    "beat_benchmark": true
   }
  ]
