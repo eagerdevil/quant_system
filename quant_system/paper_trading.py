@@ -260,7 +260,8 @@ def main():
         edata = etf_data.get(p["code"]) or {}
         kline = edata.get("kline", [])
         # 严格语义: 今日K线存在才成交, 绝不用stale数据
-        if kline and kline[-1].get("date") == TODAY and kline[-1].get("open", 0) > 0:
+        # (数据源日期带横杠如 "2026-08-13", 归一化后与 TODAY 比较; 否则永远判定无开盘价)
+        if kline and str(kline[-1].get("date", "")).replace("-", "") == TODAY and kline[-1].get("open", 0) > 0:
             price_map[p["code"]] = kline[-1]["open"]
         else:
             price_map[p["code"]] = None
