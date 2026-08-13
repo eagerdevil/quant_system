@@ -17,7 +17,7 @@
       "action": "BUY",
       "shares": 25900,
       "signal_date": "20260812",
-      "retries": 0,
+      "retries": 1,
       "reason": ""
     },
     {
@@ -26,7 +26,7 @@
       "action": "BUY",
       "shares": 11600,
       "signal_date": "20260812",
-      "retries": 0,
+      "retries": 1,
       "reason": ""
     },
     {
@@ -35,15 +35,15 @@
       "action": "BUY",
       "shares": 36300,
       "signal_date": "20260812",
-      "retries": 0,
+      "retries": 1,
       "reason": ""
     },
     {
       "code": "510880",
       "name": "红利ETF",
       "action": "BUY",
-      "shares": 32100,
-      "signal_date": "20260812",
+      "shares": 25900,
+      "signal_date": "20260813",
       "retries": 0,
       "reason": ""
     },
@@ -51,8 +51,8 @@
       "code": "515220",
       "name": "煤炭ETF",
       "action": "BUY",
-      "shares": 42900,
-      "signal_date": "20260812",
+      "shares": 43600,
+      "signal_date": "20260813",
       "retries": 0,
       "reason": ""
     }
