@@ -1,0 +1,127 @@
+{
+  "date": "20260814",
+  "baseline_ic_train": -0.05343,
+  "current_ic_train": 0.02909,
+  "best_ic_train": 0.13119,
+  "baseline_ic_test": -0.30458,
+  "current_ic_test": -0.35269,
+  "best_ic_test": -0.24888,
+  "overfitting": false,
+  "updated": false,
+  "reason": "🛑 训练IC提升(+0.10210)但OOS门禁未达标(t=0.1<2或正IC率60%<60%或过拟合2窗) → 拒绝更新, 保持现有参数",
+  "train_points": 1831,
+  "test_points": 786,
+  "etf_count": 15,
+  "point_count": 2617,
+  "evolution_log_entries": 1,
+  "wfcv": {
+    "n_windows": 5,
+    "mean_oos_ic": 0.02814,
+    "std_oos_ic": 0.48681,
+    "positive_rate": 0.6,
+    "stability": "⚠️ 不稳定",
+    "windows": [
+      {
+        "window": 1,
+        "train_range": "2026-04-24~2026-05-11",
+        "test_range": "2026-05-11~2026-05-12",
+        "n_train": 120,
+        "n_test": 20,
+        "ic_best_oos": 0.05944,
+        "ic_current_oos": 0.06097,
+        "ic_baseline_oos": -0.15674,
+        "ic_best_train": 0.14151,
+        "overfit_gap": 0.08206,
+        "overfit_warning": false
+      },
+      {
+        "window": 2,
+        "train_range": "2026-05-18~2026-05-28",
+        "test_range": "2026-05-28~2026-05-29",
+        "n_train": 120,
+        "n_test": 20,
+        "ic_best_oos": 0.58766,
+        "ic_current_oos": 0.5668,
+        "ic_baseline_oos": 0.73494,
+        "ic_best_train": 0.47684,
+        "overfit_gap": -0.11082,
+        "overfit_warning": false
+      },
+      {
+        "window": 3,
+        "train_range": "2026-06-04~2026-06-16",
+        "test_range": "2026-06-16~2026-06-17",
+        "n_train": 120,
+        "n_test": 20,
+        "ic_best_oos": -0.16178,
+        "ic_current_oos": -0.04289,
+        "ic_baseline_oos": -0.16108,
+        "ic_best_train": 0.25023,
+        "overfit_gap": 0.412,
+        "overfit_warning": true
+      },
+      {
+        "window": 4,
+        "train_range": "2026-06-23~2026-07-03",
+        "test_range": "2026-07-03~2026-07-07",
+        "n_train": 120,
+        "n_test": 20,
+        "ic_best_oos": -0.68096,
+        "ic_current_oos": -0.75771,
+        "ic_baseline_oos": -0.72864,
+        "ic_best_train": -0.47513,
+        "overfit_gap": 0.20583,
+        "overfit_warning": true
+      },
+      {
+        "window": 5,
+        "train_range": "2026-07-10~2026-07-22",
+        "test_range": "2026-07-22~2026-07-23",
+        "n_train": 120,
+        "n_test": 20,
+        "ic_best_oos": 0.33634,
+        "ic_current_oos": 0.20399,
+        "ic_baseline_oos": 0.26411,
+        "ic_best_train": -0.06853,
+        "overfit_gap": -0.40488,
+        "overfit_warning": false
+      }
+    ]
+  },
+  "factor_correlation": {
+    "n_high_pairs": 4,
+    "avg_abs_corr": 0.1969,
+    "high_corr_pairs": [
+      [
+        "F9_Sortino",
+        "F15_夏普",
+        0.979,
+        "正"
+      ],
+      [
+        "F1_趋势强度",
+        "F13_均线排列",
+        0.849,
+        "正"
+      ],
+      [
+        "F1_趋势强度",
+        "F12_多周期",
+        0.738,
+        "正"
+      ],
+      [
+        "F9_Sortino",
+        "F14_长期",
+        0.708,
+        "正"
+      ]
+    ],
+    "warnings": [
+      "🚨 F9_Sortino↔F15_夏普 r=+0.979 极度正相关 → 强烈建议合并或大幅降权其一",
+      "⚠️ F1_趋势强度↔F13_均线排列 r=+0.849 高度正相关 → 建议降低其中之一的权重",
+      "⚡ F1_趋势强度↔F12_多周期 r=+0.738 正相关 → 关注，可能重复计票",
+      "⚡ F9_Sortino↔F14_长期 r=+0.708 正相关 → 关注，可能重复计票"
+    ]
+  }
+}

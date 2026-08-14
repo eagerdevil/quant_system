@@ -458,7 +458,8 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
     sentiment = timing.get("sentiment", {})
     if sentiment:
         emoji = {"贪婪":"\U0001f525","偏乐观":"\U0001f60a","中性":"\U0001f610","偏恐慌":"\U0001f628","恐慌":"\U0001f480"}
-        lines.append(f"  \U0001f4ca 市场情绪: {emoji.get(sentiment.get('level',''),'')} {sentiment.get('level','?')} ({sentiment.get('score',50)}分)")
+        est_note = "(含估算)" if sentiment.get("estimated") else ""  # 8/14: 广度数据估算时标注, 防假数据
+        lines.append(f"  \U0001f4ca 市场情绪: {emoji.get(sentiment.get('level',''),'')} {sentiment.get('level','?')} ({sentiment.get('score',50)}分){est_note}")
 
     # ===== 账户概览 =====
     ps = port_summary or {}
@@ -787,6 +788,14 @@ def main():
         logger.info(f"{reason}，休市跳过")
         return
 
+    # 8/14: 邮件幂等 — 当日实盘报告已生成则跳过(防cron双触发/手动重跑导致重复邮件)
+    today_iso = datetime.now().strftime("%Y%m%d")
+    if "--force" not in sys.argv and "--rerun" not in sys.argv:
+        existing = [f for f in _glob.glob(os.path.join(OUTPUT_DIR, f"report_{today_iso}.json"))]
+        if existing:
+            logger.info(f"今日实盘报告已存在({len(existing)}个), 跳过运行(--force可强制重跑)")
+            return
+
     logger.info("启动每日量化分析...")
 
     # 参数解析
@@ -856,6 +865,14 @@ def main():
             fund_nav = fetch_etf_fund_nav(code)
             premium_info = compute_etf_premium(code, current_price, fund_nav)
             premium_pct = premium_info.get("premium_pct")
+            # 8/14修复(P1): NAV失败时溢价惩罚整体丢失→用历史溢价兜底, 10%溢价的QDII不能再零扣分买入
+            if premium_pct is None and premium_info.get("is_qdii"):
+                fb_history = compute_etf_premium_history(code, kline)
+                if fb_history.get("has_history"):
+                    premium_pct = fb_history.get("current")
+                    premium_info["premium_pct"] = premium_pct
+                    premium_info["premium_source"] = "history_fallback"
+                    premium_info["warning"] = f"NAV不可用, 历史溢价兜底({premium_pct:.1f}%)"
 
             # 溢价惩罚：在截面调整后的技术分上再应用
             blended_tech = result["blended_technical"]
@@ -873,7 +890,7 @@ def main():
                 result["premium_multiplier"] = multiplier
                 result["premium_warning"] = warning
             else:
-                result["premium_info_raw"] = {"warning": "QDII溢价数据缺失"}
+                result["premium_info_raw"] = {"warning": "QDII溢价数据缺失(含历史兜底均不可用)"}
 
             # 重新判定等级（因溢价可能改变分数）
             grade_thresholds = OPTIMIZED_PARAMS.get("grade_thresholds", {"A_强烈买入": 78, "B_买入": 65, "C_观察": 55, "D_谨慎": 42})

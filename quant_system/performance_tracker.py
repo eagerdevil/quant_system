@@ -125,9 +125,11 @@ def compute_performance_metrics(equity_curve, net_outflow=0.0, per_point_adjust=
     avg_loss = float(np.mean(loss_diffs)) if len(loss_diffs) > 0 else 0.0
     profit_factor = avg_win / avg_loss if avg_loss > 0 else float('inf')
 
-    # 现金纪律（满仓日 cash=0 同样计入分母，避免比例虚高）
+    # 现金纪律 — 8/14修复: 原固定700元为旧账户时代(小资金)的拍脑袋阈值,
+    # 改为比例口径: 现金 < max(200元, 总资产0.1%) 视为满仓违规(50万账户≈500元, 单笔最小100股成本)
     cash_days = [e for e in equity_curve if "cash" in e]
-    cash_below_700 = sum(1 for e in cash_days if e["cash"] < 700)
+    cash_below_min = sum(1 for e in cash_days
+                         if e["cash"] < max(200.0, e.get("total_assets", 0) * 0.001))
     days_with_cash_data = len(cash_days)
 
     return {
@@ -144,8 +146,8 @@ def compute_performance_metrics(equity_curve, net_outflow=0.0, per_point_adjust=
         "profit_factor": round(profit_factor, 2) if profit_factor != float('inf') else 999,
         "avg_win": round(avg_win, 2),
         "avg_loss": round(avg_loss, 2),
-        "cash_violation_days": cash_below_700,
-        "cash_violation_pct": round(cash_below_700 / days_with_cash_data * 100, 1)
+        "cash_violation_days": cash_below_min,
+        "cash_violation_pct": round(cash_below_min / days_with_cash_data * 100, 1)
                if days_with_cash_data > 0 else 0,
         "latest_assets": round(assets[-1], 2),
         "latest_cash": round(equity_curve[-1]["cash"], 2)
@@ -320,7 +322,7 @@ def generate_performance_summary(report_dir=None):
     lines.append(f"  期初资产: {metrics['start_assets']:.2f}元 → 期末: {metrics['end_assets']:.2f}元")
     lines.append(f"  🚨 现金纪律违反: {metrics['cash_violation_days']}天 ({metrics['cash_violation_pct']:.0f}%)")
     if metrics['cash_violation_pct'] > 50:
-        lines.append(f"     ⚠️ 超过半数交易日现金低于700元！这是账户最大风险来源")
+        lines.append(f"     ⚠️ 超过半数交易日现金不足(总资产0.1%)！无缓冲满仓是账户最大风险来源")
 
     # 信号准确性 (v7.2: 预测性评估)
     if accuracy and "error" not in accuracy:

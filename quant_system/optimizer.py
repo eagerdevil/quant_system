@@ -294,7 +294,7 @@ def current_params_from_config(config):
 
 
 def save_config(params, ic_score, old_config=None, reason=""):
-    """保存最优参数到 factor_weights.json"""
+    """保存最优参数到 factor_weights.json, 并追加历史版本(factor_weights_history.json)"""
     if old_config is None:
         old_config = load_current_config()
 
@@ -317,6 +317,29 @@ def save_config(params, ic_score, old_config=None, reason=""):
 
     with open(WEIGHTS_FILE, 'w', encoding='utf-8') as f:
         json.dump(config, f, ensure_ascii=False, indent=2)
+
+    # 8/14: 追加权重历史 — 供回测按时间切片(消除权重前视偏差), 之前只有当前版本无法回放
+    hist_file = os.path.join(SCRIPT_DIR, "factor_weights_history.json")
+    try:
+        hist = []
+        if os.path.exists(hist_file):
+            with open(hist_file, 'r', encoding='utf-8') as f:
+                hist = json.load(f)
+        if not isinstance(hist, list):
+            hist = []
+        # 同版本号不重复追加(幂等)
+        if not any(h.get("version") == config["meta"]["version"] for h in hist):
+            hist.append({
+                "version": config["meta"]["version"],
+                "date": TODAY,
+                "ic_score": round(ic_score, 5),
+                "reason": reason[:120],
+                "factor_weights": config["factor_weights"],
+            })
+            with open(hist_file, 'w', encoding='utf-8') as f:
+                json.dump(hist, f, ensure_ascii=False, indent=2)
+    except (OSError, json.JSONDecodeError) as e:
+        logger.info(f"  [WARN] 权重历史保存失败: {e}")
 
     return config
 
@@ -800,6 +823,22 @@ def main():
     final_ic = current_ic_train
     reason = ""
 
+    # 8/14 OOS门禁: 训练IC提升必须通过Walk-Forward样本外验证才允许更新
+    # 标准(8/5审查todo): 有效窗口≥4 + OOS t统计量≥2.0 + 正IC窗口占比≥60% + 过拟合窗口<2
+    oos_gate = {}
+    if not wfcv_result.get("error"):
+        oos_gate = {
+            "n": wfcv_result.get("n_windows", 0),
+            "t": wfcv_result.get("t_statistic", 0) or 0,
+            "positive_rate": wfcv_result.get("positive_rate", 0) or 0,
+            "overfit_windows": wfcv_result.get("overfit_windows", 0),
+        }
+    wfcv_passed = (not oos_gate) or (
+        oos_gate["n"] >= 4 and oos_gate["t"] >= 2.0
+        and oos_gate["positive_rate"] >= 0.60
+        and oos_gate["overfit_windows"] < 2
+    )
+
     # v7.2: 过拟合检测
     overfitting = (refine_best_ic_train > current_ic_train + 0.003
                    and refine_best_ic_test < current_ic_test - 0.002)
@@ -808,10 +847,16 @@ def main():
         reason = (f"⚠️ 过拟合警告! 训练IC大幅提升({ic_improvement_train:+.5f})"
                   f"但测试IC下降({ic_improvement_test:+.5f})，拒绝更新")
     elif refine_best_ic_train > current_ic_train + 0.003:
-        should_update = True
-        final_params = refine_best_params
-        final_ic = refine_best_ic_train
-        reason = (f"IC显著提升 训练{ic_improvement_train:+.5f} 测试{ic_improvement_test:+.5f} ✓")
+        if wfcv_passed:
+            should_update = True
+            final_params = refine_best_params
+            final_ic = refine_best_ic_train
+            reason = (f"IC显著提升 训练{ic_improvement_train:+.5f} 测试{ic_improvement_test:+.5f} "
+                      f"OOS达标(t={oos_gate.get('t',0):.1f} 正IC率{oos_gate.get('positive_rate',0):.0%}) ✓")
+        else:
+            reason = (f"🛑 训练IC提升({ic_improvement_train:+.5f})但OOS门禁未达标"
+                      f"(t={oos_gate.get('t',0):.1f}<2或正IC率{oos_gate.get('positive_rate',0):.0%}<60%"
+                      f"或过拟合{oos_gate.get('overfit_windows',0)}窗) → 拒绝更新, 保持现有参数")
     elif refine_best_ic_train < -0.01 and current_ic_train < -0.01:
         should_update = True
         final_params = baseline_params
@@ -823,6 +868,20 @@ def main():
         reason = "现有参数已是最优"
 
     logger.info(f"  决策: {'✓ 更新' if should_update else '✗ 保持'} — {reason}")
+
+    # 8/14: 高相关因子权重平均化 — |r|>0.95的因子对(F9_Sortino↔F15_夏普 r=0.979实测)
+    # 在评分中双重计票同一信息, 更新时把两者权重压到均值, 防止冗余因子叠加主导
+    if should_update:
+        avg_pairs = [(f1, f2) for f1, f2, r in factor_corr_result.get("high_corr_pairs", [])
+                     if abs(r) > 0.95 and f1 in final_params["factor_weights"]
+                     and f2 in final_params["factor_weights"]]
+        for f1, f2 in avg_pairs:
+            w1 = final_params["factor_weights"].get(f1, 1.0)
+            w2 = final_params["factor_weights"].get(f2, 1.0)
+            avg_w = (w1 + w2) / 2
+            final_params["factor_weights"][f1] = avg_w
+            final_params["factor_weights"][f2] = avg_w
+            logger.info(f"  [因子去重] {f1}↔{f2} |r|>0.95重复计票, 权重平均化: {w1:.2f}/{w2:.2f} → {avg_w:.2f}")
 
     # ================================================================
     # 输出参数变化
@@ -944,8 +1003,9 @@ def main():
                     f"平均OOS IC={wfcv_result.get('mean_oos_ic', 0):+.5f} | "
                     f"正IC率={wfcv_result.get('positive_rate', 0):.0%}")
         overfit_count = wfcv_result.get("overfit_windows", 0)
-        if should_update and overfit_count >= 2:
-            logger.info(f"  🚨 WFCV检测到{overfit_count}个窗口过拟合，但单次OOS验证通过，更新继续")
+        # 8/14: OOS门禁已在上层拦截不达标更新, 这里只做状态提示
+        if not wfcv_passed and refine_best_ic_train > current_ic_train + 0.003:
+            logger.info(f"  🛑 OOS门禁拦截: 训练IC有提升但样本外验证不达标(过拟合窗口{overfit_count}个)")
         elif should_update and "⚠️" in str(wfcv_result.get("stability", "")):
             logger.info(f"  ⚠️ WFCV稳定性较差({wfcv_result.get('stability')})，建议观察而非立即更新")
 

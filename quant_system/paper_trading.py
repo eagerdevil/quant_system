@@ -156,7 +156,8 @@ def execute_pending(cash, holdings, pending, price_map):
             if buy_shares < 100:
                 continue
             cash -= cost_with_fee
-            holdings[code] = {"shares": buy_shares, "cost": exec_price, "name": p.get("name", code)}
+            holdings[code] = {"shares": buy_shares, "cost": exec_price, "name": p.get("name", code),
+                              "buy_date": TODAY}  # 8/14长持改造: 记录买入日期(最短持有期20交易日判断)
             executed.append({
                 "date": TODAY, "code": code, "name": p.get("name", code),
                 "action": "BUY", "price": round(exec_price, 4),
@@ -190,13 +191,20 @@ def build_pending_from_plan(plan):
 # 报告文本
 # ============================================================
 def format_paper_report(executed_trades, port_summary, timing_result, plan,
-                        benchmark, final_pending, account):
+                        benchmark, final_pending, account, trades_history=None):
     """【模拟盘日报】简洁文本"""
     lines = []
     lines.append("=" * 64)
     lines.append(f"【模拟盘日报】 {TODAY}")
     lines.append(f"虚拟账户: 初始 {INITIAL_CAPITAL:,.0f} 元 | 总资产 {port_summary['total_assets']:,.2f} 元 "
                  f"| 累计收益 {account.get('total_return_pct', 0):+.2f}%")
+    # 8/14: 历史平仓胜率(真实交易口径, 来自_trades流水)
+    sell_pnls = [t.get("pnl_pct") for t in (trades_history or [])
+                 if t.get("action") == "SELL" and t.get("pnl_pct") is not None]
+    if sell_pnls:
+        wins = sum(1 for p in sell_pnls if p > 0)
+        lines.append(f"历史平仓: {len(sell_pnls)}笔 | 胜率 {wins/len(sell_pnls)*100:.0f}% | "
+                     f"平均盈亏 {sum(sell_pnls)/len(sell_pnls):+.1f}%")
     lines.append(f"现金 {port_summary.get('available_cash', 0):,.2f} 元 | "
                  f"持仓仓位 {100 - port_summary.get('cash_ratio', 100):.1f}% | "
                  f"今日盈亏 {port_summary.get('total_daily_pnl', 0):+.2f} 元")
@@ -243,6 +251,15 @@ def main():
         logger.info(f"{reason}，休市跳过（模拟盘状态零改动）")
         return
 
+    # 8/14: 邮件幂等 — 当日模拟盘报告已生成则跳过(防cron双触发重复邮件)
+    import glob as _glob
+    today_iso = TODAY
+    if "--force" not in sys.argv and "--rerun" not in sys.argv:
+        existing = [f for f in _glob.glob(os.path.join(OUTPUT_DIR, f"report_paper_{today_iso}.json"))]
+        if existing:
+            logger.info(f"今日模拟盘报告已存在, 跳过运行(--force可强制重跑)")
+            return
+
     logger.info("启动模拟盘每日运行...")
 
     # S1. 加载虚拟账户
@@ -275,6 +292,28 @@ def main():
             f"{t['action']} {t['code']} {t['shares']}股@{t['price']}" for t in executed_trades))
     else:
         logger.info("  无成交（昨日无计划或均延期）")
+
+    # 8/14修复: 执行原子化 — 成交立即落盘, 防止S4a-S6(评分/网络/择时)崩溃导致当日成交丢失顺延T+2
+    if executed_trades:
+        portfolio["_available_cash"] = cash
+        for k in [k for k in portfolio if not k.startswith("_")]:
+            del portfolio[k]
+        for code, pos in holdings.items():
+            portfolio[code] = pos
+        # 止损卖出→写入冷却期(5个交易日内禁止重买, 配合quant_engine买入过滤)
+        cooldowns = portfolio.get("_cooldowns") if isinstance(portfolio.get("_cooldowns"), dict) else {}
+        for t in executed_trades:
+            if t["action"] == "SELL" and "止损" in t["reason"]:
+                cooldowns[t["code"]] = TODAY
+                logger.info(f"  [冷却] {t['code']} 止损卖出, 5个交易日内禁止重买")
+        portfolio["_cooldowns"] = cooldowns
+        # 交易流水(可审计): 保留最近200条
+        trades = portfolio.get("_trades") if isinstance(portfolio.get("_trades"), list) else []
+        trades.extend(executed_trades)
+        del trades[:-200]
+        portfolio["_trades"] = trades
+        save_paper_portfolio(portfolio)
+        logger.info(f"  [原子化] 当日{len(executed_trades)}笔成交已立即落盘(portfolio_paper.json)")
 
     # S4a. 评分（照搬 daily_runner Step2 的 ETF 部分, 含溢价惩罚+行业轮动）
     logger.info("Step 3/4: 评分+择时+生成计划...")
@@ -310,6 +349,14 @@ def main():
         fund_nav = fetch_etf_fund_nav(code)
         premium_info = compute_etf_premium(code, current_price, fund_nav)
         premium_pct = premium_info.get("premium_pct")
+        # 8/14修复(P1): NAV失败时溢价惩罚整体丢失→用历史溢价兜底
+        if premium_pct is None and premium_info.get("is_qdii"):
+            fb_history = compute_etf_premium_history(code, kline)
+            if fb_history.get("has_history"):
+                premium_pct = fb_history.get("current")
+                premium_info["premium_pct"] = premium_pct
+                premium_info["premium_source"] = "history_fallback"
+                premium_info["warning"] = f"NAV不可用, 历史溢价兜底({premium_pct:.1f}%)"
 
         blended_tech = result["blended_technical"]
         if premium_pct is not None:
@@ -325,7 +372,7 @@ def main():
             result["premium_multiplier"] = multiplier
             result["premium_warning"] = warning
         else:
-            result["premium_info_raw"] = {"warning": "QDII溢价数据缺失"}
+            result["premium_info_raw"] = {"warning": "QDII溢价数据缺失(含历史兜底均不可用)"}
 
         # 重新判定等级（因溢价可能改变分数）
         grade_thresholds = OPTIMIZED_PARAMS.get("grade_thresholds",
@@ -396,6 +443,15 @@ def main():
     for code, pos in holdings.items():
         portfolio[code] = pos
     portfolio = update_portfolio_prices(portfolio, etf_data)
+    # 8/14长持改造: 每日评分写入持仓历史(供quant_engine"连续5日<55卖出"判断), 保留最近7天
+    score_by_code = {s["code"]: s["score"] for s in scores}
+    for code, pos in list(portfolio.items()):
+        if code.startswith("_") or not isinstance(pos, dict) or "shares" not in pos:
+            continue
+        if code in score_by_code:
+            hist = pos.setdefault("score_history", [])
+            hist.append(round(score_by_code[code], 1))
+            del hist[:-7]
     port_summary = compute_portfolio_summary(portfolio, scores)
     decider = TradeDecider(scores, timing_result, portfolio)
     plan = decider.generate_plan()
@@ -430,10 +486,21 @@ def main():
     # (执行过的订单已从remaining移除; 不同方向如SELL+BUY同日保留, 先卖后买)
     new_pending = build_pending_from_plan(plan)
     pending_keys = {(p["code"], p["action"]) for p in new_pending}
-    final_pending = [p for p in remaining if (p["code"], p["action"]) not in pending_keys] + new_pending
+    # 8/14修复: 停牌订单的retries不因新信号覆盖而归零(原覆盖后重试上限失效, 订单无限滞留)
+    retry_carry = {}
+    for p in remaining:
+        if (p["code"], p["action"]) in pending_keys and p.get("retries", 0) > 0:
+            retry_carry[(p["code"], p["action"])] = p["retries"]
+    final_pending = [p for p in remaining if (p["code"], p["action"]) not in pending_keys]
+    for p in new_pending:
+        key = (p["code"], p["action"])
+        if key in retry_carry:
+            p["retries"] = retry_carry[key]
+        final_pending.append(p)
 
     report = format_paper_report(executed_trades, port_summary, timing_result, plan,
-                                 benchmark, final_pending, account)
+                                 benchmark, final_pending, account,
+                                 trades_history=portfolio.get("_trades"))
     try:
         print(report)
     except UnicodeEncodeError:

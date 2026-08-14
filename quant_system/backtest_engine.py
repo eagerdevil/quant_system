@@ -23,6 +23,38 @@ from quant_engine import (
     CURRENT_WEIGHTS, FACTOR_NAMES, SYSTEM_CONFIG
 )
 
+# 8/14: 权重历史加载 — 回测按时间切片消除前视偏差
+def _load_weight_history():
+    """读取 factor_weights_history.json (optimizer每次保存权重时追加), 按版本升序返回"""
+    hist_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "factor_weights_history.json")
+    if not os.path.exists(hist_file):
+        return []
+    try:
+        with open(hist_file, 'r', encoding='utf-8') as f:
+            hist = json.load(f)
+        if not isinstance(hist, list):
+            return []
+        hist.sort(key=lambda h: str(h.get("date", "")))
+        return [h for h in hist if isinstance(h.get("factor_weights"), dict)]
+    except (OSError, json.JSONDecodeError):
+        return []
+
+def _weight_slice_for(date_str, history=None):
+    """
+    返回date_str(YYYYMMDD)当日适用的权重 — 取<=date的最晚版本
+    无匹配(回测早于首版权重) → 返回None, 调用方需警告前视
+    """
+    if history is None:
+        history = _load_weight_history()
+    best = None
+    for h in history:
+        hd = str(h.get("date", "")).replace("-", "")
+        if hd and hd <= str(date_str).replace("-", ""):
+            best = h["factor_weights"]
+        else:
+            break
+    return best
+
 TODAY = datetime.now().strftime("%Y%m%d")
 COMMISSION_RATE = SYSTEM_CONFIG['commission_rate']  # 万5 (0.0005)
 MIN_COMMISSION = 5.0       # A股最低佣金5元/笔
@@ -95,6 +127,12 @@ def _load_cache(cache_key):
         with open(cache_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
         logger.info(f"[backtest] using cache ({age_hours:.1f}h ago, {len(data.get('trading_days',[]))} days)")
+        # 8/14: 坏缓存校验(空etfs/空交易日=历史失败保存) — 丢弃重拉
+        if not data.get("etfs") or not data.get("trading_days"):
+            logger.info("[backtest] cache corrupt (empty etfs/trading_days), discarding")
+            return None
+        # 8/14: 基准(池内等权净值)每次重建 — 缓存可能混入旧版沪深300基准
+        data["benchmark"] = _build_equal_weight_benchmark(data["etfs"], data["trading_days"])
         return data
     except:
         return None
@@ -162,17 +200,47 @@ def prepare_backtest_data(start_date, end_date=None, pool=None):
     if dropped:
         logger.info(f"[回测] 剔除数据不足的ETF: {', '.join(dropped)}")
     logger.info(f"[回测] 有效ETF: {len(valid_etfs)}只 (要求>={min_klines}条K线)")
-    logger.info(f"[回测] 拉取沪深300指数 ({total_days}天)...")
-    benchmark_klines = fetch_index_daily("000300", days=total_days)
-    if benchmark_klines:
-        benchmark = [{"date": k["date"], "close": k["close"]} for k in benchmark_klines]
-    else:
-        benchmark = []
     trading_days = _get_common_trading_days(valid_etfs, start_date)
+    # 8/14修复: 基准=池内等权买入持有(检验标准), 原沪深300与15只全球宽基池错配
+    benchmark = _build_equal_weight_benchmark(valid_etfs, trading_days)
     logger.info(f"[回测] 数据就绪: {len(valid_etfs)}只ETF, {len(trading_days)}个交易日")
     result = {"etfs": valid_etfs, "benchmark": benchmark, "trading_days": trading_days}
     _save_cache(cache_key, result)
     return result
+
+
+def _build_equal_weight_benchmark(valid_etfs, trading_days):
+    """
+    池内等权买入持有基准净值 — 8/14: 替代沪深300
+    每日对池内所有有效ETF取等权平均日收益, 复利累乘。
+    与检验标准(15只池等权买入持有)一致, 无前视。
+    """
+    if not valid_etfs or not trading_days:
+        return []
+    closes_map = {}
+    for code, edata in valid_etfs.items():
+        closes_map[code] = {k["date"]: k["close"] for k in edata["klines"]}
+    prev_close = {}
+    daily_rets = {}
+    for d in trading_days:
+        rets = []
+        for code, cm in closes_map.items():
+            c = cm.get(d)
+            p = prev_close.get(code)
+            if c is not None and p is not None and p > 0:
+                rets.append(c / p - 1)
+            if c is not None:
+                prev_close[code] = c
+        if len(rets) >= 5:
+            daily_rets[d] = sum(rets) / len(rets)
+    nav = 1.0
+    out = []
+    for d in trading_days:
+        if d in daily_rets:
+            nav *= (1 + daily_rets[d])
+        out.append({"date": d, "close": round(nav, 6)})
+    logger.info(f"[回测] 等权基准构建完成: {len(daily_rets)}个有效收益日, 终值{nav:.3f}")
+    return out
 
 def _get_common_trading_days(valid_etfs, start_date, min_etfs=5):
     if not valid_etfs:
@@ -221,6 +289,14 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
 
     logger.info(f"[回测] 开始: {equity_days[0]} ~ {equity_days[-1]} ({len(equity_days)}天)")
     logger.info(f"[回测] 初始资金: ¥{initial_capital:,.0f}")
+
+    # 8/14: 权重历史加载 — 回测全程按日期切片使用当时权重(消除权重前视)
+    weight_history = _load_weight_history()
+    if weight_history:
+        logger.info(f"[回测] 权重历史: {len(weight_history)}个版本, 按日期切片生效 "
+                    f"(最早{weight_history[0].get('date')}~最新{weight_history[-1].get('date')})")
+    else:
+        logger.info("[回测] ⚠️ 无权重历史文件, 全程使用当前权重(区间早于权重生效日时存在前视)")
 
     # v7.6 (8/5): 消除前视偏差 — T日收盘计算信号 → T+1日开盘价执行
     # pending: [{code, name, action, shares, reason}]，每个T日信号层生成，次日执行层用开盘价成交
@@ -286,7 +362,8 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
                 if buy_shares < 100:
                     continue
                 cash -= cost_with_fee
-                holdings[code] = {"shares": buy_shares, "cost": exec_price, "name": p["name"], "price": exec_price}
+                holdings[code] = {"shares": buy_shares, "cost": exec_price, "name": p["name"],
+                                  "price": exec_price, "buy_date": today}  # 8/14: 最短持有期基准
                 trades_log.append({
                     "date": today, "code": code, "name": p["name"],
                     "action": "BUY", "price": exec_price, "shares": buy_shares,
@@ -317,7 +394,8 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
             try:
                 indicators = compute_indicators(closes, highs, lows, volumes)
                 factors = score_factors(indicators)
-                weights = CURRENT_WEIGHTS
+                # 8/14: 权重时间切片 — 按日期取当时生效的权重版本(无历史时用当前+警告)
+                weights = _weight_slice_for(today, weight_history) or CURRENT_WEIGHTS
                 weighted_sum = sum(factors[k] * weights.get(k, 1.0) for k in FACTOR_NAMES)
                 max_weighted = sum(FACTOR_MAX[k] * weights.get(k, 1.0) for k in FACTOR_NAMES)
                 score = round(weighted_sum / max_weighted * 100) if max_weighted > 0 else 50
@@ -363,65 +441,77 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
         etf_scores.sort(key=lambda x: x["score"], reverse=True)
         top_codes = set(s["code"] for s in etf_scores[:MAX_HOLDINGS])
 
-        # === 信号层-止损检查（v7.2）: 生成T+1卖出计划 ===
-        # 已计划卖出的代码集合：防止同一持仓同日生成重复卖出计划、以及止损后当日重买回
+        # === 信号层-卖出检查（v8.0: 与生产quant_engine卖出逻辑对齐, 8/14长持改造）===
+        # 参数: 止损按市场状态(TREND_UP -10%/其余-8%), 最短持有20个工作日,
+        #       评分连续5天<55卖出, 保盈止盈(盈>25%且5日跌>8%), 卖出冷却5交易日
         sold_codes = set()
+        stop_loss_pct = -10.0 if market_bullish >= 1.0 else -8.0
+        cooldowns = {}  # code -> 卖出day_idx, 冷却期内禁买
         for code in list(holdings.keys()):
-            if code in sold_codes:
-                continue
             pos = holdings[code]
             current_price = next((s["price"] for s in etf_scores if s["code"] == code), pos.get("price", pos["cost"]))
             pnl_pct = (current_price / pos["cost"] - 1) * 100
-            # 更新持仓中的最高价（用于追踪止盈）
-            high_water = pos.get("high_water", pos["cost"])
-            if current_price > high_water:
-                pos["high_water"] = current_price
-                high_water = current_price
-            pullback_from_high = (current_price / high_water - 1) * 100  # 从高点回撤
 
-            should_stop = False
-            stop_reason = ""
+            # 最短持有期(自然日*5/7≈工作日, 与生产一致; 无buy_date视为999天)
+            buy_date = pos.get("buy_date", "")
+            days_held = 999
+            if buy_date:
+                try:
+                    days_held = (datetime.strptime(today, "%Y-%m-%d") - datetime.strptime(buy_date, "%Y-%m-%d")).days * 5 // 7
+                except ValueError:
+                    days_held = 999
+            min_hold = days_held < 20
 
-            # 条件1: 硬止损 -8%
-            if pnl_pct <= -8.0:
-                should_stop = True
-                stop_reason = f"硬止损触发 (浮亏{pnl_pct:.1f}% ≤ -8%)"
-            # 条件2: 追踪止盈 - 从高点回撤>6%且曾经浮盈>10%
-            elif pnl_pct > 10 and pullback_from_high <= -6.0:
-                should_stop = True
-                stop_reason = f"追踪止盈 (高点+{(high_water/pos['cost']-1)*100:.1f}%→回撤{pullback_from_high:.1f}%)"
-            # 条件3: 评分E级+亏损中
-            elif pnl_pct < 0:
-                score_data = next((s for s in etf_scores if s["code"] == code), None)
-                if score_data and score_data["score"] < 42:
-                    should_stop = True
-                    stop_reason = f"评分E级({score_data['score']}分)+浮亏{pnl_pct:.1f}%"
+            # 评分历史(连续<55判断, 与生产score_history一致)
+            score_data = next((s for s in etf_scores if s["code"] == code), None)
+            hist = pos.setdefault("score_history", [])
+            if score_data:
+                hist.append(float(score_data["score"]))
+                del hist[:-5]
 
-            if should_stop:
+            should_sell = False
+            sell_reason = ""
+
+            # 条件1: 硬止损(不受最短持有约束, 与生产一致)
+            if pnl_pct <= stop_loss_pct:
+                should_sell = True
+                sell_reason = f"硬止损{pnl_pct:.1f}%≤{stop_loss_pct:.0f}%"
+            # 条件2: 保盈止盈 - 盈>25%且近5日跌>8% (受最短持有约束)
+            elif pnl_pct > 25 and not min_hold:
+                r5d = 0.0
+                edata = valid_etfs.get(code)
+                if edata:
+                    dates = [k["date"] for k in edata["klines"]]
+                    if today in dates:
+                        idx = dates.index(today)
+                        if idx >= 5:
+                            r5d = (edata["klines"][idx]["close"] / edata["klines"][idx - 5]["close"] - 1) * 100
+                if r5d < -8:
+                    should_sell = True
+                    sell_reason = f"保盈止盈(盈{pnl_pct:.1f}% 5日跌{r5d:.1f}%)"
+            # 条件3: 评分连续5天<55 (受最短持有约束, 历史不足5天不卖)
+            elif score_data and not min_hold and len(hist) >= 3 and all(h < 55 for h in hist):
+                should_sell = True
+                sell_reason = f"评分连续{len(hist)}天<55(最近{hist[-1]:.0f})"
+            # 条件4: 评分<40硬兜底(不受最短持有约束)
+            elif score_data and score_data["score"] < 40:
+                should_sell = True
+                sell_reason = f"评分{score_data['score']}硬兜底"
+
+            if should_sell:
                 sold_codes.add(code)
-                pending.append({
-                    "code": code, "name": pos["name"], "action": "STOP_LOSS",
-                    "shares": pos["shares"], "reason": stop_reason
-                })
-
-        # 卖出（评分排名下滑）→ 生成T+1卖出计划
-        for code in list(holdings.keys()):
-            if code in sold_codes:
-                continue
-            if code not in top_codes:
-                pos = holdings[code]
-                pnl_pct = (pos["price"] / pos["cost"] - 1) * 100
-                sold_codes.add(code)
+                cooldowns[code] = day_idx
                 pending.append({
                     "code": code, "name": pos["name"], "action": "SELL",
-                    "shares": pos["shares"], "reason": f"得分排名下滑 (浮盈{pnl_pct:+.1f}%)"
+                    "shares": pos["shares"], "reason": sell_reason
                 })
 
-        # 买入 → 生成T+1买入计划（排除已计划卖出的代码，修复止损当日重买回）
+        # 买入 → 生成T+1买入计划（排除已计划卖出/冷却期内代码, 与生产一致）
         needed_holdings = MAX_HOLDINGS - len(holdings) + len(sold_codes)
         if needed_holdings > 0:
             buy_candidates = [s for s in etf_scores[:MAX_HOLDINGS]
-                              if s["code"] not in holdings and s["code"] not in sold_codes]
+                              if s["code"] not in holdings and s["code"] not in sold_codes
+                              and day_idx - cooldowns.get(s["code"], -999) > 5]
             if buy_candidates:
                 inv_vols = [1.0 / max(s.get("volatility", 0.20), 0.05) for s in buy_candidates]
                 total_inv_vol = sum(inv_vols)

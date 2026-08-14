@@ -197,6 +197,55 @@ def compute_var_cvar(portfolio_value, etf_data, holdings,
 # ============================================================
 # 4. 集中度风险检测
 # ============================================================
+def compute_var_weight_uncertainty(etf_data, holdings, total_value,
+                                   n_sims=200, confidence=0.95):
+    """
+    8/14新增: 权重不确定性VaR带 — Dirichlet扰动权重N次, 评估权重估计误差对VaR的影响
+    当前权重(按市值计算)是历史事实, 但目标权重(信号分配)有估计误差;
+    扰动后VaR分布给出风险的不确定性区间, 权重集中度越高带宽越宽。
+
+    返回 {"var_pct_p5", "var_pct_p50", "var_pct_p95", "n_sims"} 或 None(数据不足)
+    """
+    np.random.seed(42)  # 固定种子保证日报可复现
+    codes = []
+    weights = []
+    rets_map = {}
+    for code, pos in holdings.items():
+        if code.startswith("_") or code not in etf_data:
+            continue
+        kline = etf_data[code].get("kline", [])
+        if len(kline) < 40:
+            continue
+        closes = [k["close"] for k in kline[-61:]]
+        r = daily_returns(closes)
+        if len(r) < 30:
+            continue
+        value = pos.get("shares", 0) * pos.get("current_price", 0)
+        codes.append(code)
+        weights.append(max(value, 0))
+        rets_map[code] = np.asarray(r, dtype=np.float64)
+    if len(codes) < 2:
+        return None
+    w_arr = np.array(weights, dtype=np.float64)
+    w_arr = w_arr / w_arr.sum()
+    min_len = min(len(rets_map[c]) for c in codes)
+    matrix = np.column_stack([rets_map[c][-min_len:] for c in codes])
+    var_list = []
+    for _ in range(n_sims):
+        perturb = np.random.dirichlet(w_arr * 50 + 1e-6)
+        pr = matrix @ perturb
+        sorted_pr = np.sort(pr)
+        idx = min(int(len(sorted_pr) * (1 - confidence)), len(sorted_pr) - 1)
+        var_list.append(abs(float(sorted_pr[idx])) * 100)
+    var_arr = np.array(var_list)
+    return {
+        "var_pct_p5": round(float(np.percentile(var_arr, 5)), 2),
+        "var_pct_p50": round(float(np.percentile(var_arr, 50)), 2),
+        "var_pct_p95": round(float(np.percentile(var_arr, 95)), 2),
+        "n_sims": n_sims,
+    }
+
+
 def detect_concentration_risk(corr_result, holdings, etf_data):
     """
     检测投资组合集中度风险 — 量化逻辑不变，保持原有输出
@@ -290,6 +339,8 @@ def portfolio_risk_report(portfolio, etf_data, scores=None):
     corr_result = compute_correlation_matrix(etf_data)
     var_result = compute_var_cvar(total_value, etf_data, holdings_for_var)
     conc_result = detect_concentration_risk(corr_result, holdings_for_var, etf_data)
+    # 8/14: 权重不确定性VaR带(评估权重估计误差对风险的影响)
+    var_uncertainty = compute_var_weight_uncertainty(etf_data, holdings_for_var, total_value)
 
     # 单只风险拆解 — numpy向量化
     single_risks = []
@@ -346,6 +397,7 @@ def portfolio_risk_report(portfolio, etf_data, scores=None):
         "n_holdings": len(single_risks),
         "correlation": corr_result,
         "var": var_result,
+        "var_uncertainty": var_uncertainty,  # 8/14: 权重扰动VaR带
         "concentration": conc_result,
         "single_risks": single_risks
     }
@@ -364,6 +416,12 @@ def format_risk_section(report):
         lines.append(f"     VaR(95%):  {var['var_95']:.2f}元 ({var['var_95_pct']:.1f}%) — 95%概率日亏损不超过此值")
         lines.append(f"     CVaR(95%): {var['cvar_95']:.2f}元 ({var['cvar_95_pct']:.1f}%) — 超过VaR时的平均亏损")
         lines.append(f"     历史最差日: {var['worst_day']:.2f}元 ({var['worst_day_pct']:.1f}%)")
+        vu = report.get("var_uncertainty")
+        if vu:
+            lines.append(f"     权重扰动VaR带 (蒙特卡洛{vu['n_sims']}次): "
+                         f"P5 {vu['var_pct_p5']:.1f}% | P50 {vu['var_pct_p50']:.1f}% | "
+                         f"P95 {vu['var_pct_p95']:.1f}% "
+                         f"(带宽{vu['var_pct_p95']-vu['var_pct_p5']:.1f}pp, 越宽=权重估计越不确定)")
 
     corr = report.get("correlation", {})
     if corr and corr.get("n_assets", 0) >= 2:

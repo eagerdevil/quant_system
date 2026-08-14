@@ -27,6 +27,23 @@ jobs:
       - name: 安装依赖
         run: pip install -r requirements.txt
 
+      # 8/14: K线缓存上云 — 增量缓存跨job复用, 避免每天全量重拉(东财WAF 707风暴)
+      - name: 恢复K线缓存
+        uses: actions/cache@v4
+        with:
+          path: quant_system/kline_cache
+          key: kline-cache-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            kline-cache-${{ runner.os }}-
+
+      - name: 恢复回测缓存
+        uses: actions/cache@v4
+        with:
+          path: quant_system/backtest_cache
+          key: backtest-cache-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            backtest-cache-${{ runner.os }}-
+
       - name: 运行量化模型
         env:
           TZ: Asia/Shanghai

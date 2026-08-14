@@ -93,7 +93,8 @@ INDEX_CODES = {
 
 def fetch_json(url, timeout=10, retries=MAX_RETRY):
     # 东方财富API预检失败 → 直接跳过快失败，节省时间
-    if not _EASTMONEY_OK and "eastmoney.com" in url:
+    # 8/14修复: datacenter-web(北向资金真实源)与push2系分域判断, push2被限不连坐北向
+    if not _EASTMONEY_OK and "eastmoney.com" in url and "datacenter" not in url:
         return None
     for attempt in range(retries):
         try:
@@ -109,7 +110,7 @@ def fetch_json(url, timeout=10, retries=MAX_RETRY):
         except Exception as e:
             logger.info(f"  [API ERROR] 第{attempt+1}次尝试失败: {type(e).__name__}: {e}")
             if attempt < retries - 1:
-                time.sleep(1.2)  # 逐只间隔1.2秒
+                time.sleep(1.2 * (2 ** attempt))  # 8/14: 指数退避1.2/2.4/4.8s, 防WAF 707风暴
     return None
 
 # ============================================================
@@ -118,26 +119,27 @@ def fetch_json(url, timeout=10, retries=MAX_RETRY):
 # ============================================================
 KLINE_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kline_cache")
 
-def _kline_cache_path(code):
-    return os.path.join(KLINE_CACHE_DIR, f"{code}.json")
+def _kline_cache_path(code, ver=""):
+    # ver: 复权版本标记(如"_qf1"), 防止fqt=0/1数据混用同文件(8/14)
+    return os.path.join(KLINE_CACHE_DIR, f"{code}{ver}.json")
 
-def _load_kline_cache(code):
+def _load_kline_cache(code, ver=""):
     """读取K线缓存, 返回 (klines, last_date) 或 (None, None)"""
     try:
-        with open(_kline_cache_path(code), 'r', encoding='utf-8') as f:
+        with open(_kline_cache_path(code, ver), 'r', encoding='utf-8') as f:
             d = json.load(f)
         klines = d.get("klines", [])
         return klines, (klines[-1]["date"] if klines else "")
     except (OSError, json.JSONDecodeError, KeyError, IndexError):
         return None, None
 
-def _save_kline_cache(code, klines):
+def _save_kline_cache(code, klines, ver=""):
     """保存K线缓存(仅K线, 不覆盖实时数据)"""
     if not klines:
         return
     try:
         os.makedirs(KLINE_CACHE_DIR, exist_ok=True)
-        with open(_kline_cache_path(code), 'w', encoding='utf-8') as f:
+        with open(_kline_cache_path(code, ver), 'w', encoding='utf-8') as f:
             json.dump({"code": code, "klines": klines,
                        "last_date": klines[-1]["date"], "updated": get_today()}, f)
     except OSError:
@@ -152,22 +154,26 @@ def _merge_klines(cached, fresh):
         by_date[k["date"]] = k
     return [by_date[d] for d in sorted(by_date)]
 
-def _fetch_kline_with_cache(code, url, days, fallback_fn):
+def _fetch_kline_with_cache(code, url, days, fallback_fn, ver=""):
     """
     通用增量缓存逻辑 (v7.6):
     1. 有缓存且最后日期==今天 → 直接用缓存(0请求)
     2. 有缓存 → 增量拉最近10根合并(1次请求); 失败→用缓存降级(标记stale)
     3. 无缓存 → 全量拉取并落缓存
+    ver: 复权版本标记, 不同fqt的数据存不同缓存文件(8/14)
     """
-    cached, last_date = _load_kline_cache(code)
+    cached, last_date = _load_kline_cache(code, ver)
     today = get_today()
     # 周末必休市: 直接用缓存(零请求)
     if cached and datetime.now().weekday() >= 5:
         return cached
-    if cached and last_date == today:
-        return cached  # 当日数据已缓存, 零请求
+    # 8/14修复: 缓存日期可能是"2026-08-13"(横杠)而today是"20260814"(无横杠),
+    # 原比较永不相等→每天全量重拉浪费请求; 统一8位数字再比
+    # 当日命中必须同时满足长度要求(回测等长历史场景days=1400+即使当日缓存也要全量补)
+    if cached and str(last_date).replace("-", "") == today and len(cached) >= days:
+        return cached  # 当日数据已缓存且长度足够, 零请求
 
-    if cached:
+    if cached and len(cached) >= days:
         # 增量: 只拉最近10根, 单次重试(限流时快速放弃用缓存降级)
         inc_url = url.replace(f"lmt={days}", "lmt=10")
         data = fetch_json(inc_url, timeout=8, retries=1)
@@ -179,13 +185,15 @@ def _fetch_kline_with_cache(code, url, days, fallback_fn):
                     fresh.append(p)
         if fresh:
             merged = _merge_klines(cached, fresh)
-            _save_kline_cache(code, merged)
+            _save_kline_cache(code, merged, ver)
             return merged
         # 增量失败: 缓存降级(数据滞后, 记录日志)
         logger.info(f"  [缓存降级] {code} 增量更新失败, 用缓存(截至{last_date})")
         return cached
 
-    # 无缓存: 全量拉取(东财主源 → 备用源)
+    # 无缓存 或 缓存长度不足days(8/14: 回测等长历史场景days=1400+) — 全量拉取
+    if cached:
+        logger.info(f"  [缓存补全] {code} 缓存{len(cached)}根 < 需求{days}根, 全量重拉")
     data = fetch_json(url)
     klines = []
     if data and data.get("data") and data["data"].get("klines"):
@@ -196,7 +204,7 @@ def _fetch_kline_with_cache(code, url, days, fallback_fn):
     if not klines and fallback_fn:
         klines = fallback_fn(code, days) or []
     if klines:
-        _save_kline_cache(code, klines)
+        _save_kline_cache(code, klines, ver)
     return klines
 
 def fetch_index_daily(code, days=120):
@@ -249,7 +257,15 @@ def fetch_sw_industry_returns(days=60, max_fail=6):
                 break
             continue
         fail_streak = 0
-        closes = [float(k.split(",")[2]) for k in data["data"]["klines"]]
+        closes = []
+        for k in data["data"]["klines"]:
+            try:
+                closes.append(float(k.split(",")[2]))
+            except (ValueError, IndexError):
+                continue
+        if len(closes) < 30:  # 8/14: 数据不完整跳过该行业(防单行解析崩溃拖垮整个行业轮动)
+            fail_streak += 1
+            continue
         result[code] = {"name": name, "closes": closes}
     return result
 
@@ -340,12 +356,16 @@ def fetch_market_fund_flow():
     }
 
 def fetch_margin_balance():
-    """获取融资余额"""
+    """
+    获取融资余额 — 8/14修复: secid=128.RZYL为死亡接口(恒None)
+    失败直接返回None(信号层按中性处理), 删除指数估算"伪造信号"
+    """
     url = f"https://push2.eastmoney.com/api/qt/stock/get?secid=128.RZYL&fields=f43,f44,f170"
     data = fetch_json(url)
     if data and data.get("data"):
         d = data["data"]
-        return {"balance": d.get("f43", 0)/1e8, "change": d.get("f170", 0)/1e8}
+        # f170为涨跌幅基点(123=1.23%), 原÷1e8≈0; 修正为÷100取百分比方向判断
+        return {"balance": d.get("f43", 0)/1e8, "change": d.get("f170", 0)/100}
     return None
 
 # ============================================================
@@ -414,7 +434,8 @@ def fetch_etf_flow_top():
 # 5. 市场情绪数据
 # ============================================================
 def fetch_market_breadth():
-    """获取涨跌停家数、炸板率等（东方财富主 + 指数数据备用估算）"""
+    """获取涨跌停家数、炸板率等（东方财富主 + 指数数据备用估算, 估算时标记estimated=True）"""
+    estimated = False  # 8/14: 走估算分支时置True, 日报标注"估算"防假数据
     # v7.1: m:0=全部A股, t:3=涨停, t:4=跌停, t:1=上涨, t:0=下跌
     # 使用pz=1只取total字段（不需要具体股票列表）
     url_zt = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=1&po=1&np=1&fltt=2&fid=f3&fs=m:0+t:3&fields=f12"
@@ -454,12 +475,14 @@ def fetch_market_breadth():
                     up_ratio = 0.5
                 up_count = up_count or int(total_est * up_ratio)
                 down_count = down_count or int(total_est * (1 - up_ratio))
+                estimated = True
                 logger.info(f"  [FALLBACK] 涨跌家数估算: 涨{up_count}/跌{down_count} (指数变化{avg_change*100:.1f}%)")
         except Exception as e:
             logger.info(f"  [FALLBACK] 涨跌家数备用源失败: {e}")
 
     # v7.1: 当limit_up/limit_down为None时（clist API失败），从涨跌比估算
     if limit_up is None or limit_down is None:
+        estimated = True  # 8/14: 涨跌停家数为估算值, 日报需标注
         # 根据涨跌比估算涨跌停家数（全部源失败时用中性默认，避免荒谬值污染情绪评分）
         if up_count is None and down_count is None:
             up_ratio = 0.5
@@ -478,15 +501,28 @@ def fetch_market_breadth():
     return {
         "limit_up": limit_up, "limit_down": limit_down,
         "up_count": up_count, "down_count": down_count,
+        "estimated": estimated,  # 8/14: 日报标注"估算"
         "total": (up_count or 0) + (down_count or 0)
     }
 
 def fetch_total_volume():
-    """获取全市场成交额（东方财富主 + Sina备用）"""
-    url = f"https://push2.eastmoney.com/api/qt/stock/get?secid=1.000001&fields=f6"
-    data = fetch_json(url)
-    if data and data.get("data"):
-        return data["data"].get("f6", 0)/1e8  # 亿元
+    """
+    获取全市场成交额(亿) — 沪深两市K线求和(与fetch_total_volume_history同口径) + Sina备用
+    8/14修复: 原secid=1.000001只含沪市(约9,900亿 vs 真实全市场2.1万亿), 与S4动态分位口径错配
+    """
+    merged = {}
+    for secid in ("1.000001", "0.399001"):
+        url = (f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={secid}"
+               f"&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f57&klt=101&fqt=0&end={get_today()}&lmt=2")
+        data = fetch_json(url, timeout=12)
+        if not data or not data.get("data") or not data["data"].get("klines"):
+            continue
+        try:
+            merged[secid] = float(data["data"]["klines"][-1].split(",")[1]) / 1e8  # f57成交额(元)→亿
+        except (ValueError, IndexError):
+            continue
+    if len(merged) == 2:
+        return round(merged["1.000001"] + merged["0.399001"], 1)
     # v7.0: Sina备用（沪市+深市成交额之和）
     try:
         sh_url = "https://hq.sinajs.cn/list=sh000001"  # v7.1: s_前缀返回6字段compact格式，去掉s_获取完整32字段
@@ -535,7 +571,7 @@ def fetch_total_volume():
             return total
     except Exception as e:
         logger.info(f"  [FALLBACK] 成交额备用源失败: {e}")
-    return 0
+    return None  # 8/14: 全部失败返回None(信号层中性), 原返回0会让情绪评分误判恐慌
 
 def fetch_total_volume_history(days=60):
     """
@@ -578,7 +614,8 @@ def compute_market_sentiment(breadth, total_volume, north_flow_5d=None):
     返回: {
         score: 0-100,
         level: "贪婪"|"偏乐观"|"中性"|"偏恐慌"|"恐慌",
-        signals: {涨跌比, 量能, 涨停热度, ...}
+        signals: {涨跌比, 量能, 涨停热度, ...},
+        estimated: bool (广度数据含估算时True, 8/14新增)
     }
     """
     score = 50  # 中性基准
@@ -596,7 +633,9 @@ def compute_market_sentiment(breadth, total_volume, north_flow_5d=None):
 
     # 2. 成交活跃度 (权重: 25%)
     signals["成交额(亿)"] = round(total_volume, 0) if total_volume else 0
-    if total_volume > 20000:
+    if not total_volume:
+        adj = 0  # 8/14: 数据缺失(0/None)中性处理, 原None>20000抛TypeError
+    elif total_volume > 20000:
         adj = 15  # 活跃
     elif total_volume > 15000:
         adj = 8
@@ -661,7 +700,8 @@ def compute_market_sentiment(breadth, total_volume, north_flow_5d=None):
     else:
         level = "恐慌"
 
-    return {"score": score, "level": level, "signals": signals}
+    return {"score": score, "level": level, "signals": signals,
+            "estimated": breadth.get("estimated", False)}  # 8/14: 广度估算标记透传
 
 # ============================================================
 # 6. ETF 基本面与因子数据
@@ -898,8 +938,10 @@ def fetch_etf_kline(code, days=250):
     # 沪市ETF: 5xxxxx, 58xxxx; 深市ETF: 15xxxx, 16xxxx
     market = "1" if code.startswith(("5","58")) else "0"
     # v7.6: fields2加f60/f61(涨跌额/换手率), 供F17换手率分位因子
-    url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&klt=101&fqt=0&end={get_today()}&lmt={days}"
-    return _fetch_kline_with_cache(code, url, days, _fetch_tencent_kline)
+    # 8/14: fqt=0→1前复权(与fetch_stock_kline一致), ETF分红除息日价格不再跳空,
+    #       收益率/趋势因子计算才正确; 缓存加_qf1版本隔离, 旧未复权缓存作废
+    url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&klt=101&fqt=1&end={get_today()}&lmt={days}"
+    return _fetch_kline_with_cache(code, url, days, _fetch_tencent_kline, ver="_qf1")
 
 def fetch_stock_kline(code, days=250):
     """获取个股日K线（支持股票和ETF，东方财富主 + 腾讯备用）"""
@@ -1038,6 +1080,7 @@ QDII_ETF_CODES = {
 }
 
 def fetch_etf_fund_nav(code):
+    time.sleep(0.12)  # 8/14: 批量NAV拉取(15-47只)节流, 防fund.eastmoney限流封IP
     """
     获取ETF最新官方净值（基金公司T+1公布）
     数据源: 天天基金API
@@ -1228,46 +1271,6 @@ def calc_fear_index():
     return 50
 
 
-def _estimate_margin_from_index(indices):
-    """
-    v7.1 CI fallback: 从沪深300指数近5日趋势估算融资余额变化
-    当东方财富API不可用时（如GitHub Actions CI环境），
-    用指数涨跌粗略推断融资趋势：
-    - 指数涨>2% → 融资大概率增加（投资者加杠杆追涨）
-    - 指数跌>2% → 融资大概率减少（去杠杆/止损）
-    - 否则 → 融资持平
-
-    返回: {"balance": 估计值(亿), "change": 估计变化(亿)} 或 None
-    """
-    if "000300" not in indices:
-        return None
-
-    data = indices["000300"].get("data", [])
-    if len(data) < 6:
-        return None
-
-    closes = [d["close"] for d in data]
-    current = closes[-1]
-    avg_5d_ago = sum(closes[-6:-1]) / 5
-
-    pct_change = (current - avg_5d_ago) / avg_5d_ago * 100
-
-    # A股融资余额通常在1.4-1.6万亿之间
-    base_balance = 15000  # 亿
-    if pct_change > 1.5:
-        change = base_balance * 0.006  # 约+90亿
-    elif pct_change > 0.5:
-        change = base_balance * 0.002  # 约+30亿
-    elif pct_change < -1.5:
-        change = -base_balance * 0.006  # 约-90亿
-    elif pct_change < -0.5:
-        change = -base_balance * 0.002  # 约-30亿
-    else:
-        change = 0
-
-    return {"balance": base_balance, "change": round(change, 1)}
-
-
 # ============================================================
 # 8. 综合数据采集
 # ============================================================
@@ -1303,14 +1306,8 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
     logger.info("  -> 资金流向...")
     result["north_bound"] = fetch_north_bound_flow(10)
     result["fund_flow"] = fetch_market_fund_flow()
-    margin_data = fetch_margin_balance()
-    if not margin_data or margin_data.get("balance", 0) == 0:
-        # v7.1 CI fallback: 从指数趋势估算融资变化
-        margin_data = _estimate_margin_from_index(result.get("indices", {}))
-        if margin_data:
-            logger.info("  [FALLBACK] 融资余额(指数估算): balance=%.0f亿 change=%+.1f亿",
-                       margin_data.get("balance", 0), margin_data.get("change", 0))
-    result["margin"] = margin_data
+    # 8/14修复: 删除指数估算"伪造信号"(硬编码1.5万亿基准), 接口失败即None, S6信号层按中性处理
+    result["margin"] = fetch_margin_balance()
 
     # 情绪数据
     logger.info("  -> 市场情绪...")

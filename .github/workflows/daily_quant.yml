@@ -24,6 +24,23 @@ jobs:
       - name: 安装依赖
         run: pip install -r quant_system/requirements.txt
 
+      # 8/14: K线缓存上云 — 增量缓存跨job复用, 避免每天全量重拉(东财WAF 707风暴)
+      - name: 恢复K线缓存
+        uses: actions/cache@v4
+        with:
+          path: quant_system/kline_cache
+          key: kline-cache-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            kline-cache-${{ runner.os }}-
+
+      - name: 恢复回测缓存
+        uses: actions/cache@v4
+        with:
+          path: quant_system/backtest_cache
+          key: backtest-cache-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            backtest-cache-${{ runner.os }}-
+
       - name: 运行量化模型
         env:
           TZ: Asia/Shanghai
@@ -32,6 +49,25 @@ jobs:
           echo "===== 开始运行: $(date '+%Y-%m-%d %H:%M') ====="
           cd quant_system && python daily_runner.py 2>&1
           echo "===== 运行完成: $(date '+%Y-%m-%d %H:%M') ====="
+
+      # 8/14: 实盘历史云端留存 — 报告+账户状态自动commit+push(此前只上传artifact, 云端日报不更新)
+      - name: 提交实盘状态到云端
+        run: |
+          if git diff --quiet -- quant_system/report_*.json quant_system/portfolio.json && \
+             [ -z "$(git ls-files --others --exclude-standard quant_system/report_*.json quant_system/portfolio.json)" ]; then
+            echo "状态未变更，跳过提交"
+            exit 0
+          fi
+          git config user.name "Quant Bot"
+          git config user.email "quant-bot@github.com"
+          DATE=$(date '+%Y%m%d')
+          git add quant_system/report_*.json quant_system/portfolio.json
+          git commit -m "quant(report): 实盘日报 ${DATE}"
+          git push origin HEAD || {
+            git pull --rebase || exit 1
+            git push origin HEAD || exit 1
+          }
+          echo "实盘状态已推送 ✓"
 
       - name: 上传报告（可选，留作存档）
         uses: actions/upload-artifact@v4

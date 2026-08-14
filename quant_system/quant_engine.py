@@ -168,7 +168,7 @@ SYSTEM_CONFIG = {
     "adx_trend_threshold": 22,          # ADX趋势判定阈值
     # --- 仓位管理 ---
     "max_single_weight": 0.25,          # 单只ETF仓位上限
-    "max_total_holdings": 5,            # 最大持仓数
+    "max_total_holdings": 15,           # 最大持仓数(8/14长持改造: 5→15, 对齐15只全球宽基池战略)
     "default_stop_loss": -0.08,         # 默认止损线
     "default_take_profit": 0.08,        # 默认止盈线
     # --- 回测 ---
@@ -334,7 +334,8 @@ def sortino(closes, rf=0.025):
     avg_ret = np.mean(rets)
     down_rets = rets[rets < 0]
     if len(down_rets) < 2:
-        return 3.0 if avg_ret > 0 else -3.0
+        # 8/14修复: 原魔数±3.0=满分, 次新ETF数据不足时凯利仓位被系统性高估; 改中性1.0
+        return 1.0
     down_std = np.std(down_rets, ddof=1)
     if down_std == 0:
         return 0.0
@@ -647,13 +648,13 @@ MARKET_REGIME = {
 REGIME_STRATEGY = {
     "TREND_UP": {
         "base_position": (0.60, 1.00),  # 仓位范围
-        "stop_loss": -0.08,            # 止损
+        "stop_loss": -0.10,            # 止损(8/14长持改造: -8%→-10%, 宽基ETF日波动1-2%, 防正常回调被踢出)
         "buy_grade_min": "B_买入",     # 最低买入等级
         "description": "趋势向好，正常操作"
     },
     "CHOPPY": {
         "base_position": (0.20, 0.40),
-        "stop_loss": -0.05,            # 收紧止损
+        "stop_loss": -0.08,            # 止损(8/14长持改造: -5%→-8%, 防震荡市反复止损磨损)
         "buy_grade_min": "B_买入",     # 8/14决策: 原A_强烈买入导致震荡市长期空仓，放宽到B级让模拟盘能建仓(仓位仍受40%上限约束)
         "description": "方向不明，缩小头寸+收紧止损"
     },
@@ -669,6 +670,16 @@ REGIME_STRATEGY = {
         "buy_grade_min": None,
         "description": "危机模式，现金为王"
     }
+}
+
+
+# 8/14长持改造: 同指数/同市场双ETF分组 — 同一组最多持有一只(相关性控制, 防止纳指×2各25%=单因子50%暴露)
+DUPLICATE_GROUPS = {
+    "588000": "科创50", "588050": "科创50",
+    "513100": "纳指100", "159659": "纳指100",
+    "513500": "标普系", "159529": "标普系",
+    "512100": "中证1000", "159845": "中证1000",
+    "513180": "恒生科技", "159750": "港股科技",
 }
 
 
@@ -1946,10 +1957,13 @@ class TradeDecider:
         sell_list = []
         hold_list = []
 
-        # 卖出判断 (v7.6: 止损线跟随市场状态regime_stop_loss，CHOPPY=-5%/TREND_UP=-8%)
-        stop_pct = self.timing.get("regime_stop_loss", -0.08) * 100  # 转百分数
+        # 卖出判断 (8/14长持改造: 止损CHOPPY=-8%/TREND_UP=-10%, 最短持有期20交易日, 评分卖出改连续5日<55)
+        stop_pct = self.timing.get("regime_stop_loss", -0.10) * 100  # 转百分数
+        sold_codes = set()
+        today_str = datetime.now().strftime("%Y%m%d")
+        _cooldowns_raw = self.portfolio.get("_cooldowns") if isinstance(self.portfolio.get("_cooldowns"), dict) else {}
         for code, pos in self.portfolio.items():
-            if code.startswith("_"):
+            if code.startswith("_") or not isinstance(pos, dict):
                 continue
             score_data = next((s for s in self.scores if s["code"] == code), None)
             if not score_data:
@@ -1961,7 +1975,18 @@ class TradeDecider:
 
             premium_pct = score_data.get("premium_info", {}).get("premium_pct") or 0
 
-            # v7.0: 溢价独立卖出逻辑（溢价回归风险）
+            # 8/14长持改造: 最短持有期20交易日 — 策略性卖出(止盈/接近止损+评分/评分下滑)受约束,
+            # 风险卖出(止损/溢价回归)豁免; 无buy_date的旧持仓视为已持有
+            buy_date = str(pos.get("buy_date", "")).replace("-", "")
+            days_held = 999
+            if len(buy_date) == 8:
+                try:
+                    days_held = (datetime.strptime(today_str, "%Y%m%d") - datetime.strptime(buy_date, "%Y%m%d")).days * 5 // 7
+                except Exception:
+                    days_held = 999
+            min_hold = days_held < 20
+
+            # v7.0: 溢价独立卖出逻辑（溢价回归风险, 不受最短持有期约束）
             premium_sell = False
             if premium_pct > 10:
                 sell_list.append({
@@ -1989,48 +2014,102 @@ class TradeDecider:
                 premium_sell = True
 
             if premium_sell:
-                pass  # 已加入卖出列表，跳过后续判断
-            # v7.0: 追踪止盈（从高点回撤>8%）
-            elif pnl_pct > 0:
+                sold_codes.add(code)
+                continue
+            # 8/14长持改造: 保盈止盈 — 盈利≥25%后5日回撤≥8%才触发(原20日+12%/5日-5%对宽基太敏感, 正常波动即出局)
+            if pnl_pct > 0 and not min_hold:
                 r20d = score_data.get("returns", {}).get("r20d", 0)
                 r5d = score_data.get("returns", {}).get("r5d", 0)
-                # 若20日曾大涨但5日快速回撤，触发追踪止盈
-                if r20d > 12 and r5d < -5:
+                if pnl_pct > 25 and r5d < -8:
                     sell_list.append({
                         "code": code, "name": pos.get("name", code), "action": "SELL",
                         "shares": pos["shares"], "price": current_price,
                         "pnl_pct": round(pnl_pct, 1),
-                        "reason": f"追踪止盈(20日+{r20d:.1f}%→5日{r5d:.1f}%)"
+                        "reason": f"保盈止盈(+{pnl_pct:.0f}%后5日{r5d:.1f}%回撤)"
                     })
-            # v7.0: 接近止损+评分恶化 组合卖出
-            elif stop_pct < pnl_pct <= stop_pct + 3 and score_data["score"] < 55:
-                sell_list.append({
-                    "code": code, "name": pos.get("name", code), "action": "SELL",
-                    "shares": pos["shares"], "price": current_price,
-                    "pnl_pct": round(pnl_pct, 1),
-                    "reason": f"接近止损({pnl_pct:.1f}%>{stop_pct:.0f}%)+评分偏低({score_data['score']})"
-                })
-            # 止损触发 (v7.6: 用regime止损，CHOPPY=-5%/TREND_UP=-8%)
-            elif pnl_pct <= stop_pct:
+                    sold_codes.add(code)
+                    continue
+            # 止损触发 (8/14长持改造: CHOPPY=-8%/TREND_UP=-10%, 不受最短持有期约束)
+            if pnl_pct <= stop_pct:
                 sell_list.append({
                     "code": code, "name": pos.get("name", code), "action": "SELL",
                     "shares": pos["shares"], "price": current_price,
                     "pnl_pct": round(pnl_pct, 1),
                     "reason": f"止损触发({stop_pct:.0f}%)"
                 })
-            # 评分下滑（D或以下）
-            elif score_data["score"] < 42:
+                sold_codes.add(code)
+                continue
+            # v7.0: 接近止损+评分恶化 组合卖出(受最短持有期约束)
+            if stop_pct < pnl_pct <= stop_pct + 3 and score_data["score"] < 55 and not min_hold:
                 sell_list.append({
                     "code": code, "name": pos.get("name", code), "action": "SELL",
                     "shares": pos["shares"], "price": current_price,
-                    "pnl_pct": round(pnl_pct, 1), "reason": "评分下滑"
-                })
-            else:
-                hold_list.append({
-                    "code": code, "name": pos.get("name", code),
-                    "score": score_data["score"], "grade": score_data.get("grade", ""),
                     "pnl_pct": round(pnl_pct, 1),
-                    "premium_pct": round(premium_pct, 2) if premium_pct > 3 else None
+                    "reason": f"接近止损({pnl_pct:.1f}%>{stop_pct:.0f}%)+评分偏低({score_data['score']})"
+                })
+                sold_codes.add(code)
+                continue
+            # 评分下滑(8/14长持改造: 原<42单日卖出改双重门槛 — 硬兜底<40 或 连续5日<55)
+            if score_data["score"] < 40:
+                sell_list.append({
+                    "code": code, "name": pos.get("name", code), "action": "SELL",
+                    "shares": pos["shares"], "price": current_price,
+                    "pnl_pct": round(pnl_pct, 1),
+                    "reason": f"评分崩盘({score_data['score']})"
+                })
+                sold_codes.add(code)
+                continue
+            if not min_hold:
+                score_hist = pos.get("score_history") if isinstance(pos.get("score_history"), list) else []
+                if len(score_hist) >= 5 and all(s < 55 for s in score_hist[-5:]):
+                    sell_list.append({
+                        "code": code, "name": pos.get("name", code), "action": "SELL",
+                        "shares": pos["shares"], "price": current_price,
+                        "pnl_pct": round(pnl_pct, 1),
+                        "reason": f"连续5日评分<55({score_hist[-1]:.0f})"
+                    })
+                    sold_codes.add(code)
+                    continue
+                if not score_hist and score_data["score"] < 50:
+                    # 无历史评分(实盘手工维护持仓): 当日<50宽松卖出兜底
+                    sell_list.append({
+                        "code": code, "name": pos.get("name", code), "action": "SELL",
+                        "shares": pos["shares"], "price": current_price,
+                        "pnl_pct": round(pnl_pct, 1),
+                        "reason": f"评分下滑({score_data['score']})"
+                    })
+                    sold_codes.add(code)
+                    continue
+            hold_list.append({
+                "code": code, "name": pos.get("name", code),
+                "score": score_data["score"], "grade": score_data.get("grade", ""),
+                "pnl_pct": round(pnl_pct, 1),
+                "premium_pct": round(premium_pct, 2) if premium_pct > 3 else None
+            })
+
+        # 8/14修复: 熔断"假降仓"(P0) — 熔断触发且持仓超目标仓位时, 按超出比例生成SELL减仓计划
+        # (原实现只min(base_position)冻结新买入, 持仓一股不卖, 日志却声称"强制降仓")
+        cb = self.timing.get("circuit_breaker") or {}
+        if cb.get("triggered") and current_invested > target_amount:
+            excess_value = current_invested - target_amount
+            for code, pos in list(self.portfolio.items()):
+                if code.startswith("_") or not isinstance(pos, dict) or code in sold_codes:
+                    continue
+                price = pos.get("current_price", pos.get("cost", 0))
+                if not price or price <= 0:
+                    continue
+                pos_value = pos.get("shares", 0) * price
+                if pos_value <= 0:
+                    continue
+                cut_shares = int(excess_value * (pos_value / current_invested) / price / 100) * 100
+                if cut_shares < 100:
+                    continue
+                sold_codes.add(code)
+                sell_list.append({
+                    "code": code, "name": pos.get("name", code), "action": "SELL",
+                    "shares": cut_shares, "price": price,
+                    "pnl_pct": round((price / pos.get("cost", price) - 1) * 100, 1) if pos.get("cost") else 0,
+                    "reason": f"熔断降仓(L{cb.get('level', '')}, 超目标仓位{target_amount:.0f}元)"
                 })
 
         # 买入建议 (v8.0: 凯利公式 × 波动率加权)
@@ -2061,11 +2140,24 @@ class TradeDecider:
             for s in self.scores:
                 if len(buy_candidates) >= 6:  # 收集更多候选用于波动率比较
                     break
-                if s["code"] in self.portfolio:
+                if s["code"] in self.portfolio or s["code"] in sold_codes:
                     continue
-                # v7.6: 行业集中度上限（max_industry参数此前从未生效）
+                # 8/14修复: 止损冷却期 — 止损卖出后5个交易日内禁买同一代码(防"止损→买回→再止损"磨损循环)
+                cd_date = str(_cooldowns_raw.get(s["code"], "")).replace("-", "")
+                if len(cd_date) == 8:
+                    try:
+                        cd_days = (datetime.strptime(today_str, "%Y%m%d") - datetime.strptime(cd_date, "%Y%m%d")).days * 5 // 7
+                        if cd_days < 5:
+                            continue
+                    except Exception:
+                        pass
+                # 8/14修复: 同指数双ETF互斥(相关性控制) — 科创50/纳指/标普/中证1000/港股各最多持一只
+                s_group = DUPLICATE_GROUPS.get(s["code"])
+                if s_group and any(DUPLICATE_GROUPS.get(h) == s_group for h in self.portfolio):
+                    continue
+                # v7.6: 行业集中度上限（15只池14只映射"综合", 综合达40%会锁死全部建仓 — 综合豁免, 由相关性分组替代控制）
                 ind = _industry_of(s["code"])
-                if ind and industry_value.get(ind, 0) >= max_industry_value:
+                if ind and ind != "综合" and industry_value.get(ind, 0) >= max_industry_value:
                     continue
                 if s["score"] < min_buy_score:
                     continue
