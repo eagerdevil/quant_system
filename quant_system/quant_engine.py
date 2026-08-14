@@ -654,7 +654,7 @@ REGIME_STRATEGY = {
     "CHOPPY": {
         "base_position": (0.20, 0.40),
         "stop_loss": -0.05,            # 收紧止损
-        "buy_grade_min": "A_强烈买入",
+        "buy_grade_min": "B_买入",     # 8/14决策: 原A_强烈买入导致震荡市长期空仓，放宽到B级让模拟盘能建仓(仓位仍受40%上限约束)
         "description": "方向不明，缩小头寸+收紧止损"
     },
     "TREND_DOWN": {
@@ -2096,6 +2096,9 @@ class TradeDecider:
 
             budget = total_capital * final_pct
             budget = min(budget, (available - spent) * 0.5)  # 单次不超过剩余可用资金50%
+            # P0修复(8/14): target_amount此前只计算未使用，v8.0凯利重写丢了目标仓位上限，
+            # 导致计划买入可超择时目标仓位(如震荡市40%目标却买68%)。买入上限=目标仓位-已持仓-本次已计划
+            budget = min(budget, max(0.0, target_amount - current_invested - spent))
             price = s.get("price", 0)
             if price <= 0:
                 continue
