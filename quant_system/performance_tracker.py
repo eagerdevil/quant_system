@@ -26,7 +26,10 @@ def load_history(report_dir, days=90, prefix="report_"):
         return reports
 
     for fname in sorted(os.listdir(report_dir)):
+        # 前缀后必须是8位数字日期(20260814), 排除 report_paper_* 模拟盘报告污染实盘绩效(P0修复)
         if not fname.startswith(prefix) or not fname.endswith(".json"):
+            continue
+        if not fname[len(prefix):len(prefix)+8].isdigit():
             continue
         path = os.path.join(report_dir, fname)
         try:

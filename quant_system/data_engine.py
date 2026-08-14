@@ -406,19 +406,9 @@ def fetch_etf_flow_top():
             break
     return {"inflow": inflow, "outflow": outflow}
 
-def fetch_north_bound_top():
-    """获取北向资金重仓行业流向"""
-    url = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=8&po=1&np=1&fltt=2&fid=f184&fs=b:MK0354&fields=f12,f14,f184"
-    data = fetch_json(url)
-    if not data or not data.get("data"):
-        return None
-    result = []
-    for d in data["data"].get("diff", [])[:8]:
-        result.append({
-            "code": d.get("f12",""), "name": d.get("f14",""),
-            "net_flow": d.get("f184", 0)
-        })
-    return result
+# fetch_north_bound_top 已于2026/8/14审查中删除：
+# fs=b:MK0354 是东财【可转债板块】而非北向资金板块，返回"炬申转债"等可转债列表
+# 冒充"北向资金偏好行业"属假数据(P0)，北向真实数据仅剩 datacenter 沪深股通成交额(north_flow)
 
 # ============================================================
 # 5. 市场情绪数据
@@ -1300,8 +1290,9 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
     }
 
     # 指数数据
+    # P1修复: 60根不够quant_engine S2信号(需>=61根算MA60今昨对比), 60根时S2恒缺失→force_cap压仓死代码
     logger.info("  -> 指数日线...")
-    result["indices"] = get_all_index_data(60)
+    result["indices"] = get_all_index_data(70)
 
     # 宏观数据
     logger.info("  -> 宏观数据...")
@@ -1333,7 +1324,7 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
     result["sector_flow"] = fetch_sector_fund_flow()
     result["dragon_tiger"] = fetch_dragon_tiger()
     result["etf_flow"] = fetch_etf_flow_top()
-    result["north_top"] = fetch_north_bound_top()
+    # 北向偏好行业已删除(原接口实为可转债板块, 假数据P0)
 
     # ETF数据 - 逐只拉取
     all_etf_codes = list(dict.fromkeys((etf_codes or []) + USER_WATCHLIST))

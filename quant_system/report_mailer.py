@@ -708,7 +708,8 @@ class MonthlyReview:  # 每月第一个周六运行，原命名WeeklyReview有�
         fnames = sorted(os.listdir(REPORT_DIR))
         # 只取最近500个报告文件（~2年数据），避免无限扫描
         for fname in fnames[-500:]:
-            if fname.startswith("report_") and fname.endswith(".json"):
+            # 排除 report_paper_* 模拟盘报告(P0修复: 模拟盘污染实盘月度复盘)
+            if fname.startswith("report_") and fname.endswith(".json") and fname[7:15].isdigit():
                 try:
                     with open(os.path.join(REPORT_DIR, fname), 'r', encoding='utf-8') as f:
                         reports.append(json.load(f))

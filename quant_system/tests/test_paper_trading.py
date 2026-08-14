@@ -85,6 +85,20 @@ class TestExecutePending:
             assert holdings["510300"]["shares"] % 100 == 0
             assert holdings["510300"]["shares"] <= 100
 
+    def test_scaled_buy_real_cost_never_negative_cash(self):
+        """P0回归: 缩量到100股后实际成本(含最低5元佣金)仍可超现金(实测404.9→-0.14), 必须放弃"""
+        for cash in (404.9, 403.0, 401.0, 405.04, 420.0):
+            holdings = {}
+            pending = [_mk_pending(shares=1000)]  # 计划1000股@4.0=4000元, 现金不足
+            price_map = {"510300": 4.0}
+            c, h, trades, remaining = execute_pending(cash, holdings, pending, price_map)
+            assert c >= 0, f"cash={cash} 修复前会变负数: 实际{c}"
+            # 现金足够覆盖实际成本(如420>405.04)时允许买1手
+            if cash >= 405.04:
+                assert len(trades) == 1 and h["510300"]["shares"] == 100
+            else:
+                assert trades == [] and h == {}
+
     def test_insufficient_budget_drop(self):
         """现金不足100股 → 放弃买入"""
         cash = 100.0

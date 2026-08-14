@@ -417,12 +417,7 @@ def format_institutional_flow(all_data):
         for s in (ef.get("outflow") or [])[:5]:
             lines.append(f"  🔴 机构净赎回: {s['name']}({s['code']}) 份额{s['share_change']:+.0f}")
 
-    # 北向行业偏好
-    nb = all_data.get("north_top")
-    if nb:
-        lines.append(f"  北向资金偏好行业:")
-        for s in nb[:5]:
-            lines.append(f"    {s['name']}")
+    # 北向行业偏好已删除(原接口MK0354实为可转债板块, 假数据P0, 2026/8/14审查移除)
 
     return "\n".join(lines)
 
@@ -696,7 +691,7 @@ def compute_benchmark_comparison(portfolio, index_data, report_prefix="report_")
 
     from glob import glob as _glob
     report_dir = os.path.dirname(os.path.abspath(__file__))
-    report_files = sorted(_glob(os.path.join(report_dir, f"{report_prefix}*.json")))
+    report_files = sorted(_glob(os.path.join(report_dir, f"{report_prefix}[0-9]*.json")))
     if report_files:
         # 找第一个包含有效总资产的报告作为对比起点（旧版报告无portfolio字段，跳过）
         for rf in report_files:
@@ -741,9 +736,12 @@ def compute_benchmark_comparison(portfolio, index_data, report_prefix="report_")
         hs300_info = index_data["000300"]
         hs300_data = hs300_info.get("data", [])
         if len(hs300_data) >= 2:
+            # P0修复: K线日期带横杠(2026-05-19) vs start_date无横杠(20260812)字符串比较恒False
+            # → 基准起点恒为窗口第一根K线且每天滚动, 统一为8位数字再比较
+            start_date_norm = str(start_date).replace("-", "")
             start_idx = 0
             for i, d in enumerate(hs300_data):
-                if d.get("date", "") >= start_date:
+                if str(d.get("date", "")).replace("-", "") >= start_date_norm:
                     start_idx = i
                     break
             benchmark_start = hs300_data[start_idx]["close"]
@@ -1085,11 +1083,16 @@ def main():
 
     if email_pw:
         logger.info("生成HTML报告并发送邮件...")
+        ok = False
         try:
             html = generate_html_report(output)
-            send_email(html, email_pw, report_date=output.get("date"))
+            ok = send_email(html, email_pw, report_date=output.get("date"))
         except Exception as e:
             logger.error(f"邮件发送失败: {e}\n{traceback.format_exc()}")
+        if not ok:
+            # P0修复: 邮件失败原为静默(workflow仍success), 现在发告警邮件+exit非0让workflow失败
+            send_failure_alert("日报邮件发送失败(系统可能无有效信号)", traceback.format_exc())
+            sys.exit(1)
     else:
         logger.info("未配置QQ邮箱授权码，跳过发送")
 

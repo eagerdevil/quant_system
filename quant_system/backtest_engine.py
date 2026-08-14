@@ -281,6 +281,8 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
                         continue
                     buy_shares = affordable
                     cost_with_fee, _ = trade_cost(buy_shares, exec_price, is_buy=True)
+                    if cost_with_fee > cash:  # P0修复: 最低5元佣金使实际成本可超估算, 现金永不为负
+                        continue
                 if buy_shares < 100:
                     continue
                 cash -= cost_with_fee

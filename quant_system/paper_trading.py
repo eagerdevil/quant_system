@@ -149,6 +149,10 @@ def execute_pending(cash, holdings, pending, price_map):
                     continue
                 buy_shares = affordable
                 cost_with_fee, _ = trade_cost(buy_shares, exec_price, is_buy=True)
+                if cost_with_fee > cash:
+                    # P0修复: 估算公式漏了最低5元佣金, 实际成本可能仍超现金(实测cash=404.9→-0.14)
+                    logger.info(f"[执行] {code} 实际成本{cost_with_fee:.2f}>现金{cash:.2f}, 放弃买入")
+                    continue
             if buy_shares < 100:
                 continue
             cash -= cost_with_fee
@@ -476,12 +480,17 @@ def main():
                 pass
     if email_pw:
         logger.info("生成HTML报告并发送邮件...")
+        ok = False
         try:
             html = generate_html_report(output)
-            send_email(html, email_pw, report_date=TODAY,
-                       subject=f"【模拟盘日报】 - {datetime.now().strftime('%Y.%m.%d')}")
+            ok = send_email(html, email_pw, report_date=TODAY,
+                            subject=f"【模拟盘日报】 - {datetime.now().strftime('%Y.%m.%d')}")
         except Exception as e:
             logger.error(f"邮件发送失败: {e}\n{traceback.format_exc()}")
+        if not ok:
+            # P0修复: 邮件失败原为静默, 现在告警+exit非0让workflow失败可被GitHub通知
+            send_failure_alert(f"模拟盘日报邮件发送失败({TODAY})", traceback.format_exc())
+            sys.exit(1)
     else:
         logger.info("未配置QQ邮箱授权码，跳过发送")
 
