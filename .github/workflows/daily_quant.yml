@@ -7,6 +7,10 @@ concurrency:
   group: daily-quant
   cancel-in-progress: false
 
+# 8/15修复: 云上留存需要push权限, 缺此块则GITHUB_TOKEN只读 → 403
+permissions:
+  contents: write
+
 jobs:
   quant-analysis:
     runs-on: ubuntu-latest
