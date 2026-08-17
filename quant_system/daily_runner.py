@@ -102,6 +102,10 @@ def update_portfolio_prices(portfolio, etf_data):
             if not prev_close and len(kline) >= 2:
                 prev_close = kline[-2].get("close")
             portfolio[code]["prev_close"] = prev_close
+            # 8/17修复: 标记K线滞后(工作日且最后bar非今日) — 报告显示⚠️防把昨日行情当今日盈亏
+            if kline:
+                last_bar = str(kline[-1].get("date", "")).replace("-", "")
+                portfolio[code]["stale_date"] = "" if last_bar == TODAY else last_bar
     return portfolio
 
 
@@ -161,6 +165,10 @@ def compute_portfolio_summary(portfolio, scores):
     for h in holdings:
         h["weight"] = round(h["value"] / total_assets * 100, 1) if total_assets > 0 else 0
 
+    # 8/17: 数据滞后持仓(现价非当日) — 报告显示⚠️防误导
+    stale_codes = [code for code, pos in portfolio.items()
+                   if not code.startswith("_") and pos.get("stale_date")]
+
     return {
         "holdings": holdings,
         "available_cash": available_cash,
@@ -171,6 +179,7 @@ def compute_portfolio_summary(portfolio, scores):
         "total_pnl_pct": round(total_pnl / total_cost * 100, 2) if total_cost > 0 else 0,
         "total_daily_pnl": round(total_daily_pnl, 2),
         "cash_ratio": round(available_cash / total_assets * 100, 1) if total_assets > 0 else 0,
+        "stale_codes": stale_codes,
     }
 
 # ============================================================
@@ -469,6 +478,9 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
     lines.append(f"  总资产: {ps.get('total_assets', 0):.2f}元 | 总市值: {ps.get('total_value', 0):.2f}元 | 可用资金: {ps.get('available_cash', 0):.2f}元")
     lines.append(f"  持仓盈亏: {ps.get('total_pnl', 0):+.2f}元 ({ps.get('total_pnl_pct', 0):+.2f}%) | 今日盈亏: {ps.get('total_daily_pnl', 0):+.2f}元")
     lines.append(f"  现金占比: {ps.get('cash_ratio', 0):.1f}%")
+    # 8/17: 数据滞后告警 — 现价非当日时今日盈亏不可信
+    if ps.get("stale_codes"):
+        lines.append(f"  ⚠️ 数据滞后: {', '.join(ps['stale_codes'])} 现价非当日K线, 今日盈亏≠当日实际(数据源更新失败)")
 
     # ===== 持仓明细 =====
     lines.append(f"\n  {'─'*60}")

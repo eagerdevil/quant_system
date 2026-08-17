@@ -185,6 +185,17 @@ def _fetch_kline_with_cache(code, url, days, fallback_fn, ver=""):
                     fresh.append(p)
         if fresh:
             merged = _merge_klines(cached, fresh)
+            # 8/17修复: 东财WAF限流时增量响应可能"成功但缺当日bar"——工作日且最后bar非今日
+            # 时立即用备用源(腾讯, US IP友好)补当日, 否则日报会把昨日收盘当现价(8/17实盘日报事故)
+            last_bar = merged[-1]["date"].replace("-", "") if merged else ""
+            if datetime.now().weekday() < 5 and last_bar < today and fallback_fn:
+                logger.info(f"  [增量缺当日] {code} 东财增量截至{last_bar}, 备用源补拉...")
+                fb = fallback_fn(code, days)
+                if fb:
+                    fb_merged = _merge_klines(cached, fb)
+                    _save_kline_cache(code, fb_merged, ver)
+                    return fb_merged
+                logger.info(f"  [增量缺当日] {code} 备用源也失败, 降级缓存(截至{last_bar})")
             _save_kline_cache(code, merged, ver)
             return merged
         # 增量失败: 缓存降级(数据滞后, 记录日志)
@@ -203,6 +214,14 @@ def _fetch_kline_with_cache(code, url, days, fallback_fn, ver=""):
                 klines.append(p)
     if not klines and fallback_fn:
         klines = fallback_fn(code, days) or []
+    # 8/17修复(全量路径): 东财返回了数据但缺当日bar(限流/CDN滞后) → 备用源补当日
+    if klines and datetime.now().weekday() < 5 and fallback_fn:
+        last_bar = klines[-1]["date"].replace("-", "")
+        if last_bar < today:
+            logger.info(f"  [全量缺当日] {code} 东财截至{last_bar}, 备用源补拉...")
+            fb = fallback_fn(code, days)
+            if fb and fb[-1]["date"].replace("-", "") > last_bar:
+                klines = fb
     if klines:
         _save_kline_cache(code, klines, ver)
     return klines
