@@ -48,8 +48,10 @@
     "name": "沪深300ETF华泰柏瑞",
     "buy_date": "20260817",
     "score_history": [
+      72,
       72
-    ]
+    ],
+    "stale_date": "20260817"
   },
   "513800": {
     "shares": 43600,
@@ -57,7 +59,9 @@
     "name": "日本东证指数ETF南方",
     "buy_date": "20260817",
     "score_history": [
+      76,
       76
-    ]
+    ],
+    "stale_date": "20260817"
   }
 }
