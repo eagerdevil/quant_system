@@ -1109,6 +1109,42 @@ QDII_ETF_CODES = {
     "159660", "513060", "513880", "513220",
 }
 
+def fetch_etf_iopv(code):
+    """获取ETF实时IOPV估算净值（腾讯行情字段77/78，当日口径）
+
+    QDII官方净值T+1公布，盘中/盘后日报时最新官方净值滞后1-2个交易日，
+    用它算溢价会把前几天的溢价当今天（8/19实测：官方口径+3.24% vs 实时+1.19%）。
+    腾讯字段78=IOPV估算净值，字段77=按IOPV算的实时溢价%（支付宝同源数据），
+    比东财f169可靠（后者对部分QDII返回-61/9等无效值）。
+
+    返回: {"price": float, "iopv": float, "premium_pct": float} 或 None
+    """
+    try:
+        sym = ("sh" if code.startswith(("5", "6")) else "sz") + code
+        url = f"http://qt.gtimg.cn/q={sym}"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = resp.read().decode("gbk", errors="ignore")
+        for line in data.split(";"):
+            if "=" not in line or '"' not in line:
+                continue
+            fields = line.split('"')[1].split("~")
+            if len(fields) < 79 or fields[2] != code:
+                continue
+            price = _to_float(fields[3])
+            iopv = _to_float(fields[78])
+            premium = _to_float(fields[77])
+            if price <= 0 or iopv <= 0:
+                return None
+            # 合理性校验：IOPV偏离现价>50%视为垃圾值（防止假溢价进决策链）
+            if abs(iopv / price - 1) > 0.5:
+                return None
+            return {"price": round(price, 4), "iopv": round(iopv, 4),
+                    "premium_pct": round(premium, 2)}
+    except Exception as e:
+        logger.info(f"  [IOPV ERROR] {code}: {e}")
+    return None
+
 def fetch_etf_fund_nav(code):
     time.sleep(0.12)  # 8/14: 批量NAV拉取(15-47只)节流, 防fund.eastmoney限流封IP
     """
@@ -1139,6 +1175,9 @@ def fetch_etf_fund_nav(code):
 def compute_etf_premium(code, current_price, nav_data=None):
     """
     计算ETF溢价率
+    优先级: 1) 腾讯实时IOPV（当日口径，QDII官方净值T+1滞后1-2天）
+            2) 官方净值（T+1，滞后口径兜底）
+            3) 东财IOPV（腾讯失败时兜底）
     返回: {
         "premium_pct": float (正=溢价, 负=折价),
         "nav": float,
@@ -1149,7 +1188,19 @@ def compute_etf_premium(code, current_price, nav_data=None):
     """
     is_qdii = code in QDII_ETF_CODES
 
-    # 优先级1: 官方净值（最可靠）
+    # 优先级1: 实时IOPV（仅QDII走此路径——A股ETF申赎套利使溢价≈0，无需IOPV）
+    if is_qdii:
+        rt = fetch_etf_iopv(code)
+        if rt and rt.get("iopv", 0) > 0:
+            return {
+                "premium_pct": rt["premium_pct"],
+                "nav": rt["iopv"],
+                "nav_date": get_today(),
+                "data_source": "iopv",
+                "is_qdii": True
+            }
+
+    # 优先级2: 官方净值（最可靠，但QDII T+1滞后——IOPV不可用时的兜底）
     if nav_data and nav_data.get("nav", 0) > 0:
         premium = (current_price / nav_data["nav"] - 1) * 100
         return {
@@ -1160,7 +1211,7 @@ def compute_etf_premium(code, current_price, nav_data=None):
             "is_qdii": is_qdii
         }
 
-    # 优先级2: 尝试实时IOPV
+    # 优先级3: 尝试东财实时IOPV
     rt = fetch_etf_realtime(code)
     if rt and rt.get("iopv") and rt["iopv"] > 0:
         premium = (current_price / rt["iopv"] - 1) * 100
@@ -1230,6 +1281,9 @@ def compute_etf_premium_history(code, kline, days=60):
     """
     计算历史溢价序列及统计特征（价格K线 vs 历史官方净值，按日期对齐）
     溢价 = 收盘价/当日净值 - 1（历史净值T+1公布，为估算值；IOPV更准但无历史）
+    注意: current 为当日IOPV实时口径（current_source标记来源），
+    历史统计(median/mean/percentile)基于官方净值序列——QDII官方净值
+    T+1滞后1-2天，直接用 series 末位会把旧溢价当今天报（8/19修复）。
 
     返回:
     {
@@ -1265,8 +1319,18 @@ def compute_etf_premium_history(code, kline, days=60):
 
     series = series[-days:]
     prem_values = [s["premium"] for s in series]
-    current = prem_values[-1]
     n = len(prem_values)
+
+    # current 用当日IOPV口径（8/19修复：官方净值T+1滞后1-2天，
+    # 盘中等场景 series 最后一根是几天前的溢价，会把旧溢价当今天报）
+    # IOPV 为交易所/做市商当日估算，与最终官方净值接近，方向一致
+    iopv = fetch_etf_iopv(code)
+    if iopv and iopv.get("iopv", 0) > 0:
+        current = iopv["premium_pct"]
+        current_source = "iopv"
+    else:
+        current = prem_values[-1]
+        current_source = "official_nav"
 
     # 当前溢价在历史中的百分位（< current 的样本占比）
     percentile = round(sum(1 for p in prem_values if p < current) / n * 100, 1)
@@ -1279,6 +1343,7 @@ def compute_etf_premium_history(code, kline, days=60):
         "has_history": True,
         "series": series,
         "current": current,
+        "current_source": current_source,  # "iopv"(当日估算) | "official_nav"(T+1滞后)
         "median": round(statistics.median(prem_values), 2),
         "mean": round(sum(prem_values) / n, 2),
         "max": round(max(prem_values), 2),
