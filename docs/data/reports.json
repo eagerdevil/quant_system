@@ -1,40 +1,64 @@
 {
-  "reports": [
-    {
-      "file": "data/report_paper_20260812.json",
-      "date": "20260812",
-      "total_assets": 500000.0,
-      "total_return_pct": 0.0
-    },
-    {
-      "file": "data/report_paper_20260813.json",
-      "date": "20260813",
-      "total_assets": 500000.0,
-      "total_return_pct": 0.0
-    },
-    {
-      "file": "data/report_paper_20260814.json",
-      "date": "20260814",
-      "total_assets": 500000.0,
-      "total_return_pct": 0.0
-    },
-    {
-      "file": "data/report_paper_20260817.json",
-      "date": "20260817",
-      "total_assets": 501813.22,
-      "total_return_pct": 0.36
-    },
-    {
-      "file": "data/report_paper_20260818.json",
-      "date": "20260818",
-      "total_assets": 501813.22,
-      "total_return_pct": 0.36
-    },
-    {
-      "file": "data/report_paper_20260819.json",
-      "date": "20260819",
-      "total_assets": 494748.22,
-      "total_return_pct": -1.05
-    }
-  ]
+ "reports": [
+  {
+   "date": "20260812",
+   "file": "data/report_paper_20260812.json",
+   "updated_at": "2026-08-12T18:13:55.920592",
+   "total_assets": 500000.0,
+   "total_return_pct": 0.0,
+   "benchmark_return": -3.29,
+   "excess_return": 3.29,
+   "beat_benchmark": true
+  },
+  {
+   "date": "20260813",
+   "file": "data/report_paper_20260813.json",
+   "updated_at": "2026-08-13T20:10:26.408409",
+   "total_assets": 500000.0,
+   "total_return_pct": 0.0,
+   "benchmark_return": -2.49,
+   "excess_return": 2.49,
+   "beat_benchmark": true
+  },
+  {
+   "date": "20260814",
+   "file": "data/report_paper_20260814.json",
+   "updated_at": "2026-08-14T21:21:23.805004",
+   "total_assets": 500000.0,
+   "total_return_pct": 0.0,
+   "benchmark_return": -3.7,
+   "excess_return": 3.7,
+   "beat_benchmark": true
+  },
+  {
+   "date": "20260817",
+   "file": "data/report_paper_20260817.json",
+   "updated_at": "2026-08-17T18:12:11.538845",
+   "total_assets": 501813.22,
+   "total_return_pct": 0.36,
+   "benchmark_return": 1.07,
+   "excess_return": -0.71,
+   "beat_benchmark": false
+  },
+  {
+   "date": "20260818",
+   "file": "data/report_paper_20260818.json",
+   "updated_at": "2026-08-18T18:11:52.686114",
+   "total_assets": 501813.22,
+   "total_return_pct": 0.36,
+   "benchmark_return": 1.07,
+   "excess_return": -0.71,
+   "beat_benchmark": false
+  },
+  {
+   "date": "20260819",
+   "file": "data/report_paper_20260819.json",
+   "updated_at": "2026-08-19T21:03:32.773629",
+   "total_assets": 494748.22,
+   "total_return_pct": -1.05,
+   "benchmark_return": -2.18,
+   "excess_return": 1.13,
+   "beat_benchmark": true
+  }
+ ]
 }
