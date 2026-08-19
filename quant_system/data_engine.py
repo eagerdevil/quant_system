@@ -198,7 +198,17 @@ def _fetch_kline_with_cache(code, url, days, fallback_fn, ver=""):
                 logger.info(f"  [增量缺当日] {code} 备用源也失败, 降级缓存(截至{last_bar})")
             _save_kline_cache(code, merged, ver)
             return merged
-        # 增量失败: 缓存降级(数据滞后, 记录日志)
+        # 增量失败: 先试备用源, 备用源也失败才缓存降级
+        # (8/19修复: 原逻辑仅"增量成功但缺当日bar"走备用源, 东财整体不可达时备用源从未被调用,
+        #  导致8/18-8/19连续两天用8/17缓存生成模拟盘/实盘日报, 误报盈利实际亏损)
+        if fallback_fn:
+            logger.info(f"  [增量失败] {code} 东财不可达, 备用源补拉...")
+            fb = fallback_fn(code, days)
+            if fb:
+                merged = _merge_klines(cached, fb)
+                _save_kline_cache(code, merged, ver)
+                return merged
+        # 缓存降级(数据滞后, 记录日志)
         logger.info(f"  [缓存降级] {code} 增量更新失败, 用缓存(截至{last_date})")
         return cached
 
