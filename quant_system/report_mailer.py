@@ -173,6 +173,20 @@ def _generate_speedview(report_data):
     return html
 
 
+def _generate_stale_banner(report_data):
+    """8/19加固: 数据滞后时生成醒目红色横幅（实盘/模拟盘报告通用）"""
+    stale = report_data.get("stale_codes") or []
+    if not stale:
+        return ""
+    return (
+        '<div style="background:#3d0a0a;border:3px solid #ff4757;border-radius:8px;'
+        'padding:16px 20px;margin:16px 0;font-size:16px;font-weight:bold;color:#ff6b6b;">'
+        f'⚠️⚠️⚠️ 数据滞后告警：{", ".join(stale)} K线未更新到当日<br>'
+        '<span style="font-weight:normal;font-size:13px;color:#ffa5a5;">'
+        '今日盈亏/总资产为陈旧数据，不反映当日实际行情，请勿据此操作</span></div>'
+    )
+
+
 def generate_html_report(report_data):
     """生成HTML格式的邮件报告 — 增强版"""
     if not report_data:
@@ -226,6 +240,9 @@ def generate_html_report(report_data):
     </style></head><body>
 
     <div class="header"><h1>A股量化决策系统 - 每日报告</h1><p>{datetime.now().strftime('%Y年%m月%d日')} | 收盘后自动生成</p></div>
+
+    <!-- 8/19加固: 数据滞后显著告警横幅(邮件正文最顶部, 红色高亮) -->
+    {_generate_stale_banner(report_data)}
 
     <!-- v8.0: 30秒速览 -->
     {_generate_speedview(report_data)}

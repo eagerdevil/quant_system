@@ -1115,7 +1115,11 @@ def main():
         ok = False
         try:
             html = generate_html_report(output)
-            ok = send_email(html, email_pw, report_date=output.get("date"))
+            # 8/19加固: stale数据时邮件标题显著标记, 避免误读
+            subject = None
+            if output.get("stale_codes"):
+                subject = f"[数据滞后] A股量化日报 - {output.get('date')} ({', '.join(output['stale_codes'])})"
+            ok = send_email(html, email_pw, report_date=output.get("date"), subject=subject)
         except Exception as e:
             logger.error(f"邮件发送失败: {e}\n{traceback.format_exc()}")
         if not ok:

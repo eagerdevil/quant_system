@@ -150,12 +150,15 @@ function renderReportList() {
     const item = document.createElement("div");
     item.className = "report-item";
     const retCls = pctCls(r.total_return_pct ?? 0);
+    // 8/19加固: 数据滞后报告显示红色⚠️(manifest.stale字段, 来自报告JSON stale_codes)
+    const staleMark = r.stale ? `<span class="stale-badge" title="数据滞后: ${r.stale}">⚠️ 数据滞后</span>` : "";
     item.innerHTML = `
       <span class="r-date">${dateFmt(r.date)}</span>
       <span class="r-meta">总资产 ${fmtMoney(r.total_assets)}</span>
       <span class="r-ret ${retCls}">${pctSign(r.total_return_pct ?? 0)}</span>
       <span class="r-meta ${r.beat_benchmark ? "up" : "down"}">${r.beat_benchmark ? "跑赢" : "跑输"}基准 ${pctSign(r.excess_return ?? 0)}</span>
-      <span class="hint">${String(r.updated_at || "").slice(0, 10)} 更新</span>`;
+      <span class="hint">${String(r.updated_at || "").slice(0, 10)} 更新</span>
+      ${staleMark}`;
     item.onclick = () => toggleDetail(item, r);
     list.appendChild(item);
   });
@@ -189,7 +192,8 @@ function renderChart() {
   const wrap = canvas.parentElement;
   if (!manifest || !manifest.reports || manifest.reports.length < 1) { showEmpty("chart-empty", true); wrap.style.height = "auto"; return; }
   showEmpty("chart-empty", false);
-  const pts = manifest.reports.map(r => ({ x: dateFmt(r.date), y: r.total_assets }));
+  // 8/19加固: 数据滞后(stale)报告不进入净值曲线 — 防陈旧价污染曲线形态
+  const pts = manifest.reports.filter(r => !r.stale).map(r => ({ x: dateFmt(r.date), y: r.total_assets }));
   if (navChart) { navChart.destroy(); }
   navChart = new Chart(canvas, {
     type: "line",

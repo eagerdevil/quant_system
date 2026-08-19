@@ -108,6 +108,12 @@ tr:hover td { background: rgba(59,130,246,.06); }
 .report-item .r-date { font-weight: 600; }
 .report-item .r-meta { color: var(--muted); font-size: 12px; margin-left: auto; margin-right: 14px; }
 .report-item .r-ret { font-weight: 700; }
+/* 8/19: 数据滞后报告红色标记 */
+.report-item .stale-badge {
+  background: #3d0a0a; color: #ff6b6b; border: 1px solid #ff4757;
+  border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 700;
+  white-space: nowrap; margin-left: 8px;
+}
 .report-detail {
   background: var(--panel-2); border: 1px solid var(--border);
   border-radius: 8px; padding: 14px; margin-top: 8px;

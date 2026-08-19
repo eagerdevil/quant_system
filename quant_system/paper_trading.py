@@ -443,6 +443,17 @@ def main():
     for code, pos in holdings.items():
         portfolio[code] = pos
     portfolio = update_portfolio_prices(portfolio, etf_data)
+    # 8/19加固: 数据滞后检测 — 现价非当日K线时标记stale
+    # (update_portfolio_prices已写入stale_date; 交易日+最后bar非今日=数据源失败)
+    stale_codes = []
+    if not is_rest_day()[0]:
+        for code, pos in portfolio.items():
+            if code.startswith("_") or not isinstance(pos, dict) or "shares" not in pos:
+                continue
+            if pos.get("stale_date"):
+                stale_codes.append(code)
+    if stale_codes:
+        logger.warning(f"  [STALE] 数据滞后: {', '.join(stale_codes)} — 现价为陈旧K线, 报告将显著告警")
     # 8/14长持改造: 每日评分写入持仓历史(供quant_engine"连续5日<55卖出"判断), 保留最近7天
     score_by_code = {s["code"]: s["score"] for s in scores}
     for code, pos in list(portfolio.items()):
@@ -501,6 +512,12 @@ def main():
     report = format_paper_report(executed_trades, port_summary, timing_result, plan,
                                  benchmark, final_pending, account,
                                  trades_history=portfolio.get("_trades"))
+    # 8/19加固: stale数据时报告顶部显著告警(邮件正文+HTML同源)
+    if stale_codes:
+        report = ("⚠️⚠️⚠️ 数据滞后告警 ⚠️⚠️⚠️\n"
+                  f"以下持仓K线未更新到今日: {', '.join(stale_codes)}\n"
+                  "今日盈亏/总资产为陈旧数据, 不反映当日实际行情, 请勿据此操作\n"
+                  + "-" * 64 + "\n") + report
     try:
         print(report)
     except UnicodeEncodeError:
@@ -510,6 +527,7 @@ def main():
         "date": TODAY,
         "timestamp": datetime.now().isoformat(),
         "type": "paper",
+        "stale_codes": stale_codes,  # 8/19: 供workflow/manifest/网站判定数据新鲜度
         "timing": timing_result,
         "scores": scores,
         "plan": plan,
@@ -550,8 +568,11 @@ def main():
         ok = False
         try:
             html = generate_html_report(output)
-            ok = send_email(html, email_pw, report_date=TODAY,
-                            subject=f"【模拟盘日报】 - {datetime.now().strftime('%Y.%m.%d')}")
+            # 8/19加固: stale数据时邮件标题显著标记, 避免误读
+            subj = f"【模拟盘日报】 - {datetime.now().strftime('%Y.%m.%d')}"
+            if stale_codes:
+                subj = f"[数据滞后] {subj} ({', '.join(stale_codes)})"
+            ok = send_email(html, email_pw, report_date=TODAY, subject=subj)
         except Exception as e:
             logger.error(f"邮件发送失败: {e}\n{traceback.format_exc()}")
         if not ok:

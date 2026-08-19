@@ -88,6 +88,7 @@ jobs:
                   'benchmark_return': round((b.get('benchmark_return') or 0) * 100, 2),
                   'excess_return': round((b.get('excess_return') or 0) * 100, 2),
                   'beat_benchmark': bool(b.get('beat_benchmark', False)),
+                  'stale': ','.join(d.get('stale_codes') or []),  # 8/19: 数据滞后标记(网站显示告警+曲线过滤)
               })
           json.dump({'reports': reports}, open('../docs/data/reports.json', 'w', encoding='utf-8'),
                     ensure_ascii=False, indent=1)
@@ -109,9 +110,11 @@ jobs:
           DATE=$(date '+%Y%m%d')
           NAV=$(python -c "import json,glob; fs=sorted(glob.glob('quant_system/report_paper_*.json')); d=json.load(open(fs[-1],encoding='utf-8')) if fs else {}; print(d.get('account',{}).get('total_assets',0))" 2>/dev/null || echo 0)
           RET=$(python -c "import json,glob; fs=sorted(glob.glob('quant_system/report_paper_*.json')); d=json.load(open(fs[-1],encoding='utf-8')) if fs else {}; print(d.get('account',{}).get('total_return_pct',0))" 2>/dev/null || echo 0)
+          # 8/19加固: 数据滞后时提交信息带[STALE]标记(可审计, 网站据此过滤曲线)
+          STALE=$(python -c "import json,glob; fs=sorted(glob.glob('quant_system/report_paper_*.json')); d=json.load(open(fs[-1],encoding='utf-8')) if fs else {}; sc=d.get('stale_codes') or []; print('['+','.join(sc)+']' if sc else '')" 2>/dev/null || echo "")
 
           git add quant_system/portfolio_paper.json quant_system/report_paper_*.json docs/data/
-          git commit -m "paper(trade): 模拟盘日报 ${DATE} 净值${NAV} 累计${RET}%"
+          git commit -m "paper(trade): 模拟盘日报 ${DATE} 净值${NAV} 累计${RET}% ${STALE}"
 
           git push origin HEAD || {
             echo "push失败，rebase重试一次"
