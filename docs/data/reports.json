@@ -8,7 +8,8 @@
    "total_return_pct": 0.0,
    "benchmark_return": -3.29,
    "excess_return": 3.29,
-   "beat_benchmark": true
+   "beat_benchmark": true,
+   "stale": ""
   },
   {
    "date": "20260813",
@@ -18,7 +19,8 @@
    "total_return_pct": 0.0,
    "benchmark_return": -2.49,
    "excess_return": 2.49,
-   "beat_benchmark": true
+   "beat_benchmark": true,
+   "stale": ""
   },
   {
    "date": "20260814",
@@ -28,7 +30,8 @@
    "total_return_pct": 0.0,
    "benchmark_return": -3.7,
    "excess_return": 3.7,
-   "beat_benchmark": true
+   "beat_benchmark": true,
+   "stale": ""
   },
   {
    "date": "20260817",
@@ -38,7 +41,8 @@
    "total_return_pct": 0.36,
    "benchmark_return": 1.07,
    "excess_return": -0.71,
-   "beat_benchmark": false
+   "beat_benchmark": false,
+   "stale": ""
   },
   {
    "date": "20260818",
@@ -48,7 +52,8 @@
    "total_return_pct": 0.36,
    "benchmark_return": 1.07,
    "excess_return": -0.71,
-   "beat_benchmark": false
+   "beat_benchmark": false,
+   "stale": ""
   },
   {
    "date": "20260819",
@@ -58,7 +63,19 @@
    "total_return_pct": -1.05,
    "benchmark_return": -2.18,
    "excess_return": 1.13,
-   "beat_benchmark": true
+   "beat_benchmark": true,
+   "stale": ""
+  },
+  {
+   "date": "20260820",
+   "file": "data/report_paper_20260820.json",
+   "updated_at": "2026-08-20T18:11:53.511190",
+   "total_assets": 495347.82,
+   "total_return_pct": -0.93,
+   "benchmark_return": -2.09,
+   "excess_return": 1.16,
+   "beat_benchmark": true,
+   "stale": ""
   }
  ]
 }
