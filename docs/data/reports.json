@@ -87,6 +87,17 @@
    "excess_return": 0.74,
    "beat_benchmark": true,
    "stale": ""
+  },
+  {
+   "date": "20260824",
+   "file": "data/report_paper_20260824.json",
+   "updated_at": "2026-08-24T18:14:49.186903",
+   "total_assets": 494814.22,
+   "total_return_pct": -1.04,
+   "benchmark_return": -2.72,
+   "excess_return": 1.69,
+   "beat_benchmark": true,
+   "stale": ""
   }
  ]
 }
