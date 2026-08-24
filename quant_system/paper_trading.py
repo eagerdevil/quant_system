@@ -269,7 +269,9 @@ def main():
     pending = portfolio.get("_pending", [])
 
     # S2. 采集数据（与实盘同源同构; 模拟盘只交易ETF不采集个股）
-    etf_list = list(set(list(KEY_ETFS.keys()) + USER_WATCHLIST))
+    # 8/24: 持仓代码强制加入采集范围 — 池子调整后(如510300移出)模拟盘持仓仍能更新价格/评分
+    holdings_codes = [k for k in portfolio if not k.startswith("_")]
+    etf_list = list(set(list(KEY_ETFS.keys()) + USER_WATCHLIST + holdings_codes))
     logger.info("Step 1/4: 采集数据...")
     all_data = collect_all_data(etf_list, [])
 

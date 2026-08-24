@@ -653,9 +653,9 @@ REGIME_STRATEGY = {
         "description": "趋势向好，正常操作"
     },
     "CHOPPY": {
-        "base_position": (0.20, 0.40),
+        "base_position": (0.20, 0.90),  # 8/24用户决策: 仓位上限40%→90%, 允许震荡市加仓/补仓
         "stop_loss": -0.08,            # 止损(8/14长持改造: -5%→-8%, 防震荡市反复止损磨损)
-        "buy_grade_min": "B_买入",     # 8/14决策: 原A_强烈买入导致震荡市长期空仓，放宽到B级让模拟盘能建仓(仓位仍受40%上限约束)
+        "buy_grade_min": "B_买入",     # 8/14决策: 原A_强烈买入导致震荡市长期空仓，放宽到B级让模拟盘能建仓
         "description": "方向不明，缩小头寸+收紧止损"
     },
     "TREND_DOWN": {
@@ -1739,7 +1739,8 @@ class MarketTiming:
         force_cap = hs300_below_ma20 and ma60_down
 
         if force_cap:
-            base_position = min(base_position, 0.30)
+            # 8/24用户决策: 强制压仓上限30%→90%(仅趋势市1.0仓位破位时压至90%, 震荡市不再额外压制)
+            base_position = min(base_position, 0.90)
 
         return {
             "bull_signals": bull_count,
@@ -2146,8 +2147,10 @@ class TradeDecider:
             for s in self.scores:
                 if len(buy_candidates) >= 6:  # 收集更多候选用于波动率比较
                     break
-                if s["code"] in self.portfolio or s["code"] in sold_codes:
+                if s["code"] in sold_codes:
                     continue
+                # 8/24用户决策: 允许补仓 — 持仓标的评分达标(B级)且仓位未满时可加仓,
+                # 由预算(目标仓位-已持仓)和单只上限(25%)约束, 防止无限补仓
                 # 8/14修复: 止损冷却期 — 止损卖出后5个交易日内禁买同一代码(防"止损→买回→再止损"磨损循环)
                 cd_date = str(_cooldowns_raw.get(s["code"], "")).replace("-", "")
                 if len(cd_date) == 8:
@@ -2197,6 +2200,11 @@ class TradeDecider:
             # P0修复(8/14): target_amount此前只计算未使用，v8.0凯利重写丢了目标仓位上限，
             # 导致计划买入可超择时目标仓位(如震荡市40%目标却买68%)。买入上限=目标仓位-已持仓-本次已计划
             budget = min(budget, max(0.0, target_amount - current_invested - spent))
+            # 8/24补仓约束: 允许补仓后, 单只总持仓(含原有)不得超过单只上限, 防集中度失控
+            if code in self.portfolio:
+                _pos = self.portfolio[code]
+                _existing = _pos.get("shares", 0) * _pos.get("current_price", _pos.get("cost", 0))
+                budget = min(budget, max(0.0, max_single * total_capital - _existing))
             price = s.get("price", 0)
             if price <= 0:
                 continue

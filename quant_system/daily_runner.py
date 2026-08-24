@@ -457,7 +457,7 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
         label = name.replace("S1_HS300_above_MA20","沪深300在20日线上").replace("S2_HS300_MA60_up","沪深300的60日线向上").replace("S3_NorthFlow_5d_positive","北向资金5日净流入").replace("S4_Volume_active","成交额>2万亿").replace("S5_LimitDown_low","跌停<20家").replace("S6_Margin_increasing","融资余额增加")
         lines.append(f"    {icon} {label}")
     if timing['force_capped']:
-        lines.append(f"  [WARNING] 强制限制生效: 仓位上限30%")
+        lines.append(f"  [WARNING] 强制限制生效: 仓位上限90%(8/24放松)")
     nf_5d = timing.get("north_flow_5d")
     if nf_5d is not None:
         lines.append(f"  沪深股通5日均成交: {nf_5d:.1f}亿元(北向净买额2024/8起停披露,以成交活跃度替代)")
@@ -821,7 +821,9 @@ def main():
     portfolio = load_portfolio(portfolio_file)
 
     # 确定分析标的
-    etf_list = list(set(list(KEY_ETFS.keys()) + USER_WATCHLIST))
+    # 8/24: 持仓代码强制加入采集范围 — 池子调整后(如510300移出)持仓仍能更新价格/评分, 防僵尸持仓
+    holdings_codes = [k for k in portfolio if not k.startswith("_")]
+    etf_list = list(set(list(KEY_ETFS.keys()) + USER_WATCHLIST + holdings_codes))
     stock_list = list(USER_STOCKS.keys())
 
     # 1. 采集数据
