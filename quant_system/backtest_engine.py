@@ -414,12 +414,16 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
                 equity_curve.append(dict(prev, date=today))
             continue
 
-        # 简化大盘择时
-        hs300_etf = valid_etfs.get("510300")
+        # 简化大盘择时：基准取池内可用的大盘宽基（8/24: 510300移出池后A500优先，回退链兜底）
+        bench_etf = None
+        for _bc in ("563360", "510300", "510500", "512100", "159915"):
+            bench_etf = valid_etfs.get(_bc)
+            if bench_etf:
+                break
         market_bullish = 1.0  # 默认满仓（无指数数据时）
-        if hs300_etf:
-            hs300_closes = [k["close"] for k in hs300_etf["klines"]]
-            all_dates = [k["date"] for k in hs300_etf["klines"]]
+        if bench_etf:
+            hs300_closes = [k["close"] for k in bench_etf["klines"]]
+            all_dates = [k["date"] for k in bench_etf["klines"]]
             if today in all_dates:
                 pos = all_dates.index(today)
                 hs300_slice = hs300_closes[:pos + 1]
