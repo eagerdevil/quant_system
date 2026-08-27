@@ -16,7 +16,17 @@
       "note": "8/13策略转向全球宽基ETF，清空待执行行业ETF订单（512800/515650/510880/513800/515220）"
     }
   ],
-  "_pending": [],
+  "_pending": [
+    {
+      "code": "513800",
+      "name": "日本东证指数ETF南方",
+      "action": "BUY",
+      "shares": 1000,
+      "signal_date": "20260827",
+      "retries": 0,
+      "reason": ""
+    }
+  ],
   "_cooldowns": {},
   "_trades": [
     {
@@ -48,13 +58,13 @@
     "name": "沪深300ETF华泰柏瑞",
     "buy_date": "20260817",
     "score_history": [
-      72,
       74,
       76,
       70,
       71,
       74,
-      71
+      71,
+      69
     ],
     "stale_date": ""
   },
@@ -64,13 +74,13 @@
     "name": "日本东证指数ETF南方",
     "buy_date": "20260817",
     "score_history": [
-      76,
       79,
       79,
       80,
       79,
       82,
-      78
+      78,
+      77
     ],
     "stale_date": ""
   }
