@@ -1057,27 +1057,41 @@ def fetch_etf_realtime(code):
         raw_chg = _to_float(d.get("f170"))
 
         def _pick_scale():
-            if _raw_prev > 0 and _raw_price > 0:
-                best_s, best_err = None, None
-                for s in (1000.0, 100.0, 1.0):
-                    if raw_high > 0 and _raw_price / s > raw_high / s:
-                        continue  # 现价>最高价 → 尺度错误
-                    est = _raw_prev / s * (1 + raw_chg / 10000.0)  # 由昨收反推现价
-                    if est <= 0:
-                        continue
-                    err = abs(_raw_price / s - est) / est
-                    if best_err is None or err < best_err:
-                        best_s, best_err = s, err
-                if best_s is not None and best_err < 0.15:  # 误差<15%才可信
-                    return best_s
+            """尺度投票 v2 (8/27修复):
+            - 价格区间约束(0.1~500元, 国债ETF≈141)移入投票循环内, 不再事后兜底
+            - 任何尺度都无法解释原始值 → 返回None(垃圾数据), 调用方转新浪备用
+            背景: 原投票误差公式中s可约分(尺度不变), 实际永远返回1000;
+            8/27下午东财f43对部分ETF返回异常单位(159920→1501元/159750→8.71元),
+            旧代码把垃圾值当正常价返回(与8/17、8/19同类数据污染)。
+            """
             if _raw_price > 0:
-                # 无昨收/投票不信任: 用价格区间判断（A股ETF现价0.1~100元）
+                if _raw_prev > 0:
+                    best_s, best_err = None, None
+                    for s in (1000.0, 100.0, 1.0):
+                        p = _raw_price / s
+                        if not (0.1 <= p <= 500):
+                            continue  # 价格区间先验: A股ETF 0.1~500元
+                        if raw_high > 0 and p > raw_high / s:
+                            continue  # 现价>最高价 → 尺度错误
+                        est = _raw_prev / s * (1 + raw_chg / 10000.0)  # 由昨收反推现价
+                        if est <= 0:
+                            continue
+                        err = abs(p - est) / est
+                        if best_err is None or err < best_err:
+                            best_s, best_err = s, err
+                    if best_s is not None and best_err < 0.15:  # 误差<15%才可信
+                        return best_s
                 for s in (1000.0, 100.0, 1.0):
                     p = _raw_price / s
-                    if 0.1 <= p <= 100:
+                    if 0.1 <= p <= 500:
                         return s
-            return 1000.0  # 兜底: 东财push2对ETF以厘返回
+            return None  # 垃圾数据: 所有尺度都无法解释
+
         _scale = _pick_scale()
+        if _scale is None:
+            # v8 (8/27): 东财原始值尺度无法解释 → 弃用东财, 走新浪备用
+            logger.info(f"  [实时尺度异常] {code} 东财f43无法解释, 转新浪备用")
+            return _fetch_sina_realtime(code)
 
         price = _raw_price / _scale
 
@@ -1093,6 +1107,41 @@ def fetch_etf_realtime(code):
         # 涨跌幅（f170 基点单位 ×100，如+1.2%→120）
         raw_chg = _to_float(d.get("f170"))
         change_pct = raw_chg / 100.0
+
+        # v8 (8/27): K线交叉验证 — 东财f43单位漂移(159750→8.71)在区间内漏网时,
+        # 以K线收盘为准重建价格字段。
+        # 触发条件(任一):
+        #   1) K线为当日 且 偏差>10% — 池内ETF正常盘中波动远小于此, 单位漂移10倍起跳
+        #   2) 偏差为"干净的10次幂"(10/100/0.1...误差<5%) — 即使K线非当日(缓存滞后)
+        #      也锚定: 单日真实波动绝不可能是精确10倍, 这种形态只能是单位漂移
+        # 注: 投票误差公式对尺度不敏感(浮点噪声随机选区间内尺度), 判别责任全在锚定。
+        try:
+            kline = fetch_etf_kline(code, days=6)
+            if kline and len(kline) >= 2:
+                kc = kline[-1]["close"]
+                if kc > 0:
+                    ratio = price / kc
+                    kline_fresh = kline[-1]["date"].replace("-", "") == get_today()
+                    clean_pow10 = any(abs(ratio - m) < 0.05 for m in (0.01, 0.1, 10.0, 100.0, 1000.0))
+                    if (kline_fresh and abs(ratio - 1) > 0.10) or clean_pow10:
+                        k_prev = kline[-2]["close"]
+                        k_chg = (kc / k_prev - 1) * 100 if k_prev > 0 else change_pct
+                        k_scale = _raw_price / kc
+                        logger.info(f"  [K线锚定] {code} 实时价{price} 与K线{kc}比{ratio:.4g}, 以K线重建(尺度{k_scale:.0f})")
+                        return {
+                            "price": round(kc, 4),
+                            "high": round(_to_float(d.get("f44")) / k_scale, 4),
+                            "low": round(_to_float(d.get("f45")) / k_scale, 4),
+                            "open": round(_to_float(d.get("f46")) / k_scale, 4),
+                            "volume": _to_float(d.get("f47")), "amount": _to_float(d.get("f48")),
+                            "change_pct": round(k_chg, 2),
+                            "prev_close": round(k_prev, 4),
+                            "name": d.get("f58", ""), "code": d.get("f57", ""),
+                            "iopv": round(raw_iopv / k_scale, 4) if (iopv is not None and raw_iopv > 0) else iopv,
+                            "scale_fixed": True,
+                        }
+        except Exception:
+            pass
 
         return {
             "price": round(price, 4),
