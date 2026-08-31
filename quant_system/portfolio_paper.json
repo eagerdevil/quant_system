@@ -1,7 +1,7 @@
 {
   "_comment": "模拟盘虚拟账户（与 portfolio.json 完全隔离）| 初始资金10万 | 由 paper_trading.py 每日18:10自动运行",
   "_initial_capital": 500000.0,
-  "_available_cash": 300239.61564,
+  "_available_cash": 298458.43804,
   "_cash_flows": [
     {
       "date": "20260812",
@@ -16,17 +16,7 @@
       "note": "8/13策略转向全球宽基ETF，清空待执行行业ETF订单（512800/515650/510880/513800/515220）"
     }
   ],
-  "_pending": [
-    {
-      "code": "512890",
-      "name": "红利低波ETF华泰柏瑞",
-      "action": "BUY",
-      "shares": 1500,
-      "signal_date": "20260828",
-      "retries": 0,
-      "reason": ""
-    }
-  ],
+  "_pending": [],
   "_cooldowns": {},
   "_trades": [
     {
@@ -50,6 +40,17 @@
       "amount": 83805.85,
       "fee": 50.25,
       "reason": ""
+    },
+    {
+      "date": "20260831",
+      "code": "512890",
+      "name": "红利低波ETF华泰柏瑞",
+      "action": "BUY",
+      "price": 1.184,
+      "shares": 1500,
+      "amount": 1781.18,
+      "fee": 5.18,
+      "reason": ""
     }
   ],
   "510300": {
@@ -58,13 +59,13 @@
     "name": "沪深300ETF华泰柏瑞",
     "buy_date": "20260817",
     "score_history": [
-      76,
       70,
       71,
       74,
       71,
       69,
-      72
+      72,
+      70
     ],
     "stale_date": ""
   },
@@ -74,14 +75,24 @@
     "name": "日本东证指数ETF南方",
     "buy_date": "20260817",
     "score_history": [
-      79,
       80,
       79,
       82,
       78,
       77,
-      73
+      73,
+      75
     ],
     "stale_date": ""
+  },
+  "512890": {
+    "shares": 1500,
+    "cost": 1.184,
+    "name": "红利低波ETF华泰柏瑞",
+    "buy_date": "20260831",
+    "stale_date": "",
+    "score_history": [
+      69
+    ]
   }
 }
