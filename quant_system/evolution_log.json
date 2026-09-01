@@ -48,10 +48,59 @@
       },
       "etf_count": 15,
       "point_count": 2617
+    },
+    {
+      "date": "20260901",
+      "timestamp": "2026-09-01T21:06:59.517118",
+      "version": 3,
+      "baseline_ic": 0.38219,
+      "current_ic": 0.46214,
+      "best_ic": 0.53917,
+      "baseline_ic_oos": 0.02061,
+      "current_ic_oos": -0.15336,
+      "best_ic_oos": -0.0874,
+      "ic_change": 0.07703,
+      "ic_change_oos": 0.06596,
+      "overfitting_detected": false,
+      "updated": false,
+      "reason": "🛑 训练IC提升(+0.07703)但OOS门禁未达标(t=0.2<2或正IC率60%<60%或过拟合0窗) → 拒绝更新, 保持现有参数",
+      "train_points": 2430,
+      "test_points": 1042,
+      "wfcv": {
+        "n_windows": 5,
+        "mean_oos_ic": 0.04379,
+        "std_oos_ic": 0.5493,
+        "positive_rate": 0.6,
+        "stability": "⚠️ 不稳定",
+        "overfit_windows": 0,
+        "unreliable_factors": [
+          "F1_趋势强度",
+          "F5_均线偏离",
+          "F8_回调",
+          "F9_Sortino",
+          "F10_MaxDD"
+        ]
+      },
+      "factor_correlation": {
+        "n_high_pairs": 4,
+        "avg_abs_corr": 0.1761,
+        "warnings": [
+          "🚨 F9_Sortino↔F15_夏普 r=+0.981 极度正相关 → 强烈建议合并或大幅降权其一",
+          "⚠️ F1_趋势强度↔F13_均线排列 r=+0.833 高度正相关 → 建议降低其中之一的权重",
+          "⚡ F1_趋势强度↔F12_多周期 r=+0.746 正相关 → 关注，可能重复计票"
+        ]
+      },
+      "param_changes": {
+        "weights_changed": 0,
+        "thresholds_changed": 0,
+        "premium_curve_changed": false
+      },
+      "etf_count": 20,
+      "point_count": 3472
     }
   ],
   "summary": {
-    "total_optimizations": 1,
-    "total_ic_improvement": 0.1021
+    "total_optimizations": 2,
+    "total_ic_improvement": 0.17913
   }
 }
