@@ -281,11 +281,17 @@ def generate_html_report(report_data):
         total_invested = port.get("total_invested")
         if total_pnl_all is not None:
             alloc_color = "#00ff88" if total_pnl_all >= 0 else "#ff4757"
+            # 基准被用户确认覆盖时显示说明, 避免流水明细与基准矛盾的困惑
+            if port.get("total_invested_note"):
+                invested_detail = f'<small>{port.get("total_invested_note")}</small>'
+            else:
+                invested_detail = (f'<small>(入金{port.get("total_deposits", 0):,.2f}'
+                                   f' - 出金{port.get("total_withdrawals", 0):,.2f})</small>')
             alloc_row = (
                 f'<tr><td><b>总盈亏</b></td><td style="color:{alloc_color}">'
                 f'{total_pnl_all:+.2f}元 ({port.get("total_pnl_all_pct", 0):+.2f}%)</td>'
                 f'<td><b>累计净投入</b></td><td>{total_invested:,.2f}元<br>'
-                f'<small>(入金{port.get("total_deposits", 0):,.2f} - 出金{port.get("total_withdrawals", 0):,.2f})</small></td></tr>'
+                f'{invested_detail}</td></tr>'
             )
         else:
             alloc_row = '<tr><td><b>总盈亏</b></td><td>—</td><td><b>累计净投入</b></td><td>—</td></tr>'
@@ -573,9 +579,14 @@ def generate_wechat_markdown(report_data):
     if port.get("total_pnl_all") is not None:
         alloc_pnl = port.get("total_pnl_all", 0)
         alloc_emoji = "🟢" if alloc_pnl >= 0 else "🔴"
+        # 基准被用户确认覆盖时显示说明, 避免流水明细与基准矛盾的困惑
+        if port.get("total_invested_note"):
+            invested_str = f"累计净投入(用户基准): {port.get('total_invested', 0):,.2f}元"
+        else:
+            invested_str = (f"累计净投入: {port.get('total_invested', 0):,.2f}元"
+                            f" (入金{port.get('total_deposits', 0):,.2f} - 出金{port.get('total_withdrawals', 0):,.2f})")
         lines.append(f"总盈亏: {alloc_emoji} {alloc_pnl:+.2f}元 ({port.get('total_pnl_all_pct', 0):+.2f}%)"
-                     f" | 累计净投入: {port.get('total_invested', 0):,.2f}元"
-                     f" (入金{port.get('total_deposits', 0):,.2f} - 出金{port.get('total_withdrawals', 0):,.2f})")
+                     f" | {invested_str}")
 
     # v8.0: 基准对比（组合收益缺失时提示数据不足，避免误报"跑输基准"）
     benchmark = report_data.get("benchmark", {})

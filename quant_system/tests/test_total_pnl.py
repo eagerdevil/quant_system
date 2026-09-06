@@ -80,6 +80,24 @@ class TestTotalPnlComputation:
         assert s["total_pnl_all"] is None
         assert s["total_invested"] is None
 
+    def test_invested_base_override(self):
+        """用户确认基准(_invested_base)覆盖流水推算: 总盈亏=总资产-基准(不改历史流水)"""
+        flows = [
+            {"date": "20260625", "type": "deposit", "amount": 4000},
+            {"date": "20260715", "type": "withdraw", "amount": 2000},
+        ]
+        portfolio = _portfolio(flows=flows, holdings={
+            "159529": _holding(1000, 1.0, 2.0, 2.0),
+        }, cash=2169.02)  # 市值2000+现金2169.02 = 总资产4169.02
+        portfolio["_invested_base"] = 2169.02  # 用户确认基准
+        s = _summary(portfolio)
+        # 流水推算净投入=2000 → 总盈亏=4169.02-2000=2169.02; 基准2169.02生效 → 总盈亏=2000(≠)
+        assert s["total_invested"] == pytest.approx(2169.02, abs=0.01)
+        assert s["total_deposits"] == pytest.approx(4000, abs=0.01)  # 流水保留不变
+        assert s["total_pnl_all"] == pytest.approx(2000, abs=0.01)
+        assert s["total_invested_note"] is not None
+        assert s["total_invested_note"] != ""
+
     def test_paper_account(self):
         """模拟盘: 流水只有初始资金deposit → 总盈亏=总资产-初始资金"""
         flows = [{"date": "20260812", "type": "deposit", "amount": 500000}]
