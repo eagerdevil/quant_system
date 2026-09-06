@@ -128,12 +128,17 @@ def _generate_speedview(report_data):
     daily_pnl = port.get("total_daily_pnl", 0)
     daily_color = "#00ff88" if daily_pnl >= 0 else "#ff4757"
     daily_icon = "📈" if daily_pnl >= 0 else "📉"
+    # 9/6: 总盈亏(总资产-累计净投入) — 无流水时显示"—"
+    total_pnl_all = port.get("total_pnl_all")
+    alloc_color = "#00ff88" if (total_pnl_all or 0) >= 0 else "#ff4757"
+    alloc_text = f"{total_pnl_all:+.0f}元" if total_pnl_all is not None else "—"
 
     html = '<div class="card" style="border: 2px solid #e94560;"><h2>⚡ 30秒速览</h2>'
 
     # 数字概览行
     html += '<div class="summary-grid">'
     html += f'<div class="summary-item"><div class="label">总资产</div><div class="big" style="color:#58a6ff">{total_assets:.0f}元</div></div>'
+    html += f'<div class="summary-item"><div class="label">总盈亏</div><div class="big" style="color:{alloc_color}">{alloc_text}</div></div>'
     html += f'<div class="summary-item"><div class="label">今日盈亏</div><div class="big" style="color:{daily_color}">{daily_icon} {daily_pnl:+.0f}元</div></div>'
     html += f'<div class="summary-item"><div class="label">市场状态</div><div class="big" style="color:{regime_color}">{regime_name}</div></div>'
     html += '</div>'
@@ -231,7 +236,7 @@ def generate_html_report(report_data):
     .position-bar {{ background: #0f3460; height: 20px; border-radius: 10px; overflow: hidden; margin: 10px 0; }}
     .position-fill {{ background: linear-gradient(90deg, #e94560, #ffa502, #00ff88); height: 100%; transition: width 0.5s; }}
     .limit {{ color: #ff4757; font-size: 12px; }}
-    .summary-grid {{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }}
+    .summary-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }}
     .summary-item {{ background: #0f1117; border-radius: 8px; padding: 14px; text-align: center; }}
     .summary-item .big {{ font-size: 24px; font-weight: 700; }}
     .summary-item .label {{ font-size: 11px; color: #8b949e; margin-bottom: 4px; }}
@@ -271,12 +276,26 @@ def generate_html_report(report_data):
         cash_ratio = port.get("cash_ratio", 0)
         pnl_color = "#00ff88" if total_pnl >= 0 else "#ff4757"
         daily_color = "#00ff88" if total_daily_pnl >= 0 else "#ff4757"
+        # 9/6: 总盈亏(总资产-累计净投入); 无现金流流水时显示"—"
+        total_pnl_all = port.get("total_pnl_all")
+        total_invested = port.get("total_invested")
+        if total_pnl_all is not None:
+            alloc_color = "#00ff88" if total_pnl_all >= 0 else "#ff4757"
+            alloc_row = (
+                f'<tr><td><b>总盈亏</b></td><td style="color:{alloc_color}">'
+                f'{total_pnl_all:+.2f}元 ({port.get("total_pnl_all_pct", 0):+.2f}%)</td>'
+                f'<td><b>累计净投入</b></td><td>{total_invested:,.2f}元<br>'
+                f'<small>(入金{port.get("total_deposits", 0):,.2f} - 出金{port.get("total_withdrawals", 0):,.2f})</small></td></tr>'
+            )
+        else:
+            alloc_row = '<tr><td><b>总盈亏</b></td><td>—</td><td><b>累计净投入</b></td><td>—</td></tr>'
 
         html += f'''<div class="card"><h2>账户概览</h2>
         <table style="font-size:14px">
         <tr><td style="width:25%"><b>总资产</b></td><td style="width:25%">{total_assets:.2f}元</td><td style="width:25%"><b>总市值</b></td><td style="width:25%">{total_value:.2f}元</td></tr>
         <tr><td><b>可用资金</b></td><td>{available_cash:.2f}元</td><td><b>现金占比</b></td><td>{cash_ratio:.1f}%</td></tr>
         <tr><td><b>持仓盈亏</b></td><td style="color:{pnl_color}">{total_pnl:+.2f}元 ({total_pnl_pct:+.2f}%)</td><td><b>今日盈亏</b></td><td style="color:{daily_color}">{total_daily_pnl:+.2f}元</td></tr>
+        {alloc_row}
         </table></div>'''
 
     # v8.0: 基准对比（组合收益字段缺失时显示"数据不足"，避免误报"跑输基准"）
@@ -550,6 +569,13 @@ def generate_wechat_markdown(report_data):
     lines.append(f"### 二、账户概览")
     lines.append(f"总资产: **{total_assets:.2f}元** | 总市值: {port.get('total_value', 0):.2f}元 | 可用: {port.get('available_cash', 0):.2f}元")
     lines.append(f"持仓盈亏: {pnl_emoji} {total_pnl:+.2f}元 ({port.get('total_pnl_pct', 0):+.2f}%) | 今日盈亏: {daily_emoji} {total_daily_pnl:+.2f}元")
+    # 9/6: 总盈亏(总资产-累计净投入); 无流水时跳过
+    if port.get("total_pnl_all") is not None:
+        alloc_pnl = port.get("total_pnl_all", 0)
+        alloc_emoji = "🟢" if alloc_pnl >= 0 else "🔴"
+        lines.append(f"总盈亏: {alloc_emoji} {alloc_pnl:+.2f}元 ({port.get('total_pnl_all_pct', 0):+.2f}%)"
+                     f" | 累计净投入: {port.get('total_invested', 0):,.2f}元"
+                     f" (入金{port.get('total_deposits', 0):,.2f} - 出金{port.get('total_withdrawals', 0):,.2f})")
 
     # v8.0: 基准对比（组合收益缺失时提示数据不足，避免误报"跑输基准"）
     benchmark = report_data.get("benchmark", {})

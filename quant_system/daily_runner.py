@@ -161,6 +161,20 @@ def compute_portfolio_summary(portfolio, scores):
     total_assets = total_value + available_cash
     total_pnl = total_value - total_cost
 
+    # 9/6: 总盈亏口径 — 总资产 - 累计净投入(入金-出金)。
+    # 提现/入金不算盈亏(与基准对比的净出金修正口径一致)。
+    # 有现金流流水才可计算; 模拟盘流水只有初始资金deposit → 总盈亏=总资产-初始资金
+    cash_flows = portfolio.get("_cash_flows") or []
+    has_flows = any(cf.get("type") in ("deposit", "withdraw") for cf in cash_flows)
+    if has_flows:
+        total_deposits = round(sum(cf.get("amount", 0) for cf in cash_flows if cf.get("type") == "deposit"), 2)
+        total_withdrawals = round(sum(cf.get("amount", 0) for cf in cash_flows if cf.get("type") == "withdraw"), 2)
+        total_invested = round(total_deposits - total_withdrawals, 2)  # 累计净投入
+        total_pnl_all = round(total_assets - total_invested, 2)        # 总盈亏
+        total_pnl_all_pct = round(total_pnl_all / total_invested * 100, 2) if total_invested > 0 else None
+    else:
+        total_deposits = total_withdrawals = total_invested = total_pnl_all = total_pnl_all_pct = None
+
     # 为每个持仓计算仓位占比
     for h in holdings:
         h["weight"] = round(h["value"] / total_assets * 100, 1) if total_assets > 0 else 0
@@ -180,6 +194,12 @@ def compute_portfolio_summary(portfolio, scores):
         "total_daily_pnl": round(total_daily_pnl, 2),
         "cash_ratio": round(available_cash / total_assets * 100, 1) if total_assets > 0 else 0,
         "stale_codes": stale_codes,
+        # 9/6: 总盈亏(总资产-累计净投入); 无现金流流水时为None
+        "total_invested": total_invested,
+        "total_deposits": total_deposits,
+        "total_withdrawals": total_withdrawals,
+        "total_pnl_all": total_pnl_all,
+        "total_pnl_all_pct": total_pnl_all_pct,
     }
 
 # ============================================================
@@ -477,6 +497,11 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
     lines.append(f"  {'─'*60}")
     lines.append(f"  总资产: {ps.get('total_assets', 0):.2f}元 | 总市值: {ps.get('total_value', 0):.2f}元 | 可用资金: {ps.get('available_cash', 0):.2f}元")
     lines.append(f"  持仓盈亏: {ps.get('total_pnl', 0):+.2f}元 ({ps.get('total_pnl_pct', 0):+.2f}%) | 今日盈亏: {ps.get('total_daily_pnl', 0):+.2f}元")
+    # 9/6: 总盈亏(总资产-累计净投入) — 提现/入金不算盈亏; 无流水时跳过
+    if ps.get("total_pnl_all") is not None:
+        lines.append(f"  总盈亏: {ps.get('total_pnl_all', 0):+.2f}元 ({ps.get('total_pnl_all_pct', 0):+.2f}%)"
+                     f" | 累计净投入: {ps.get('total_invested', 0):,.2f}元"
+                     f" (入金{ps.get('total_deposits', 0):,.2f} - 出金{ps.get('total_withdrawals', 0):,.2f})")
     lines.append(f"  现金占比: {ps.get('cash_ratio', 0):.1f}%")
     # 8/17: 数据滞后告警 — 现价非当日时今日盈亏不可信
     if ps.get("stale_codes"):
