@@ -333,7 +333,97 @@ class TestMinOrderAmount:
 
 
 # ================================================================
-# 5. 三条硬底线仍然生效(用户9/19明确保留)
+# 5. TREND_DOWN 止损放宽 -5% → -8% (用户9/19决策, 仅全自动模式)
+# ================================================================
+class TestTrendDownStopLoss:
+    """原 -5% 是最紧的止损, 会与4个交易日的分批减仓抢跑: 整只止损先打掉持仓,
+    之后5个交易日冷却期又禁止重买, 收敛路径被彻底打断。放宽到与CHOPPY一致的 -8%。"""
+
+    TOTAL = 500_000.0
+
+    @staticmethod
+    def _holding_at(pnl_pct, code="510300", price=1.0, shares=10_000):
+        """构造指定浮亏的持仓"""
+        return _holdings((code, shares, price, round(price / (1 + pnl_pct / 100.0), 4)))
+
+    def _plan(self, pnl_pct, timing, autonomous):
+        port = self._holding_at(pnl_pct)
+        scores = [_score("510300", price=1.0)]
+        return _decide(scores, timing, port, autonomous=autonomous, total=self.TOTAL)
+
+    @staticmethod
+    def _td(**kw):
+        return _timing(base_position=0.2, regime="TREND_DOWN",
+                       regime_buy_grade_min=None, regime_stop_loss=-0.05, **kw)
+
+    def test_minus_6pct_survives_in_autonomous_mode(self):
+        """-6%: 原-5%线下一日内就该被清仓, 放宽后应保留"""
+        t = self._td()
+        plan = self._plan(-6.0, t, autonomous=True)
+        assert plan["sell_list"] == [], "-6% 不应再触发TREND_DOWN止损"
+        assert [h["code"] for h in plan["hold_list"]] == ["510300"]
+
+    def test_stop_still_fires_at_minus_9pct(self):
+        """放宽≠取消: -9% 仍然清仓"""
+        plan = self._plan(-9.0, self._td(), autonomous=True)
+        assert len(plan["sell_list"]) == 1
+        s = plan["sell_list"][0]
+        assert "止损" in s["reason"]
+        assert s["shares"] == 10_000, "止损仍是清仓"
+
+    def test_real_account_keeps_minus_5pct(self):
+        """实盘路径止损不动: 同样-6%持仓, autonomous=False 必须清仓"""
+        t = self._td()
+        plan = self._plan(-6.0, t, autonomous=False)
+        assert [s["code"] for s in plan["sell_list"]] == ["510300"]
+        assert "止损" in plan["sell_list"][0]["reason"]
+        assert t["regime_stop_loss"] == -0.05, "实盘 timing 不得被改写"
+
+    def test_stop_is_never_tightened(self):
+        """只放松不收紧: TREND_UP(-10%)在全自动模式下仍是 -10%(不能反向变紧)"""
+        t = _timing(base_position=0.2, regime="TREND_UP",
+                    regime_buy_grade_min="B_买入", regime_stop_loss=-0.10)
+        plan = self._plan(-9.0, t, autonomous=True)
+        assert plan["sell_list"] == [], "-9% 未到 -10% 线, 不应止损"
+        assert t["regime_stop_loss"] == -0.10
+
+    def test_crisis_stop_unchanged(self):
+        """CRISIS 维持 -5%: 危机模式快速离场是设计意图, 不放宽"""
+        t = _timing(base_position=0.05, regime="CRISIS",
+                    regime_buy_grade_min=None, regime_stop_loss=-0.05)
+        plan = self._plan(-6.0, t, autonomous=True)
+        assert [s["code"] for s in plan["sell_list"]] == ["510300"]
+        assert t["regime_stop_loss"] == -0.05
+
+    def test_effective_stop_written_back_for_reporting(self):
+        """报告/邮件显示的止损位必须等于实际用的止损位(下游读 timing[regime_stop_loss])"""
+        t = self._td()
+        self._plan(-6.0, t, autonomous=True)
+        assert t["regime_stop_loss"] == AUTONOMOUS_CONFIG["trend_down_stop_loss"] == -0.08
+
+    def test_near_stop_score_sell_band_shifts_with_it(self):
+        """'接近止损+评分恶化'窗口=(止损线, 止损线+3%], 必须跟着止损线一起平移。
+
+        选 -4% + 评分52 是因为它只落在**旧**窗口内:
+          旧(-5%,-2%] → 命中;  新(-8%,-5%] → 不命中
+        评分取52: <55 满足接近止损规则, 又 >=50 避开"无评分历史+<50"兜底卖出的干扰。
+        """
+        t_auto = self._td()
+        t_real = self._td()
+        port_auto = self._holding_at(-4.0)
+        port_real = self._holding_at(-4.0)
+        s = [_score("510300", price=1.0, score=52)]
+
+        auto = _decide(s, t_auto, port_auto, autonomous=True, total=self.TOTAL)
+        real = _decide(s, t_real, port_real, autonomous=False, total=self.TOTAL)
+
+        assert auto["sell_list"] == [], "-4% 不在新窗口(-8%,-5%]内, 不应卖出"
+        assert [x["code"] for x in real["sell_list"]] == ["510300"], "旧窗口(-5%,-2%]内应卖出"
+        assert "接近止损" in real["sell_list"][0]["reason"]
+
+
+# ================================================================
+# 6. 三条硬底线仍然生效(用户9/19明确保留)
 # ================================================================
 class TestHardFloorsIntact:
     TOTAL = 100_000.0

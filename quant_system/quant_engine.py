@@ -684,6 +684,11 @@ AUTONOMOUS_CONFIG = {
     # TREND_DOWN 不再硬禁买, 改为"只准A级+规模减半"; CRISIS 维持禁止买入
     "trend_down_grade_min": "A_强烈买入",
     "trend_down_size_scale": 0.5,
+    # 9/19用户决策: TREND_DOWN 止损 -5%→-8%(与CHOPPY一致)
+    # 理由: -5% 是四个市况里最紧的止损, 会与"目标仓位分批收敛"抢跑 — 减仓要4个交易日
+    #      才收敛完, 而整只止损可能先一步打掉持仓, 之后还有5个交易日冷却期, 收敛路径被打断。
+    # 只放松不收紧(取更松的一侧); CRISIS 维持 -5%(危机模式快速离场是设计意图)
+    "trend_down_stop_loss": -0.08,
 }
 
 
@@ -1984,6 +1989,14 @@ class TradeDecider:
 
         # 卖出判断 (8/14长持改造: 止损CHOPPY=-8%/TREND_UP=-10%, 最短持有期20交易日, 评分卖出改连续5日<55)
         stop_pct = self.timing.get("regime_stop_loss", -0.10) * 100  # 转百分数
+        # 9/19全自动模式: TREND_DOWN 止损放宽到 -8%(min=取更松的一侧, 永不收紧)
+        # 写回 self.timing 是为了让报告/邮件显示的止损位与实际执行的止损位一致 —
+        # 下游(report_mailer/HTML)都读这个键算持仓止损价, 不写回会出现"显示-5%实际用-8%"。
+        if self.autonomous and self.timing.get("regime") == "TREND_DOWN":
+            relaxed = min(stop_pct, AUTONOMOUS_CONFIG["trend_down_stop_loss"] * 100)
+            if relaxed != stop_pct:
+                stop_pct = relaxed
+                self.timing["regime_stop_loss"] = relaxed / 100
         sold_codes = set()
         today_str = datetime.now().strftime("%Y%m%d")
         _cooldowns_raw = self.portfolio.get("_cooldowns") if isinstance(self.portfolio.get("_cooldowns"), dict) else {}
