@@ -52,6 +52,9 @@ TODAY = datetime.now().strftime("%Y%m%d")
 PAPER_PORTFOLIO_FILE = os.path.join(OUTPUT_DIR, "portfolio_paper.json")
 INITIAL_CAPITAL = 500000.0   # 虚拟初始资金
 MAX_PENDING_RETRY = 2        # 连续2个交易日无开盘价则放弃该笔计划
+# 9/19: 单笔最低金额 — 低于此额度的买单不成单(原实现会做几百元的"零钱补仓",
+# 如8/31那笔1,781元, 只是手续费磨损)。同时适用于目标仓位收敛的减仓笔。
+PAPER_MIN_ORDER_AMOUNT = 2000.0
 REPORT_PREFIX = "report_paper_"
 
 
@@ -466,8 +469,10 @@ def main():
             hist.append(round(score_by_code[code], 1))
             del hist[:-7]
     port_summary = compute_portfolio_summary(portfolio, scores)
-    decider = TradeDecider(scores, timing_result, portfolio)
-    plan = decider.generate_plan()
+    # 9/19: 模拟盘启用全自动模式 — 目标仓位双向收敛 + TREND_DOWN放宽建仓等级并降规模。
+    # 实盘日报(daily_runner)不传此参数, 行为与改造前一致(用户决策: 先只放模拟盘)。
+    decider = TradeDecider(scores, timing_result, portfolio, autonomous=True)
+    plan = decider.generate_plan(min_order_amount=PAPER_MIN_ORDER_AMOUNT)
 
     # S5. 基准对比（模拟盘无出入金, 口径简单: 总资产/初始资金）
     benchmark = compute_benchmark_comparison(portfolio, indices_data, report_prefix=REPORT_PREFIX)

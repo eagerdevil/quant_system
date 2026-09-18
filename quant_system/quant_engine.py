@@ -672,6 +672,20 @@ REGIME_STRATEGY = {
     }
 }
 
+# 9/19: 全自动模式参数(模拟盘专用, 见 TradeDecider(autonomous=True))
+# 背景: 原设计里目标仓位只约束买入(买入预算=目标-现有持仓, 下限0), 从不约束卖出;
+#       唯一的按目标减仓路径是熔断(回撤≤-10%)。结果9/2起"模型目标20%却实持40%"僵持14个交易日,
+#       账户既不买也不卖(见9/19诊断)。本配置让目标仓位变成双向约束。
+# 三条硬底线(用户9/19决策保留): 止损/仓位上限/单笔最低金额, 本配置不动它们。
+AUTONOMOUS_CONFIG = {
+    # 目标仓位双向收敛: 超出目标超过死区才动手, 每次只卖超额的1/3
+    "trim_dead_band": 0.05,      # 死区=总资产5% — 防止小幅漂移引发抖动交易
+    "trim_batch": 1 / 3,         # 单次减仓比例(按剩余超额, 约4个交易日收敛到死区内)
+    # TREND_DOWN 不再硬禁买, 改为"只准A级+规模减半"; CRISIS 维持禁止买入
+    "trend_down_grade_min": "A_强烈买入",
+    "trend_down_size_scale": 0.5,
+}
+
 
 # 8/14长持改造: 同指数/同市场双ETF分组 — 同一组最多持有一只(相关性控制, 防止纳指×2各25%=单因子50%暴露)
 DUPLICATE_GROUPS = {
@@ -1826,10 +1840,13 @@ def compute_atr_stop_loss(closes, highs, lows, cost_price,
 class TradeDecider:
     """根据因子得分+择时+持仓生成操作计划"""
 
-    def __init__(self, etf_scores, timing_result, portfolio=None):
+    def __init__(self, etf_scores, timing_result, portfolio=None, autonomous=False):
         self.scores = sorted(etf_scores, key=lambda x: x["score"], reverse=True)
         self.timing = timing_result
         self.portfolio = portfolio or {}
+        # 9/19: 全自动模式(模拟盘专用) — 目标仓位双向收敛 + TREND_DOWN放宽建仓等级并降规模。
+        # 实盘日报(daily_runner)保持 autonomous=False, 行为与改造前逐字一致。
+        self.autonomous = autonomous
 
     # ============================================================
     # v7.3: 凯利公式仓位管理
@@ -1931,7 +1948,8 @@ class TradeDecider:
         return adjustments
 
 
-    def generate_plan(self, total_capital=None, max_single=0.25, max_industry=0.40):
+    def generate_plan(self, total_capital=None, max_single=0.25, max_industry=0.40,
+                      min_order_amount=0.0):
         """生成明日操作计划
         total_capital: 总资产，默认从portfolio动态计算（现金+持仓市值）"""
         def _holding_value(p, k):
@@ -2119,11 +2137,58 @@ class TradeDecider:
                     "reason": f"熔断降仓(L{cb.get('level', '')}, 超目标仓位{target_amount:.0f}元)"
                 })
 
+        # 9/19全自动模式: 目标仓位双向收敛 — 持仓超过"目标+死区"时按比例减仓
+        # (原实现只在熔断触发时才会按目标降仓; 正常市况下目标仓位只约束买入从不约束卖出,
+        #  导致9/2起"目标20%却持40%"僵持14个交易日。本块把目标仓位变成双向约束)
+        # 三个设计取舍:
+        #   1) 与熔断块互斥 — 熔断是全量降到目标, 更紧急, 触发时不重复减仓
+        #   2) 按比例分摊到各持仓(与熔断块口径一致), 保持组合结构不变
+        #   3) 分批: 每次只卖"当时剩余超额"的1/3 — 几何衰减(剩余=(2/3)^n), 实测40%→20%
+        #      的缺口约4个交易日进入死区(不是3天: 每次都按剩余量再取1/3), 避免单日砸盘
+        # 注1: 不受"最短持有期20日"约束 — 这是组合层面的风险动作, 不是对单只标的的策略性卖出
+        #      (与熔断降仓同理); 三条硬底线(止损/仓位上限/单笔最低金额)照常生效
+        # 注2: 若持仓只数很多且单只极小, 可能出现各只分到的减仓额都低于单笔最低金额而全部
+        #      跳过 → 停在略高于死区的位置反复空转。500k账户(≤5只)不会遇到; 真遇到也不亏钱
+        cb_triggered = bool(cb.get("triggered"))
+        if self.autonomous and not cb_triggered and total_capital > 0:
+            excess = current_invested - target_amount
+            if excess > AUTONOMOUS_CONFIG["trim_dead_band"] * total_capital:
+                cut_total = excess * AUTONOMOUS_CONFIG["trim_batch"]
+                for code, pos in list(self.portfolio.items()):
+                    if code.startswith("_") or not isinstance(pos, dict) or code in sold_codes:
+                        continue
+                    price = pos.get("current_price", pos.get("cost", 0))
+                    if not price or price <= 0:
+                        continue
+                    pos_value = pos.get("shares", 0) * price
+                    if pos_value <= 0:
+                        continue
+                    cut_shares = int(cut_total * (pos_value / current_invested) / price / 100) * 100
+                    if cut_shares < 100 or cut_shares * price < min_order_amount:
+                        continue
+                    sold_codes.add(code)
+                    cost = pos.get("cost", 0)
+                    sell_list.append({
+                        "code": code, "name": pos.get("name", code), "action": "SELL",
+                        "shares": cut_shares, "price": round(price, 4),
+                        "pnl_pct": round((price / cost - 1) * 100, 1) if cost else 0,
+                        "reason": (f"目标仓位收敛({current_invested / total_capital * 100:.0f}%"
+                                   f"→{target_amount / total_capital * 100:.0f}%, "
+                                   f"超额{excess:.0f}元, 本日减{cut_total:.0f}元)")
+                    })
+
         # 买入建议 (v8.0: 凯利公式 × 波动率加权)
         available = total_capital - current_invested
 
         # v3.1: 市场状态约束买入 — TREND_DOWN/CRISIS 禁止买入，CHOPPY 仅 A_强烈买入
         regime_grade_min = self.timing.get("regime_buy_grade_min", "B_买入")
+        regime = self.timing.get("regime", "")
+        buy_size_scale = 1.0
+        # 9/19全自动模式: TREND_DOWN 从"禁止买入"放宽为"只准A级 + 规模减半"
+        # (原硬闸导致9/16起模型转谨慎后连A级标的也一股不能买; CRISIS 维持禁止, 现金为王)
+        if self.autonomous and regime_grade_min is None and regime == "TREND_DOWN":
+            regime_grade_min = AUTONOMOUS_CONFIG["trend_down_grade_min"]
+            buy_size_scale = AUTONOMOUS_CONFIG["trend_down_size_scale"]
         regime_blocks_buy = regime_grade_min is None
         grade_thresholds = OPTIMIZED_PARAMS.get("grade_thresholds", {})
         min_buy_score = grade_thresholds.get(regime_grade_min, 65) if regime_grade_min else float("inf")
@@ -2194,6 +2259,7 @@ class TradeDecider:
             # v8.0: 凯利 × 波动率调整 = 最终仓位（cap在单只上限，防止vol_adj突破max_single）
             vol_adj = vol_adjs.get(code, 1.0)
             final_pct = min(kelly_pct * vol_adj, max_single)
+            final_pct *= buy_size_scale  # 9/19: TREND_DOWN 全自动模式下规模减半
 
             budget = total_capital * final_pct
             budget = min(budget, (available - spent) * 0.5)  # 单次不超过剩余可用资金50%
@@ -2209,7 +2275,8 @@ class TradeDecider:
             if price <= 0:
                 continue
             shares = int(budget / price / 100) * 100
-            if shares < 100:
+            # 9/19: 单笔最低金额 — 低于门槛的"零钱补仓"（如8/31那笔1,781元）只是手续费磨损, 不成单
+            if shares < 100 or shares * price < min_order_amount:
                 continue
             # 若剩余可用资金已不足1手，停止买入
             if (available - spent) < price * 100:
