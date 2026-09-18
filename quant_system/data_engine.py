@@ -16,6 +16,18 @@ def get_today():
     """返回当前日期字符串 YYYYMMDD（每次调用实时计算）"""
     return datetime.now().strftime("%Y%m%d")
 
+def _latest_trading_day(today=None):
+    """返回最近一个应有K线的交易日 YYYYMMDD（只按周一~周五推算，不含节假日历）
+
+    9/19修复: 判断"缓存是否已含最新一根bar"需要的是交易日而非自然日。
+    原逻辑用 weekday()<5 当"今天该有bar"的代理，周末恒为False →
+    备用源在周末永不被调用，缓存停在周四也照用。
+    """
+    d = datetime.strptime(today, "%Y%m%d") if today else datetime.now()
+    while d.weekday() >= 5:
+        d -= timedelta(days=1)
+    return d.strftime("%Y%m%d")
+
 def _to_float(v, default=0.0):
     """安全转换数值；东财接口缺失值常返回 '-'/''/None，避免 TypeError/ValueError 击穿采集流程"""
     try:
@@ -164,9 +176,16 @@ def _fetch_kline_with_cache(code, url, days, fallback_fn, ver=""):
     """
     cached, last_date = _load_kline_cache(code, ver)
     today = get_today()
-    # 周末必休市: 直接用缓存(零请求)
+    expected_bar = _latest_trading_day(today)
+    # 周末必休市: 缓存已含最近一个交易日时才直接用(零请求)
+    # 9/19修复: 原逻辑无条件返回周末缓存, 但缓存未必停在周五——
+    #   本地9/17凌晨跑过一次(缓存截至9/16), 周六再跑就直接返回这份旧数据,
+    #   少9/17/9/18两根K线, MA/量比/250日分位全部失真。
+    #   只有 last_date >= 最近交易日 才证明缓存完整。
     if cached and datetime.now().weekday() >= 5:
-        return cached
+        if str(last_date).replace("-", "") >= expected_bar:
+            return cached
+        logger.info(f"  [周末缓存滞后] {code} 缓存截至{last_date} < 最近交易日{expected_bar}, 转增量拉取")
     # 8/14修复: 缓存日期可能是"2026-08-13"(横杠)而today是"20260814"(无横杠),
     # 原比较永不相等→每天全量重拉浪费请求; 统一8位数字再比
     # 当日命中必须同时满足长度要求(回测等长历史场景days=1400+即使当日缓存也要全量补)
@@ -188,8 +207,9 @@ def _fetch_kline_with_cache(code, url, days, fallback_fn, ver=""):
             # 8/17修复: 东财WAF限流时增量响应可能"成功但缺当日bar"——工作日且最后bar非今日
             # 时立即用备用源(腾讯, US IP友好)补当日, 否则日报会把昨日收盘当现价(8/17实盘日报事故)
             last_bar = merged[-1]["date"].replace("-", "") if merged else ""
-            if datetime.now().weekday() < 5 and last_bar < today and fallback_fn:
-                logger.info(f"  [增量缺当日] {code} 东财增量截至{last_bar}, 备用源补拉...")
+            # 9/19: 判据从"今天"改为"最近交易日", 周末同样能识别增量缺bar
+            if last_bar < expected_bar and fallback_fn:
+                logger.info(f"  [增量缺bar] {code} 东财增量截至{last_bar} < {expected_bar}, 备用源补拉...")
                 fb = fallback_fn(code, days)
                 if fb:
                     fb_merged = _merge_klines(cached, fb)
@@ -225,10 +245,11 @@ def _fetch_kline_with_cache(code, url, days, fallback_fn, ver=""):
     if not klines and fallback_fn:
         klines = fallback_fn(code, days) or []
     # 8/17修复(全量路径): 东财返回了数据但缺当日bar(限流/CDN滞后) → 备用源补当日
-    if klines and datetime.now().weekday() < 5 and fallback_fn:
+    if klines and fallback_fn:
         last_bar = klines[-1]["date"].replace("-", "")
-        if last_bar < today:
-            logger.info(f"  [全量缺当日] {code} 东财截至{last_bar}, 备用源补拉...")
+        # 9/19: 同上, 用最近交易日排除"跨周末全量只到周四"的情况
+        if last_bar < expected_bar:
+            logger.info(f"  [全量缺bar] {code} 东财截至{last_bar} < {expected_bar}, 备用源补拉...")
             fb = fallback_fn(code, days)
             if fb and fb[-1]["date"].replace("-", "") > last_bar:
                 klines = fb
