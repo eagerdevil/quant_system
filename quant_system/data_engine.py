@@ -825,6 +825,24 @@ USER_STOCKS = {
     "000995": "皇台酒业",
 }
 
+
+def is_stock_code(code):
+    """判断代码是否为个股（非ETF/基金）。
+
+    9/21新增: 实盘持仓首次含个股(600900长江电力)。daily_runner 原先把所有持仓
+    无条件塞进 etf_list，导致个股走ETF通道：被按"ETF池"做横截面评分、显示在报告的
+    ETF板块、并被贴上"QDII溢价数据缺失"的错误文案(个股本就无IOPV/净值)。
+
+      ETF/基金: 沪市 5xxxxx(含58xxxx) | 深市 15xxxx / 16xxxx(LOF)
+      个股:     沪市 6xxxxx          | 深市 0xxxxx / 2xxxxx / 3xxxxx
+    """
+    c = str(code).strip()
+    if c.startswith("5"):            # 沪市ETF/基金/国债ETF
+        return False
+    if c.startswith(("15", "16")):   # 深市ETF/LOF
+        return False
+    return True
+
 # ============================================================
 # 备用数据源：腾讯/新浪 API（东方财富被限时使用）
 # ============================================================
@@ -1459,13 +1477,15 @@ def calc_fear_index():
 # ============================================================
 # 8. 综合数据采集
 # ============================================================
-def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
+def collect_all_data(etf_codes=None, stock_codes=None, sequential=True, stock_names=None):
     """一次性采集所有数据
 
     Args:
         etf_codes: ETF代码列表
         stock_codes: 个股代码列表
         sequential: True=逐只拉取(防限流), False=快速模式
+        stock_names: 个股代码->名称 覆盖表(9/21新增)。持仓个股不在 USER_STOCKS 里,
+            且 GitHub 上 realtime=None 拿不到实时名字, 不传会退化成显示纯代码
     """
     logger.info("[DATA ENGINE] 开始采集数据...")
 
@@ -1558,7 +1578,7 @@ def collect_all_data(etf_codes=None, stock_codes=None, sequential=True):
             if sequential and i > 0:
                 time.sleep(1.2)  # 逐只间隔1.2秒
 
-            name = USER_STOCKS.get(code, code)
+            name = (stock_names or {}).get(code) or USER_STOCKS.get(code, code)
             kline, realtime = None, None
             if _ON_GITHUB:
                 kline = fetch_stock_kline(code, 250)

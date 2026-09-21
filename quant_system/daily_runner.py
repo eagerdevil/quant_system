@@ -45,7 +45,7 @@ for old_log in _glob.glob(os.path.join(LOG_DIR, "daily_*.log")):
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from data_engine import (
-    collect_all_data, KEY_ETFS, USER_WATCHLIST, USER_STOCKS,
+    collect_all_data, KEY_ETFS, USER_WATCHLIST, USER_STOCKS, is_stock_code,
     fetch_market_breadth, fetch_total_volume,
     fetch_north_bound_flow, fetch_margin_balance, fetch_etf_kline,
     fetch_etf_realtime, get_all_index_data,
@@ -89,13 +89,20 @@ def load_portfolio(filepath=None):
         f"\n格式: {{\"_available_cash\": 金额, \"代码\": {{\"shares\": 股数, \"cost\": 成本, \"name\": \"名称\"}}}}"
     )
 
-def update_portfolio_prices(portfolio, etf_data):
-    """更新持仓的当前价格和昨日收盘价"""
+def update_portfolio_prices(portfolio, etf_data, stock_data=None):
+    """更新持仓的当前价格和昨日收盘价
+
+    9/21: 增加 stock_data 参数 — 持仓含个股时其行情在 all_data["stocks"],
+    原实现只吃 etf_data 会让个股拿不到价格而回落成 cost(幽灵估值)。
+    """
+    price_data = dict(etf_data or {})
+    if stock_data:
+        price_data.update(stock_data)  # 个股行情覆盖同名键(实际不会重名)
     for code in portfolio:
         if code.startswith("_"): continue  # 跳过元数据
-        if code in etf_data:
-            rt = etf_data[code].get("realtime") or {}
-            kline = etf_data[code].get("kline", [])
+        if code in price_data:
+            rt = price_data[code].get("realtime") or {}
+            kline = price_data[code].get("kline", [])
             portfolio[code]["current_price"] = rt.get("price") if rt.get("price") else (kline[-1]["close"] if kline else portfolio[code].get("cost", 0))
             # 昨收价：优先实时数据，其次K线倒数第二根
             prev_close = rt.get("prev_close")
@@ -581,9 +588,13 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
             lines.append(f"    [注意] {r}")
 
     # ===== 投资组合风险（v3.0 新增）=====
-    etf_data_map = all_data.get("etfs", {}) if all_data else {}
+    # 9/21: 合并个股行情 — 风险/压力测试/蒙特卡洛均按 portfolio 遍历、按 map 取K线,
+    # 若 map 里没有个股, 该持仓会被静默跳过(单只风险漏列/相关性VaR漏算)
+    etf_data_map = dict(all_data.get("etfs", {}) if all_data else {})
+    if all_data:
+        etf_data_map.update(all_data.get("stocks", {}) or {})
     if port_summary and etf_data_map:
-        risk_report = portfolio_risk_report(portfolio, etf_data_map, scores)
+        risk_report = portfolio_risk_report(portfolio, etf_data_map, scores + (stock_scores or []))
         lines.append(format_risk_section(risk_report))
 
     # ===== 行业暴露热力图（v7.3 新增）=====
@@ -859,13 +870,21 @@ def main():
     # 确定分析标的
     # 8/24: 持仓代码强制加入采集范围 — 池子调整后(如510300移出)持仓仍能更新价格/评分, 防僵尸持仓
     holdings_codes = [k for k in portfolio if not k.startswith("_")]
-    etf_list = list(set(list(KEY_ETFS.keys()) + USER_WATCHLIST + holdings_codes))
-    stock_list = list(USER_STOCKS.keys())
+    # 9/21: 持仓按代码类型拆分 — 个股(6xx/0xx/3xx)不能混进 etf_list,
+    # 否则会走ETF通道被按ETF池做横截面评分、显示在报告的ETF板块
+    holdings_etfs = [c for c in holdings_codes if not is_stock_code(c)]
+    holdings_stocks = [c for c in holdings_codes if is_stock_code(c)]
+    etf_list = list(set(list(KEY_ETFS.keys()) + USER_WATCHLIST + holdings_etfs))
+    stock_list = list(set(list(USER_STOCKS.keys()) + holdings_stocks))
 
     # 1. 采集数据
     logger.info("Step 1/4: 采集数据...")
     try:
-        all_data = collect_all_data(etf_list, stock_list)
+        # 9/21: 持仓个股传名字 — 不在 USER_STOCKS 且GitHub上无realtime,
+        # 不传会退化成在报告个股区显示纯代码"600900"
+        stock_names = {c: portfolio[c].get("name", c)
+                       for c in holdings_stocks if isinstance(portfolio.get(c), dict)}
+        all_data = collect_all_data(etf_list, stock_list, stock_names=stock_names)
     except Exception as e:
         logger.error(f"数据采集失败: {e}\n{traceback.format_exc()}")
         raise RuntimeError(f"数据采集失败，量化分析无法继续: {e}") from e
@@ -1036,10 +1055,12 @@ def main():
     # 4. 生成决策
     logger.info("Step 4/4: 生成决策...")
     portfolio = load_portfolio(portfolio_file)
-    portfolio = update_portfolio_prices(portfolio, etf_data)
+    # 9/21: 个股行情来自 all_data["stocks"], 一并传入否则个股回落成cost
+    portfolio = update_portfolio_prices(portfolio, etf_data, all_data.get("stocks", {}))
 
     # 计算持仓概览（市值、盈亏、仓位等）
-    port_summary = compute_portfolio_summary(portfolio, scores)
+    # 9/21: 合并个股评分 — 否则持仓里的个股在概览里拿不到 score/grade
+    port_summary = compute_portfolio_summary(portfolio, scores + stock_scores)
 
     decider = TradeDecider(scores, timing_result, portfolio)
     plan = decider.generate_plan()
@@ -1099,7 +1120,9 @@ def main():
         "date": TODAY,
         "timestamp": datetime.now().isoformat(),
         "timing": timing_result,
-        "scores": scores,
+        # 9/21: 合并个股评分 — report_mailer 靠 is_stock 分流ETF/个股板块,
+        # performance_tracker 按 code 聚合因子表现, 不合并则个股不进邮件个股区
+        "scores": scores + stock_scores,
         "plan": plan,
         "portfolio": port_summary,
         "report": report,
