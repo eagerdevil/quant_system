@@ -382,23 +382,36 @@ def analyze_watchlist_etf(s, timing, portfolio, kline_data=None):
     else:
         action = "WATCH"
 
+    # 9/22修复: 市场状态禁止买入时(TREND_DOWN/CRISIS → regime_buy_grade_min=None)降级为观望。
+    #   原先这里不看状态, 报告顶部写"最低买入等级: 禁止买入"、下面却给"[加仓] 可以加仓"
+    #   和"建议买入价", 自相矛盾。此处必须放在"持仓特殊建议"之前 — action 决定持仓文案分支。
+    #   注意: 9/19 对 TREND_DOWN 的放宽(只准A级+半仓)只作用于模拟盘(autonomous),
+    #   实盘日报仍走 regime_blocks_buy, 见 quant_engine.calc_position_plan。
+    #   键缺失时用与 calc_position_plan 相同的默认值, 未知状态不静默压制建议。
+    _grade_min = timing.get("regime_buy_grade_min", "B_买入")
+    if _grade_min is None and action == "BUY":
+        action = "WATCH"
+        reasons_avoid.append(f"当前市场状态({timing.get('regime_name', '未知')})禁止买入，暂不建仓/加仓")
+
     # 持仓特殊建议
     holding_advice = ""
     if is_holding:
         cost = holding_info.get("cost", s["price"])
         pnl = (s["price"]/cost - 1)*100
+        # 9/22: 原先各分支一律写"浮盈"+带符号百分数 → 亏损时出现"浮盈-3.4%"这种自相矛盾文案
+        _pnl_txt = f"{'浮盈' if pnl >= 0 else '浮亏'}{abs(pnl):.1f}%"
         if pnl <= -8:
-            holding_advice = f"止损触发！浮亏{pnl:.1f}%，建议减仓"
+            holding_advice = f"止损触发！{_pnl_txt}，建议减仓"
             action = "SELL"
         elif action == "AVOID" and pnl > 3:
-            holding_advice = f"浮盈{pnl:.1f}%，但评分下滑，建议止盈"
+            holding_advice = f"{_pnl_txt}，但评分下滑，建议止盈"
             action = "REDUCE"
         elif action == "AVOID":
-            holding_advice = f"浮亏{pnl:.1f}%，评分走弱，关注止损线"
+            holding_advice = f"{_pnl_txt}，评分走弱，关注止损线"
         elif action == "BUY":
-            holding_advice = f"浮盈{pnl:.1f}%，可以加仓"
+            holding_advice = f"{_pnl_txt}，可以加仓"
         else:
-            holding_advice = f"浮盈{pnl:.1f}%，继续持有观察"
+            holding_advice = f"{_pnl_txt}，继续持有观察"
 
     buy_price = s["price"]
     # v7.2: ATR动态止损 — 用kline数据计算（有数据时），否则回退固定值
