@@ -483,9 +483,37 @@ def fetch_etf_flow_top():
 # ============================================================
 # 5. 市场情绪数据
 # ============================================================
+def _fetch_limit_pool_count(kind, date_str):
+    """9/22新增: 东财涨停板/跌停板池家数 — push2ex域, 与push2(clist)不同域。
+
+    背景: push2.eastmoney.com/api/qt/clist 被限流时直接断连(RemoteDisconnected),
+    而 push2ex 的 getTopicZTPool/getTopicDTPool 仍可访问 → 优先取真实家数,
+    取不到再退回粗估。实测9/22: clist断连, 池返回涨停63/跌停3(粗估给30/30)。
+
+    kind: 'ZT'=涨停池 | 'DT'=跌停池。返回家数(int)或None。
+    """
+    sort = "fbt:asc" if kind == "ZT" else "fund:asc"
+    url = (f"https://push2ex.eastmoney.com/getTopic{kind}Pool"
+           f"?ut=7eea3edcaed734bea9cbfc24409ed989&dpt=wz.ztzt"
+           f"&Pageindex=0&pagesize=1&sort={sort}&date={date_str}")
+    d = fetch_json(url)
+    if d and isinstance(d.get("data"), dict):
+        tc = d["data"].get("tc")
+        if tc is not None:
+            try:
+                return int(tc)
+            except (TypeError, ValueError):
+                return None
+    return None
+
+
 def fetch_market_breadth():
     """获取涨跌停家数、炸板率等（东方财富主 + 指数数据备用估算, 估算时标记estimated=True）"""
     estimated = False  # 8/14: 走估算分支时置True, 日报标注"估算"防假数据
+    # 9/22: 涨跌停家数是否估算 — 与涨跌家数分开标记。原先进/跌停的估算默认值是
+    #       固定30/30, 被下游当成真实数据(S5信号恒FAIL、情绪扣分), 实测9/22真实
+    #       跌停仅5家 vs 估算30家。
+    limit_estimated = False
     # v7.1: m:0=全部A股, t:3=涨停, t:4=跌停, t:1=上涨, t:0=下跌
     # 使用pz=1只取total字段（不需要具体股票列表）
     url_zt = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=1&po=1&np=1&fltt=2&fid=f3&fs=m:0+t:3&fields=f12"
@@ -505,6 +533,17 @@ def fetch_market_breadth():
     url_down = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=1&po=1&np=1&fltt=2&fid=f3&fs=m:0+t:0&fields=f12"
     down_data = fetch_json(url_down)
     down_count = down_data["data"]["total"] if (down_data and down_data.get("data")) else None
+
+    # 9/22: clist域挂了先走涨停/跌停池(push2ex域)取真实家数, 再退粗估。
+    #       顺序很重要 — 放在下面粗估分支之前, 否则真数据永远拿不到。
+    if limit_up is None or limit_down is None:
+        _qdate = _latest_trading_day()
+        if limit_up is None:
+            limit_up = _fetch_limit_pool_count("ZT", _qdate)
+        if limit_down is None:
+            limit_down = _fetch_limit_pool_count("DT", _qdate)
+        if limit_up is not None and limit_down is not None:
+            logger.info(f"  [FALLBACK] 涨跌停取自东财池(push2ex): 涨停{limit_up}/跌停{limit_down}")
 
     # v7.0: GitHub Actions备用 — 从指数涨跌推算涨跌比（近似）
     if up_count is None or down_count is None:
@@ -533,6 +572,7 @@ def fetch_market_breadth():
     # v7.1: 当limit_up/limit_down为None时（clist API失败），从涨跌比估算
     if limit_up is None or limit_down is None:
         estimated = True  # 8/14: 涨跌停家数为估算值, 日报需标注
+        limit_estimated = True  # 9/22: 单独标记, 供S5信号/情绪评分剔除
         # 根据涨跌比估算涨跌停家数（全部源失败时用中性默认，避免荒谬值污染情绪评分）
         if up_count is None and down_count is None:
             up_ratio = 0.5
@@ -552,6 +592,7 @@ def fetch_market_breadth():
         "limit_up": limit_up, "limit_down": limit_down,
         "up_count": up_count, "down_count": down_count,
         "estimated": estimated,  # 8/14: 日报标注"估算"
+        "limit_estimated": limit_estimated,  # 9/22: 涨跌停是否为估算值
         "total": (up_count or 0) + (down_count or 0)
     }
 
@@ -700,20 +741,27 @@ def compute_market_sentiment(breadth, total_volume, north_flow_5d=None):
     # 3. 涨停热度 (权重: 20%)
     lu = breadth.get("limit_up") or 0
     ld = breadth.get("limit_down") or 0
-    signals["涨停家数"] = lu
-    signals["跌停家数"] = ld
-    if lu > 100:
-        adj = 18
-    elif lu > 60:
-        adj = 10
-    elif lu > 30:
-        adj = 3
+    # 9/22: 涨跌停为估算值时按中性处理。估算分支的默认值是固定30/30, 计分会
+    #       平白扣7分(ld>20)且连板加成失效, 与"成交额缺失按中性"同口径。
+    if breadth.get("limit_estimated", False):
+        signals["涨停家数"] = None
+        signals["跌停家数"] = None
+        adj = 0
     else:
-        adj = -5
-    if ld > 50:
-        adj -= 15  # 恐慌
-    elif ld > 20:
-        adj -= 7
+        signals["涨停家数"] = lu
+        signals["跌停家数"] = ld
+        if lu > 100:
+            adj = 18
+        elif lu > 60:
+            adj = 10
+        elif lu > 30:
+            adj = 3
+        else:
+            adj = -5
+        if ld > 50:
+            adj -= 15  # 恐慌
+        elif ld > 20:
+            adj -= 7
     score += adj * 0.20
 
     # 4. 沪深股通成交活跃度 (权重: 15%) — v7.6: 北向净买额2024/8停披露，以成交额替代

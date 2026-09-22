@@ -52,7 +52,8 @@ REPORT_DIR = os.path.dirname(os.path.abspath(__file__))
 SIGNAL_LABELS = {
     "S1_HS300_above_MA20": "沪深300在20日线上", "S2_HS300_MA60_up": "沪深300的60日线向上",
     "S3_NorthFlow_5d_positive": "北向资金5日净流入", "S4_Volume_active": "成交额>2万亿",
-    "S5_LimitDown_low": "跌停<20家", "S6_Margin_increasing": "融资余额增加"
+    "S5_LimitDown_low": "跌停<20家", "S6_Margin_increasing": "融资余额增加",
+    "S7_Bond_low": "10Y国债收益率<1.5%"  # 9/22: 原先漏配, 邮件里显示原始signal名
 }
 
 def load_latest_report():
@@ -229,6 +230,7 @@ def generate_html_report(report_data):
     .watch {{ color: #ffa502; }}
     .avoid {{ color: #666; text-decoration: line-through; }}
     .pass {{ color: #00ff88; }} .fail {{ color: #ff4757; }}
+    .na {{ color: #8a8f98; }}  /* 9/22: 数据缺失/估算信号, 与看空(红)区分 */
     .reason_good {{ color: #00cc66; font-size: 12px; }}
     .reason_bad {{ color: #ff6b7f; font-size: 12px; }}
     .kbx {{ display: inline-block; background: #0f3460; color: #ffa502; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin: 0 2px; }}
@@ -259,9 +261,11 @@ def generate_html_report(report_data):
     """
 
     for name, value in timing.get("signal_detail", {}).items():
-        cls = "pass" if value else "fail"
+        # 9/22: 三态 — None(数据缺失/估算)以前走 fail 分支, 把"没数据"显示成"看空"
+        cls = "pass" if value else ("fail" if value is False else "na")
+        mark = "✓" if value else ("✗" if value is False else "–")
         label = SIGNAL_LABELS.get(name, name)
-        html += f'<span class="{cls}" style="margin-right:12px">{"✓" if value else "✗"} {label}</span>'
+        html += f'<span class="{cls}" style="margin-right:12px">{mark} {label}</span>'
 
     html += f"<p>{timing.get('advice', '')}</p></div>"
 
@@ -550,18 +554,20 @@ def generate_wechat_markdown(report_data):
     signal_labels = {
         "S1_HS300_above_MA20":"沪深300站上20日线", "S2_HS300_MA60_up":"沪深300的60日线向上",
         "S3_NorthFlow_5d_positive":"北向资金5日净流入", "S4_Volume_active":"成交额>2万亿",
-        "S5_LimitDown_low":"跌停<20家", "S6_Margin_increasing":"融资余额增加"
+        "S5_LimitDown_low":"跌停<20家", "S6_Margin_increasing":"融资余额增加",
+        "S7_Bond_low":"10Y国债收益率<1.5%"  # 9/22: 原先漏配, 微信推送里显示原始signal名
     }
     lines.append(f"### 一、大盘择时")
     lines.append(f"看多信号: **{timing.get('bull_signals', 0)}/{timing.get('total_signals', 6)}** → 建议仓位 **{pos_pct}%**")
     sigs = []
     for name, value in timing.get("signal_detail", {}).items():
         label = signal_labels.get(name, name)
-        sigs.append(f"{'✅' if value else '❌'} {label}")
+        # 9/22: 三态 — None(数据缺失/估算)以前走❌, 把"没数据"显示成"看空"
+        sigs.append(f"{'✅' if value else ('❌' if value is False else '⬜')} {label}")
     lines.append(" | ".join(sigs))
     lines.append(f"> {timing.get('advice', '')}")
     if timing.get('force_capped'):
-        lines.append(f"> ⚠️ 强制限制生效: 仓位上限30%")
+        lines.append(f"> ⚠️ 强制限制生效: 仓位上限90%")  # 9/22: 原写30%, 实际上限8/24起为90%
     lines.append("")
 
     # ══════════════════════════════════════

@@ -484,12 +484,19 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
     if regime_signals:
         lines.append(f"    判定依据: {' | '.join(regime_signals)}")
     lines.append(f"    策略: {timing.get('regime_description', '')}")
-    lines.append(f"  传统信号: {timing['bull_signals']}/{timing['total_signals']}看多 -> 建议仓位 {timing['base_position']*100:.0f}%")
-    lines.append(f"    状态止损: {timing.get('regime_stop_loss', -0.08)*100:.0f}% | 最低买入等级: {timing.get('regime_buy_grade_min', 'B_买入')}")
-    for name, value in timing['signal_detail'].items():
-        icon = "[PASS]" if value else "[FAIL]"
-        label = name.replace("S1_HS300_above_MA20","沪深300在20日线上").replace("S2_HS300_MA60_up","沪深300的60日线向上").replace("S3_NorthFlow_5d_positive","北向资金5日净流入").replace("S4_Volume_active","成交额>2万亿").replace("S5_LimitDown_low","跌停<20家").replace("S6_Margin_increasing","融资余额增加")
-        lines.append(f"    {icon} {label}")
+    _sig_detail = timing['signal_detail']
+    _n_missing = sum(1 for v in _sig_detail.values() if v is None)
+    _miss_note = f" ({_n_missing}项数据缺失, 按中性偏保守计)" if _n_missing else ""
+    lines.append(f"  传统信号: {timing['bull_signals']}/{timing['total_signals']}看多 -> 建议仓位 {timing['base_position']*100:.0f}%{_miss_note}")
+    # 9/22: buy_grade_min=None 表示该状态下禁止买入(TREND_DOWN/CRISIS), 原样打印"None"看不懂
+    _grade_min = timing.get('regime_buy_grade_min', 'B_买入')
+    _grade_txt = '禁止买入' if _grade_min is None else _grade_min
+    lines.append(f"    状态止损: {timing.get('regime_stop_loss', -0.08)*100:.0f}% | 最低买入等级: {_grade_txt}")
+    for name, value in _sig_detail.items():
+        # 9/22: 三态显示 — 原先 None(数据缺失/估算) 被 else 吞成 FAIL, 把"没数据"报成"看空"
+        icon = "[--]" if value is None else ("[PASS]" if value else "[FAIL]")
+        label = name.replace("S1_HS300_above_MA20","沪深300在20日线上").replace("S2_HS300_MA60_up","沪深300的60日线向上").replace("S3_NorthFlow_5d_positive","北向资金5日净流入").replace("S4_Volume_active","成交额>2万亿").replace("S5_LimitDown_low","跌停<20家").replace("S6_Margin_increasing","融资余额增加").replace("S7_Bond_low","10Y国债收益率<1.5%")
+        lines.append(f"    {icon} {label}{'  (无数据/估算, 不计入)' if value is None else ''}")
     if timing['force_capped']:
         lines.append(f"  [WARNING] 强制限制生效: 仓位上限90%(8/24放松)")
     nf_5d = timing.get("north_flow_5d")

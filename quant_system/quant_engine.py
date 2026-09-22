@@ -1695,7 +1695,13 @@ class MarketTiming:
 
         ld = self.breadth.get("limit_down")
         # S5: 跌停家数缺失时置None(中性)，不误判为"跌停多"压仓
-        signals['S5_LimitDown_low'] = (ld < SYSTEM_CONFIG['limit_down_danger']) if ld is not None else None
+        # 9/22修复: 估算值同样置None。原先东财接口失败时估算分支给默认30家,
+        #   被当作真实数据 → (30 < 20)=False 恒FAIL, 实测9/22真实跌停仅5家
+        #   (该条件本应PASS), 一个假FAIL把建议仓位从40%压到20%。
+        _ld_est = self.breadth.get("limit_estimated", False)
+        signals['S5_LimitDown_low'] = (
+            (ld < SYSTEM_CONFIG['limit_down_danger']) if (ld is not None and not _ld_est) else None
+        )
 
         # S6: 融资余额缺失时置None(中性)
         if self.margin:
