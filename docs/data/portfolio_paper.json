@@ -1,7 +1,7 @@
 {
   "_comment": "模拟盘虚拟账户（与 portfolio.json 完全隔离）| 初始资金10万 | 由 paper_trading.py 每日18:10自动运行",
   "_initial_capital": 500000.0,
-  "_available_cash": 298458.43804,
+  "_available_cash": 330684.69068,
   "_cash_flows": [
     {
       "date": "20260812",
@@ -21,19 +21,19 @@
       "code": "510300",
       "name": "沪深300ETF华泰柏瑞",
       "action": "SELL",
-      "shares": 4000,
-      "signal_date": "20260921",
+      "shares": 2700,
+      "signal_date": "20260922",
       "retries": 0,
-      "reason": "目标仓位收敛(40%→20%, 超额98155元, 本日减32718元)"
+      "reason": "目标仓位收敛(33%→20%, 超额66385元, 本日减22128元)"
     },
     {
       "code": "513800",
       "name": "日本东证指数ETF南方",
       "action": "SELL",
-      "shares": 7200,
-      "signal_date": "20260921",
+      "shares": 4800,
+      "signal_date": "20260922",
       "retries": 0,
-      "reason": "目标仓位收敛(40%→20%, 超额98155元, 本日减32718元)"
+      "reason": "目标仓位收敛(33%→20%, 超额66385元, 本日减22128元)"
     }
   ],
   "_cooldowns": {},
@@ -70,37 +70,61 @@
       "amount": 1781.18,
       "fee": 5.18,
       "reason": ""
+    },
+    {
+      "date": "20260922",
+      "code": "510300",
+      "name": "沪深300ETF华泰柏瑞",
+      "action": "SELL",
+      "price": 4.636,
+      "shares": 4000,
+      "amount": 18532.87,
+      "fee": 11.13,
+      "pnl_pct": -1.99,
+      "reason": "目标仓位收敛(40%→20%, 超额98155元, 本日减32718元)"
+    },
+    {
+      "date": "20260922",
+      "code": "513800",
+      "name": "日本东证指数ETF南方",
+      "action": "SELL",
+      "price": 1.903,
+      "shares": 7200,
+      "amount": 13693.38,
+      "fee": 8.22,
+      "pnl_pct": -0.94,
+      "reason": "目标仓位收敛(40%→20%, 超额98155元, 本日减32718元)"
     }
   ],
   "510300": {
-    "shares": 24500,
+    "shares": 20500,
     "cost": 4.73,
     "name": "沪深300ETF华泰柏瑞",
     "buy_date": "20260817",
     "score_history": [
-      68,
       66,
       64,
       68,
       68,
       69,
-      71
+      71,
+      72
     ],
     "stale_date": ""
   },
   "513800": {
-    "shares": 43600,
+    "shares": 36400,
     "cost": 1.921,
     "name": "日本东证指数ETF南方",
     "buy_date": "20260817",
     "score_history": [
-      72,
       74,
       80,
       76,
       71,
       79,
-      78
+      78,
+      75
     ],
     "stale_date": ""
   },
@@ -111,13 +135,13 @@
     "buy_date": "20260831",
     "stale_date": "",
     "score_history": [
-      73,
       70,
       73,
       74,
       75,
       78,
-      77
+      77,
+      74
     ]
   }
 }
