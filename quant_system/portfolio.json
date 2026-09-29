@@ -6,15 +6,22 @@
   "_cash_flows": [
     {"date": "20260325", "type": "deposit", "amount": 0.69, "note": "2024-2025章节留存零头(2025/6/18清仓转出14627.63后的余款), 空窗期一直挂账"},
     {"date": "20260325", "type": "deposit", "amount": 500, "note": "2026年回归股市首笔入金(用户查App资金流水确认; 此前估算的4000/0625作废)"},
-    {"date": "20260601", "type": "deposit", "amount": 3508.40, "note": "⚠️占位合计: 2026年尚未被记录的入金(=官方2026毛转入10436.97 - 已知6928.57). 日期为估计, 待用户导出完整资金流水后拆分校正"},
+    {"date": "20260402", "type": "deposit", "amount": 500, "note": "用户查App资金流水确认"},
+    {"date": "20260416", "type": "deposit", "amount": 1088.34, "note": "用户查App资金流水确认"},
+    {"date": "20260428", "type": "deposit", "amount": 1000, "note": "用户查App资金流水确认"},
+    {"date": "20260611", "type": "deposit", "amount": 1000, "note": "用户查App资金流水确认"},
+    {"date": "20260617", "type": "withdraw", "amount": 1000, "note": "转出(用户查App资金流水确认)"},
+    {"date": "20260622", "type": "deposit", "amount": 1000.01, "note": "用户查App资金流水确认"},
     {"date": "20260706", "type": "withdraw", "amount": 1000, "note": "转出"},
     {"date": "20260710", "type": "withdraw", "amount": 500, "note": "转出"},
     {"date": "20260721", "type": "withdraw", "amount": 200, "note": "转出"},
     {"date": "20260722", "type": "withdraw", "amount": 300, "note": "转出"},
     {"date": "20260823", "type": "deposit", "amount": 1075.73, "note": "新增资金"},
     {"date": "20260827", "type": "deposit", "amount": 4995, "note": "新增资金(学费资金按计划入市)"},
-    {"date": "20260906", "type": "deposit", "amount": 357.84, "note": "新增资金"}
+    {"date": "20260906", "type": "deposit", "amount": 357.84, "note": "新增资金"},
+    {"date": "20260601", "type": "withdraw", "amount": 79.95, "note": "⚠️待核对差额(日期为占位, 非真实交易): 用户枚举的2026流水净额8516.92 比官方净转入8436.97 多79.95, 暂挂此行使流水与已验证基准一致; 查明后删除并修正对应行. 不影响任何盈亏计算"}
   ],
+  "_cash_flows_status": "2026/9/30用户查App资金流水逐笔确认9笔转入+5笔转出, 明细已完整; 残留79.95差额待查(见占位行)",
   "_account_history": {
     "chapter1_2024_2025": {
       "period": "2024-09-30 开户 → 2025-06-18 清仓离场",
