@@ -98,6 +98,34 @@ class TestTotalPnlComputation:
         assert s["total_invested_note"] is not None
         assert s["total_invested_note"] != ""
 
+    def test_lifetime_base(self):
+        """9/30: 终身口径(2024/9入市至今) 独立于2026年口径, 用_lifetime_base手填基准"""
+        portfolio = _portfolio(flows=[
+            {"date": "20260906", "type": "deposit", "amount": 357.84},
+        ], holdings={
+            "159529": _holding(1000, 1.0, 2.0, 2.0),   # 值2000
+        }, cash=87.33)
+        portfolio["_invested_base"] = 8437.66      # 2026年口径
+        portfolio["_lifetime_base"] = 14616.34     # 终身口径
+        s = _summary(portfolio)
+        # 总资产 = 2000 + 87.33 = 2087.33
+        assert s["total_assets"] == pytest.approx(2087.33, abs=0.01)
+        # 两个口径互不影响
+        assert s["total_pnl_all"] == pytest.approx(2087.33 - 8437.66, abs=0.01)
+        assert s["lifetime_invested"] == pytest.approx(14616.34, abs=0.01)
+        assert s["lifetime_pnl"] == pytest.approx(2087.33 - 14616.34, abs=0.01)
+        # 故意无百分比字段: 净投入当分母会算出误导值(-44.67%), 用户已确认终身口径不标收益率
+        assert "lifetime_pnl_pct" not in s
+
+    def test_lifetime_base_absent(self):
+        """未配置_lifetime_base时字段为None, 渲染器应跳过该行"""
+        portfolio = _portfolio(flows=[
+            {"date": "20260906", "type": "deposit", "amount": 357.84},
+        ], holdings={"159529": _holding(1000, 1.0, 2.0, 2.0)}, cash=100)
+        s = _summary(portfolio)
+        assert s["lifetime_pnl"] is None
+        assert s["lifetime_invested"] is None
+
     def test_paper_account(self):
         """模拟盘: 流水只有初始资金deposit → 总盈亏=总资产-初始资金"""
         flows = [{"date": "20260812", "type": "deposit", "amount": 500000}]

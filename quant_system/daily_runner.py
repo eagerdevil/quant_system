@@ -188,6 +188,18 @@ def compute_portfolio_summary(portfolio, scores):
     else:
         total_deposits = total_withdrawals = total_invested = total_pnl_all = total_pnl_all_pct = None
 
+    # 9/30: 终身口径(2024/9入市至今) — 与上面的2026年口径相互独立。
+    # 基准=_lifetime_base=累计毛转入-毛转出(App"账户周期统计"官方数), 终身盈亏=总资产-该基准。
+    # 之所以不用_cash_flows推算: _cash_flows只覆盖2026年, 算不出2024-2025那一章。
+    # 注意: 故意不提供百分比。资金两年间分批进出、中途还取回过26827.63,
+    #       拿净投入14616.34当分母会算出-44.67%这种严重误导的数(2026/9/30用户已确认不标收益率)。
+    lifetime_base = portfolio.get("_lifetime_base")
+    if lifetime_base is not None and float(lifetime_base) > 0:
+        lifetime_invested = round(float(lifetime_base), 2)
+        lifetime_pnl = round(total_assets - lifetime_invested, 2)
+    else:
+        lifetime_invested = lifetime_pnl = None
+
     # 为每个持仓计算仓位占比
     for h in holdings:
         h["weight"] = round(h["value"] / total_assets * 100, 1) if total_assets > 0 else 0
@@ -213,6 +225,9 @@ def compute_portfolio_summary(portfolio, scores):
         "total_withdrawals": total_withdrawals,
         "total_pnl_all": total_pnl_all,
         "total_pnl_all_pct": total_pnl_all_pct,
+        # 9/30: 终身口径(2024/9入市至今); 未配置_lifetime_base时为None。无百分比字段(见上)
+        "lifetime_invested": lifetime_invested,
+        "lifetime_pnl": lifetime_pnl,
         "total_invested_note": total_invested_note,  # 基准被用户确认覆盖时的说明
     }
 

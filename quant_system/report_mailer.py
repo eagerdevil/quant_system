@@ -139,7 +139,12 @@ def _generate_speedview(report_data):
     # 数字概览行
     html += '<div class="summary-grid">'
     html += f'<div class="summary-item"><div class="label">总资产</div><div class="big" style="color:#58a6ff">{total_assets:.0f}元</div></div>'
-    html += f'<div class="summary-item"><div class="label">总盈亏</div><div class="big" style="color:{alloc_color}">{alloc_text}</div></div>'
+    # 9/30: 终身口径(2024/9入市至今) 提到速览首位之后, 用户要求看到"从2024年到目前"的总亏损
+    lifetime_pnl_top = port.get("lifetime_pnl")
+    if lifetime_pnl_top is not None:
+        lt_color_top = "#00ff88" if lifetime_pnl_top >= 0 else "#ff4757"
+        html += f'<div class="summary-item"><div class="label">累计总盈亏<br><small>2024/9入市至今</small></div><div class="big" style="color:{lt_color_top}">{lifetime_pnl_top:+.0f}元</div></div>'
+    html += f'<div class="summary-item"><div class="label">今年盈亏<br><small>2026年</small></div><div class="big" style="color:{alloc_color}">{alloc_text}</div></div>'
     html += f'<div class="summary-item"><div class="label">今日盈亏</div><div class="big" style="color:{daily_color}">{daily_icon} {daily_pnl:+.0f}元</div></div>'
     html += f'<div class="summary-item"><div class="label">市场状态</div><div class="big" style="color:{regime_color}">{regime_name}</div></div>'
     html += '</div>'
@@ -238,7 +243,7 @@ def generate_html_report(report_data):
     .position-bar {{ background: #0f3460; height: 20px; border-radius: 10px; overflow: hidden; margin: 10px 0; }}
     .position-fill {{ background: linear-gradient(90deg, #e94560, #ffa502, #00ff88); height: 100%; transition: width 0.5s; }}
     .limit {{ color: #ff4757; font-size: 12px; }}
-    .summary-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }}
+    .summary-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }}
     .summary-item {{ background: #0f1117; border-radius: 8px; padding: 14px; text-align: center; }}
     .summary-item .big {{ font-size: 24px; font-weight: 700; }}
     .summary-item .label {{ font-size: 11px; color: #8b949e; margin-bottom: 4px; }}
@@ -300,12 +305,26 @@ def generate_html_report(report_data):
         else:
             alloc_row = '<tr><td><b>总盈亏</b></td><td>—</td><td><b>累计净投入</b></td><td>—</td></tr>'
 
+        # 9/30: 终身口径(2024/9/30入市至今) — 用户明确要求看到"从2024年到目前"的总亏损
+        lifetime_pnl = port.get("lifetime_pnl")
+        if lifetime_pnl is not None:
+            lt_color = "#00ff88" if lifetime_pnl >= 0 else "#ff4757"
+            lifetime_row = (
+                f'<tr><td><b>账户累计盈亏</b></td><td style="color:{lt_color}">'
+                f'{lifetime_pnl:+.2f}元</td>'
+                f'<td><b>入市以来净投入</b></td><td>{port.get("lifetime_invested", 0):,.2f}元<br>'
+                f'<small>2024/9/30入市至今（含已取回资金，故不标收益率）</small></td></tr>'
+            )
+        else:
+            lifetime_row = ""
+
         html += f'''<div class="card"><h2>账户概览</h2>
         <table style="font-size:14px">
         <tr><td style="width:25%"><b>总资产</b></td><td style="width:25%">{total_assets:.2f}元</td><td style="width:25%"><b>总市值</b></td><td style="width:25%">{total_value:.2f}元</td></tr>
         <tr><td><b>可用资金</b></td><td>{available_cash:.2f}元</td><td><b>现金占比</b></td><td>{cash_ratio:.1f}%</td></tr>
         <tr><td><b>持仓盈亏</b></td><td style="color:{pnl_color}">{total_pnl:+.2f}元 ({total_pnl_pct:+.2f}%)</td><td><b>今日盈亏</b></td><td style="color:{daily_color}">{total_daily_pnl:+.2f}元</td></tr>
         {alloc_row}
+        {lifetime_row}
         </table></div>'''
 
     # v8.0: 基准对比（组合收益字段缺失时显示"数据不足"，避免误报"跑输基准"）
@@ -593,6 +612,13 @@ def generate_wechat_markdown(report_data):
                             f" (入金{port.get('total_deposits', 0):,.2f} - 出金{port.get('total_withdrawals', 0):,.2f})")
         lines.append(f"总盈亏: {alloc_emoji} {alloc_pnl:+.2f}元 ({port.get('total_pnl_all_pct', 0):+.2f}%)"
                      f" | {invested_str}")
+
+    # 9/30: 终身口径(2024/9/30入市至今) — 用户明确要求看到"从2024年到目前"的总亏损
+    if port.get("lifetime_pnl") is not None:
+        lt_pnl = port.get("lifetime_pnl", 0)
+        lt_emoji = "🟢" if lt_pnl >= 0 else "🔴"
+        lines.append(f"**账户累计盈亏(2024年入市至今): {lt_emoji} {lt_pnl:+.2f}元**"
+                     f" | 入市以来净投入: {port.get('lifetime_invested', 0):,.2f}元")
 
     # v8.0: 基准对比（组合收益缺失时提示数据不足，避免误报"跑输基准"）
     benchmark = report_data.get("benchmark", {})
