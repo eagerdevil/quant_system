@@ -182,7 +182,7 @@ def compute_portfolio_summary(portfolio, scores):
         base_override = portfolio.get("_invested_base")
         if base_override is not None and float(base_override) > 0:
             total_invested = round(float(base_override), 2)  # 用户确认基准覆盖流水推算
-            total_invested_note = "用户基准(9/6确认累计亏损189元)"
+            total_invested_note = f"用户基准(券商App口径, 累计净投入{total_invested:.2f}元)"
         total_pnl_all = round(total_assets - total_invested, 2)        # 总盈亏
         total_pnl_all_pct = round(total_pnl_all / total_invested * 100, 2) if total_invested > 0 else None
     else:
