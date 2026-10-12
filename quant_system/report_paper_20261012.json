@@ -1,0 +1,4346 @@
+{
+  "date": "20261012",
+  "timestamp": "2026-10-12T18:12:20.733433",
+  "type": "paper",
+  "stale_codes": [],
+  "timing": {
+    "bull_signals": 1,
+    "total_signals": 7,
+    "signal_detail": {
+      "S1_HS300_above_MA20": false,
+      "S2_HS300_MA60_up": false,
+      "S3_NorthFlow_5d_positive": true,
+      "S4_Volume_active": false,
+      "S5_LimitDown_low": null,
+      "S6_Margin_increasing": null,
+      "S7_Bond_low": null
+    },
+    "base_position": 0.05,
+    "force_capped": true,
+    "north_flow_5d": 1353.7,
+    "advice": "防御(仓位5%) — 几乎无看多信号，强制限制生效",
+    "regime": "CRISIS",
+    "regime_name": "危机模式",
+    "regime_confidence": 0.9,
+    "regime_signals": [
+      "均线空头排列",
+      "ADX=32.8(趋势明确)",
+      "高波动(布林带宽=8.4%)",
+      "高波动+下跌趋势 → 升级为危机模式"
+    ],
+    "regime_stop_loss": -0.05,
+    "regime_buy_grade_min": null,
+    "regime_description": "危机模式，现金为王",
+    "sentiment": {
+      "score": 55,
+      "level": "中性",
+      "signals": {
+        "涨跌比": 0.65,
+        "成交额(亿)": 15378.0,
+        "涨停家数": null,
+        "跌停家数": null,
+        "沪深股通5日均成交(亿)": 1353.7
+      },
+      "estimated": true
+    },
+    "circuit_breaker": {
+      "triggered": false,
+      "drawdown_pct": -1.81
+    }
+  },
+  "scores": [
+    {
+      "code": "513800",
+      "name": "日本东证指数ETF南方",
+      "score": 73,
+      "technical_score": 77,
+      "cross_sectional_adj": 1.1,
+      "blended_technical": 78,
+      "max_score": 100,
+      "grade": "B_买入",
+      "price": 1.906,
+      "indicators": {
+        "rsi": 49.8,
+        "volatility_pct": 16.9,
+        "sharpe": 0.86,
+        "sortino": 1.27,
+        "max_dd_pct": 15.5,
+        "consecutive_up": 2,
+        "consecutive_down": 0,
+        "ma_alignment": 2,
+        "bb_position": 58.5,
+        "atr_pct": 0.99,
+        "vol_ratio_5d": 1.86,
+        "macd_dif": 0.0046,
+        "macd_hist": -0.003
+      },
+      "returns": {
+        "r5d": 0.7,
+        "r10d": 0.6,
+        "r20d": 0.2,
+        "r60d": 3.8,
+        "r120d": 10.3
+      },
+      "vs_ma": {
+        "pct_ma5": 0.4,
+        "pct_ma10": 0.5,
+        "pct_ma20": 0.2,
+        "pct_ma60": 2.1
+      },
+      "factors": {
+        "F1_趋势强度": 6.9,
+        "F2_动量": 8.0,
+        "F3_反转": 3.8,
+        "F4_RSI": 8.0,
+        "F5_均线偏离": 5.7,
+        "F6_低波动": 6.0,
+        "F7_成交量": 2.4,
+        "F8_回调": 3.0,
+        "F9_Sortino": 5.7,
+        "F10_MaxDD": 4.3,
+        "F11_布林带": 3.7,
+        "F12_多周期": 5.0,
+        "F13_均线排列": 2,
+        "F14_长期": 4.0,
+        "F15_夏普": 5.1,
+        "F16_量价关系": 5.0,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": null,
+        "strength": 0,
+        "description": ""
+      },
+      "premium_multiplier": 0.94,
+      "premium_warning": "🚨 历史分位97%（中枢-0.42%），溢价处自身极高位",
+      "is_watchlist": true,
+      "is_holding": true,
+      "premium_info": {
+        "premium_pct": 0.88,
+        "nav": 1.8894,
+        "nav_date": "20261012",
+        "data_source": "iopv",
+        "is_qdii": true,
+        "history": {
+          "has_history": true,
+          "series": [
+            {
+              "date": "2026-07-10",
+              "premium": 0.21
+            },
+            {
+              "date": "2026-07-13",
+              "premium": -0.51
+            },
+            {
+              "date": "2026-07-14",
+              "premium": -0.43
+            },
+            {
+              "date": "2026-07-15",
+              "premium": 1.33
+            },
+            {
+              "date": "2026-07-16",
+              "premium": 0.48
+            },
+            {
+              "date": "2026-07-17",
+              "premium": -0.82
+            },
+            {
+              "date": "2026-07-20",
+              "premium": -0.12
+            },
+            {
+              "date": "2026-07-21",
+              "premium": -0.79
+            },
+            {
+              "date": "2026-07-22",
+              "premium": -0.25
+            },
+            {
+              "date": "2026-07-23",
+              "premium": -0.66
+            },
+            {
+              "date": "2026-07-24",
+              "premium": -0.63
+            },
+            {
+              "date": "2026-07-27",
+              "premium": -0.33
+            },
+            {
+              "date": "2026-07-28",
+              "premium": -0.08
+            },
+            {
+              "date": "2026-07-29",
+              "premium": 0.07
+            },
+            {
+              "date": "2026-07-30",
+              "premium": -0.54
+            },
+            {
+              "date": "2026-07-31",
+              "premium": -1.12
+            },
+            {
+              "date": "2026-08-03",
+              "premium": -0.29
+            },
+            {
+              "date": "2026-08-04",
+              "premium": -0.61
+            },
+            {
+              "date": "2026-08-05",
+              "premium": -0.75
+            },
+            {
+              "date": "2026-08-06",
+              "premium": -0.47
+            },
+            {
+              "date": "2026-08-07",
+              "premium": -0.46
+            },
+            {
+              "date": "2026-08-10",
+              "premium": -0.55
+            },
+            {
+              "date": "2026-08-11",
+              "premium": -0.27
+            },
+            {
+              "date": "2026-08-12",
+              "premium": -0.5
+            },
+            {
+              "date": "2026-08-13",
+              "premium": -0.4
+            },
+            {
+              "date": "2026-08-14",
+              "premium": 0.02
+            },
+            {
+              "date": "2026-08-17",
+              "premium": 0.11
+            },
+            {
+              "date": "2026-08-18",
+              "premium": -0.61
+            },
+            {
+              "date": "2026-08-19",
+              "premium": 0.07
+            },
+            {
+              "date": "2026-08-20",
+              "premium": -0.86
+            },
+            {
+              "date": "2026-08-21",
+              "premium": -0.48
+            },
+            {
+              "date": "2026-08-24",
+              "premium": -0.77
+            },
+            {
+              "date": "2026-08-25",
+              "premium": -0.99
+            },
+            {
+              "date": "2026-08-26",
+              "premium": -0.4
+            },
+            {
+              "date": "2026-08-27",
+              "premium": -0.69
+            },
+            {
+              "date": "2026-08-28",
+              "premium": -0.58
+            },
+            {
+              "date": "2026-08-31",
+              "premium": -0.12
+            },
+            {
+              "date": "2026-09-01",
+              "premium": -0.62
+            },
+            {
+              "date": "2026-09-02",
+              "premium": -0.12
+            },
+            {
+              "date": "2026-09-03",
+              "premium": 0.36
+            },
+            {
+              "date": "2026-09-04",
+              "premium": -0.75
+            },
+            {
+              "date": "2026-09-07",
+              "premium": 0.02
+            },
+            {
+              "date": "2026-09-08",
+              "premium": 0.16
+            },
+            {
+              "date": "2026-09-09",
+              "premium": 0.02
+            },
+            {
+              "date": "2026-09-10",
+              "premium": -0.16
+            },
+            {
+              "date": "2026-09-11",
+              "premium": 0.04
+            },
+            {
+              "date": "2026-09-14",
+              "premium": -0.84
+            },
+            {
+              "date": "2026-09-15",
+              "premium": -0.9
+            },
+            {
+              "date": "2026-09-16",
+              "premium": -0.67
+            },
+            {
+              "date": "2026-09-17",
+              "premium": -0.07
+            },
+            {
+              "date": "2026-09-18",
+              "premium": -0.62
+            },
+            {
+              "date": "2026-09-21",
+              "premium": 0.02
+            },
+            {
+              "date": "2026-09-22",
+              "premium": 0.79
+            },
+            {
+              "date": "2026-09-23",
+              "premium": 1.68
+            },
+            {
+              "date": "2026-09-24",
+              "premium": -0.55
+            },
+            {
+              "date": "2026-09-28",
+              "premium": -0.46
+            },
+            {
+              "date": "2026-09-29",
+              "premium": -0.11
+            },
+            {
+              "date": "2026-09-30",
+              "premium": 0.03
+            },
+            {
+              "date": "2026-10-08",
+              "premium": -0.78
+            },
+            {
+              "date": "2026-10-09",
+              "premium": -0.28
+            }
+          ],
+          "current": 0.88,
+          "current_source": "iopv",
+          "median": -0.42,
+          "mean": -0.29,
+          "max": 1.68,
+          "percentile": 96.7,
+          "trend_10d": -0.03,
+          "trend_60d": -0.29,
+          "trend_gap": 0.26,
+          "n": 60
+        }
+      }
+    },
+    {
+      "code": "513500",
+      "name": "标普500ETF",
+      "score": 33,
+      "technical_score": 77,
+      "cross_sectional_adj": 0.9,
+      "blended_technical": 78,
+      "max_score": 100,
+      "grade": "E_回避",
+      "price": 2.74,
+      "indicators": {
+        "rsi": 70.0,
+        "volatility_pct": 10.0,
+        "sharpe": 1.13,
+        "sortino": 1.57,
+        "max_dd_pct": 13.6,
+        "consecutive_up": 3,
+        "consecutive_down": 0,
+        "ma_alignment": 3,
+        "bb_position": 101.5,
+        "atr_pct": 0.55,
+        "vol_ratio_5d": 0.99,
+        "macd_dif": 0.0142,
+        "macd_hist": 0.0068
+      },
+      "returns": {
+        "r5d": 2.1,
+        "r10d": 2.0,
+        "r20d": 1.6,
+        "r60d": 8.4,
+        "r120d": 20.1
+      },
+      "vs_ma": {
+        "pct_ma5": 1.1,
+        "pct_ma10": 1.3,
+        "pct_ma20": 2.0,
+        "pct_ma60": 3.6
+      },
+      "factors": {
+        "F1_趋势强度": 10.0,
+        "F2_动量": 8.0,
+        "F3_反转": 3.3,
+        "F4_RSI": 2.6,
+        "F5_均线偏离": 5.2,
+        "F6_低波动": 5.3,
+        "F7_成交量": 6.0,
+        "F8_回调": 2.0,
+        "F9_Sortino": 6.0,
+        "F10_MaxDD": 4.5,
+        "F11_布林带": 0.5,
+        "F12_多周期": 5.9,
+        "F13_均线排列": 3,
+        "F14_长期": 4.0,
+        "F15_夏普": 5.5,
+        "F16_量价关系": 5.0,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": null,
+        "strength": 0,
+        "description": ""
+      },
+      "premium_multiplier": 0.4278,
+      "premium_warning": "🚨 溢价9.9%极度危险！市价远超净值，面临停牌+溢价回归双重风险；⚠️ 历史分位80%（中枢8.71%），偏高；⚠️ 近10日溢价9.63%快速扩大（+1.8pp）",
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": 9.87,
+        "nav": 2.4894,
+        "nav_date": "20261012",
+        "data_source": "iopv",
+        "is_qdii": true,
+        "history": {
+          "has_history": true,
+          "series": [
+            {
+              "date": "2026-07-10",
+              "premium": 3.72
+            },
+            {
+              "date": "2026-07-13",
+              "premium": 4.38
+            },
+            {
+              "date": "2026-07-14",
+              "premium": 4.69
+            },
+            {
+              "date": "2026-07-15",
+              "premium": 5.4
+            },
+            {
+              "date": "2026-07-16",
+              "premium": 6.48
+            },
+            {
+              "date": "2026-07-17",
+              "premium": 4.44
+            },
+            {
+              "date": "2026-07-20",
+              "premium": 4.42
+            },
+            {
+              "date": "2026-07-21",
+              "premium": 4.71
+            },
+            {
+              "date": "2026-07-22",
+              "premium": 4.71
+            },
+            {
+              "date": "2026-07-23",
+              "premium": 6.14
+            },
+            {
+              "date": "2026-07-24",
+              "premium": 5.29
+            },
+            {
+              "date": "2026-07-27",
+              "premium": 5.92
+            },
+            {
+              "date": "2026-07-28",
+              "premium": 4.16
+            },
+            {
+              "date": "2026-07-29",
+              "premium": 6.96
+            },
+            {
+              "date": "2026-07-30",
+              "premium": 3.87
+            },
+            {
+              "date": "2026-07-31",
+              "premium": 4.39
+            },
+            {
+              "date": "2026-08-03",
+              "premium": 3.85
+            },
+            {
+              "date": "2026-08-04",
+              "premium": 3.96
+            },
+            {
+              "date": "2026-08-05",
+              "premium": 7.7
+            },
+            {
+              "date": "2026-08-06",
+              "premium": 8.74
+            },
+            {
+              "date": "2026-08-07",
+              "premium": 8.25
+            },
+            {
+              "date": "2026-08-10",
+              "premium": 8.39
+            },
+            {
+              "date": "2026-08-11",
+              "premium": 9.53
+            },
+            {
+              "date": "2026-08-12",
+              "premium": 8.54
+            },
+            {
+              "date": "2026-08-13",
+              "premium": 8.34
+            },
+            {
+              "date": "2026-08-14",
+              "premium": 11.23
+            },
+            {
+              "date": "2026-08-17",
+              "premium": 10.6
+            },
+            {
+              "date": "2026-08-18",
+              "premium": 8.9
+            },
+            {
+              "date": "2026-08-19",
+              "premium": 6.87
+            },
+            {
+              "date": "2026-08-20",
+              "premium": 9.19
+            },
+            {
+              "date": "2026-08-21",
+              "premium": 8.57
+            },
+            {
+              "date": "2026-08-24",
+              "premium": 8.84
+            },
+            {
+              "date": "2026-08-25",
+              "premium": 9.41
+            },
+            {
+              "date": "2026-08-26",
+              "premium": 10.01
+            },
+            {
+              "date": "2026-08-27",
+              "premium": 9.2
+            },
+            {
+              "date": "2026-08-28",
+              "premium": 10.09
+            },
+            {
+              "date": "2026-08-31",
+              "premium": 10.01
+            },
+            {
+              "date": "2026-09-01",
+              "premium": 10.98
+            },
+            {
+              "date": "2026-09-02",
+              "premium": 7.5
+            },
+            {
+              "date": "2026-09-03",
+              "premium": 7.05
+            },
+            {
+              "date": "2026-09-04",
+              "premium": 9.0
+            },
+            {
+              "date": "2026-09-07",
+              "premium": 8.75
+            },
+            {
+              "date": "2026-09-08",
+              "premium": 8.92
+            },
+            {
+              "date": "2026-09-09",
+              "premium": 9.54
+            },
+            {
+              "date": "2026-09-10",
+              "premium": 9.94
+            },
+            {
+              "date": "2026-09-11",
+              "premium": 8.43
+            },
+            {
+              "date": "2026-09-14",
+              "premium": 8.82
+            },
+            {
+              "date": "2026-09-15",
+              "premium": 8.69
+            },
+            {
+              "date": "2026-09-16",
+              "premium": 10.08
+            },
+            {
+              "date": "2026-09-17",
+              "premium": 8.82
+            },
+            {
+              "date": "2026-09-18",
+              "premium": 9.84
+            },
+            {
+              "date": "2026-09-21",
+              "premium": 8.4
+            },
+            {
+              "date": "2026-09-22",
+              "premium": 10.01
+            },
+            {
+              "date": "2026-09-23",
+              "premium": 10.68
+            },
+            {
+              "date": "2026-09-24",
+              "premium": 9.08
+            },
+            {
+              "date": "2026-09-28",
+              "premium": 9.52
+            },
+            {
+              "date": "2026-09-29",
+              "premium": 9.94
+            },
+            {
+              "date": "2026-09-30",
+              "premium": 10.21
+            },
+            {
+              "date": "2026-10-08",
+              "premium": 9.16
+            },
+            {
+              "date": "2026-10-09",
+              "premium": 9.49
+            }
+          ],
+          "current": 9.87,
+          "current_source": "iopv",
+          "median": 8.71,
+          "mean": 7.88,
+          "max": 11.23,
+          "percentile": 80.0,
+          "trend_10d": 9.63,
+          "trend_60d": 7.88,
+          "trend_gap": 1.75,
+          "n": 60
+        }
+      }
+    },
+    {
+      "code": "161226",
+      "name": "白银基金",
+      "score": 33,
+      "technical_score": 72,
+      "cross_sectional_adj": 1.4,
+      "blended_technical": 73,
+      "max_score": 100,
+      "grade": "E_回避",
+      "price": 1.804,
+      "indicators": {
+        "rsi": 39.3,
+        "volatility_pct": 24.6,
+        "sharpe": 1.03,
+        "sortino": 1.6,
+        "max_dd_pct": 67.6,
+        "consecutive_up": 0,
+        "consecutive_down": 1,
+        "ma_alignment": 0,
+        "bb_position": 11.9,
+        "atr_pct": 1.52,
+        "vol_ratio_5d": 0.75,
+        "macd_dif": -0.0361,
+        "macd_hist": -0.0184
+      },
+      "returns": {
+        "r5d": -0.7,
+        "r10d": -6.3,
+        "r20d": -8.7,
+        "r60d": -3.6,
+        "r120d": -36.1
+      },
+      "vs_ma": {
+        "pct_ma5": -0.6,
+        "pct_ma10": -2.4,
+        "pct_ma20": -4.2,
+        "pct_ma60": -5.7
+      },
+      "factors": {
+        "F1_趋势强度": 0.5,
+        "F2_动量": 4.1,
+        "F3_反转": 4.3,
+        "F4_RSI": 7.8,
+        "F5_均线偏离": 6.0,
+        "F6_低波动": 6.0,
+        "F7_成交量": 4.6,
+        "F8_回调": 6.5,
+        "F9_Sortino": 6.0,
+        "F10_MaxDD": 1.0,
+        "F11_布林带": 5.7,
+        "F12_多周期": 1.0,
+        "F13_均线排列": 0,
+        "F14_长期": 1.1,
+        "F15_夏普": 5.3,
+        "F16_量价关系": 5.0,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": null,
+        "strength": 0,
+        "description": ""
+      },
+      "premium_multiplier": 0.45,
+      "premium_warning": "🚨 溢价10.2%极度危险！市价远超净值，面临停牌+溢价回归双重风险",
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": 10.19,
+        "nav": 1.6372,
+        "nav_date": "2026-10-09",
+        "data_source": "official_nav",
+        "is_qdii": false
+      }
+    },
+    {
+      "code": "512890",
+      "name": "红利低波ETF华泰柏瑞",
+      "score": 71,
+      "technical_score": 71,
+      "cross_sectional_adj": -0.3,
+      "blended_technical": 71,
+      "max_score": 100,
+      "grade": "B_买入",
+      "price": 1.23,
+      "indicators": {
+        "rsi": 61.2,
+        "volatility_pct": 12.3,
+        "sharpe": 0.05,
+        "sortino": 0.08,
+        "max_dd_pct": 14.2,
+        "consecutive_up": 1,
+        "consecutive_down": 0,
+        "ma_alignment": 2,
+        "bb_position": 110.5,
+        "atr_pct": 0.57,
+        "vol_ratio_5d": 1.24,
+        "macd_dif": 0.0061,
+        "macd_hist": 0.0052
+      },
+      "returns": {
+        "r5d": 4.2,
+        "r10d": 3.9,
+        "r20d": 1.9,
+        "r60d": 10.5,
+        "r120d": 4.6
+      },
+      "vs_ma": {
+        "pct_ma5": 2.1,
+        "pct_ma10": 3.0,
+        "pct_ma20": 2.8,
+        "pct_ma60": 4.1
+      },
+      "factors": {
+        "F1_趋势强度": 10.0,
+        "F2_动量": 8.0,
+        "F3_反转": 2.5,
+        "F4_RSI": 5.1,
+        "F5_均线偏离": 4.6,
+        "F6_低波动": 5.6,
+        "F7_成交量": 5.6,
+        "F8_回调": 4.0,
+        "F9_Sortino": 3.7,
+        "F10_MaxDD": 4.5,
+        "F11_布林带": 0.5,
+        "F12_多周期": 6.0,
+        "F13_均线排列": 2,
+        "F14_长期": 3.5,
+        "F15_夏普": 3.7,
+        "F16_量价关系": 6.8,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": "bullish",
+        "strength": 5,
+        "description": "看涨背离: 价格创新低(-6.3%)但量增23%",
+        "vol_change": 1.23,
+        "price_action": "新低量增"
+      },
+      "premium_multiplier": 1.0,
+      "premium_warning": null,
+      "is_watchlist": true,
+      "is_holding": true,
+      "premium_info": {
+        "premium_pct": 1.86,
+        "nav": 1.2075,
+        "nav_date": "2026-10-09",
+        "data_source": "official_nav",
+        "is_qdii": false
+      }
+    },
+    {
+      "code": "588000",
+      "name": "科创50ETF",
+      "score": 68,
+      "technical_score": 68,
+      "cross_sectional_adj": 0.4,
+      "blended_technical": 68,
+      "max_score": 100,
+      "grade": "B_买入",
+      "price": 1.51,
+      "indicators": {
+        "rsi": 38.6,
+        "volatility_pct": 34.4,
+        "sharpe": 0.79,
+        "sortino": 1.26,
+        "max_dd_pct": 35.6,
+        "consecutive_up": 0,
+        "consecutive_down": 1,
+        "ma_alignment": 0,
+        "bb_position": -3.7,
+        "atr_pct": 2.14,
+        "vol_ratio_5d": 1.38,
+        "macd_dif": -0.0494,
+        "macd_hist": -0.0327
+      },
+      "returns": {
+        "r5d": -8.1,
+        "r10d": -13.4,
+        "r20d": -9.5,
+        "r60d": -31.6,
+        "r120d": 4.3
+      },
+      "vs_ma": {
+        "pct_ma5": -4.0,
+        "pct_ma10": -8.4,
+        "pct_ma20": -9.1,
+        "pct_ma60": -14.4
+      },
+      "factors": {
+        "F1_趋势强度": 0.5,
+        "F2_动量": 3.7,
+        "F3_反转": 8.0,
+        "F4_RSI": 7.6,
+        "F5_均线偏离": 5.5,
+        "F6_低波动": 5.4,
+        "F7_成交量": 4.2,
+        "F8_回调": 6.5,
+        "F9_Sortino": 5.7,
+        "F10_MaxDD": 2.0,
+        "F11_布林带": 1.0,
+        "F12_多周期": 1.0,
+        "F13_均线排列": 0,
+        "F14_长期": 3.4,
+        "F15_夏普": 5.0,
+        "F16_量价关系": 5.0,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": null,
+        "strength": 0,
+        "description": ""
+      },
+      "premium_multiplier": 1.0,
+      "premium_warning": null,
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": -1.92,
+        "nav": 1.5396,
+        "nav_date": "2026-10-09",
+        "data_source": "official_nav",
+        "is_qdii": false
+      }
+    },
+    {
+      "code": "513520",
+      "name": "日经ETF",
+      "score": 67,
+      "technical_score": 76,
+      "cross_sectional_adj": -0.4,
+      "blended_technical": 76,
+      "max_score": 100,
+      "grade": "B_买入",
+      "price": 2.388,
+      "indicators": {
+        "rsi": 71.9,
+        "volatility_pct": 22.1,
+        "sharpe": 1.32,
+        "sortino": 2.17,
+        "max_dd_pct": 20.4,
+        "consecutive_up": 0,
+        "consecutive_down": 2,
+        "ma_alignment": 3,
+        "bb_position": 93.5,
+        "atr_pct": 1.04,
+        "vol_ratio_5d": 1.42,
+        "macd_dif": 0.0257,
+        "macd_hist": 0.0283
+      },
+      "returns": {
+        "r5d": 5.0,
+        "r10d": 5.4,
+        "r20d": 5.5,
+        "r60d": 1.9,
+        "r120d": 22.7
+      },
+      "vs_ma": {
+        "pct_ma5": 1.1,
+        "pct_ma10": 2.6,
+        "pct_ma20": 3.8,
+        "pct_ma60": 5.3
+      },
+      "factors": {
+        "F1_趋势强度": 10.0,
+        "F2_动量": 8.0,
+        "F3_反转": 2.2,
+        "F4_RSI": 2.0,
+        "F5_均线偏离": 5.3,
+        "F6_低波动": 6.0,
+        "F7_成交量": 3.9,
+        "F8_回调": 8.0,
+        "F9_Sortino": 6.0,
+        "F10_MaxDD": 3.7,
+        "F11_布林带": 0.8,
+        "F12_多周期": 6.0,
+        "F13_均线排列": 3,
+        "F14_长期": 4.0,
+        "F15_夏普": 5.7,
+        "F16_量价关系": 5.0,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": null,
+        "strength": 0,
+        "description": ""
+      },
+      "premium_multiplier": 0.8789,
+      "premium_warning": "⚡ 溢价4.2%，略高于安全线，关注溢价收敛趋势",
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": 4.23,
+        "nav": 2.2911,
+        "nav_date": "20261012",
+        "data_source": "iopv",
+        "is_qdii": true,
+        "history": {
+          "has_history": true,
+          "series": [
+            {
+              "date": "2026-07-10",
+              "premium": 3.95
+            },
+            {
+              "date": "2026-07-13",
+              "premium": 3.63
+            },
+            {
+              "date": "2026-07-14",
+              "premium": 4.07
+            },
+            {
+              "date": "2026-07-15",
+              "premium": 4.82
+            },
+            {
+              "date": "2026-07-16",
+              "premium": 4.49
+            },
+            {
+              "date": "2026-07-17",
+              "premium": 2.55
+            },
+            {
+              "date": "2026-07-20",
+              "premium": 2.27
+            },
+            {
+              "date": "2026-07-21",
+              "premium": 3.69
+            },
+            {
+              "date": "2026-07-22",
+              "premium": 2.99
+            },
+            {
+              "date": "2026-07-23",
+              "premium": 3.08
+            },
+            {
+              "date": "2026-07-24",
+              "premium": 3.38
+            },
+            {
+              "date": "2026-07-27",
+              "premium": 4.16
+            },
+            {
+              "date": "2026-07-28",
+              "premium": 4.07
+            },
+            {
+              "date": "2026-07-29",
+              "premium": 5.2
+            },
+            {
+              "date": "2026-07-30",
+              "premium": 3.72
+            },
+            {
+              "date": "2026-07-31",
+              "premium": 2.63
+            },
+            {
+              "date": "2026-08-03",
+              "premium": 2.76
+            },
+            {
+              "date": "2026-08-04",
+              "premium": 4.06
+            },
+            {
+              "date": "2026-08-05",
+              "premium": 4.25
+            },
+            {
+              "date": "2026-08-06",
+              "premium": 3.82
+            },
+            {
+              "date": "2026-08-07",
+              "premium": 4.44
+            },
+            {
+              "date": "2026-08-10",
+              "premium": 4.66
+            },
+            {
+              "date": "2026-08-11",
+              "premium": 4.29
+            },
+            {
+              "date": "2026-08-12",
+              "premium": 4.33
+            },
+            {
+              "date": "2026-08-13",
+              "premium": 3.6
+            },
+            {
+              "date": "2026-08-14",
+              "premium": 4.34
+            },
+            {
+              "date": "2026-08-17",
+              "premium": 4.62
+            },
+            {
+              "date": "2026-08-18",
+              "premium": 5.04
+            },
+            {
+              "date": "2026-08-19",
+              "premium": 4.43
+            },
+            {
+              "date": "2026-08-20",
+              "premium": 4.04
+            },
+            {
+              "date": "2026-08-21",
+              "premium": 3.87
+            },
+            {
+              "date": "2026-08-24",
+              "premium": 3.8
+            },
+            {
+              "date": "2026-08-25",
+              "premium": 4.57
+            },
+            {
+              "date": "2026-08-26",
+              "premium": 4.18
+            },
+            {
+              "date": "2026-08-27",
+              "premium": 4.89
+            },
+            {
+              "date": "2026-08-28",
+              "premium": 4.37
+            },
+            {
+              "date": "2026-08-31",
+              "premium": 4.36
+            },
+            {
+              "date": "2026-09-01",
+              "premium": 4.45
+            },
+            {
+              "date": "2026-09-02",
+              "premium": 4.58
+            },
+            {
+              "date": "2026-09-03",
+              "premium": 3.84
+            },
+            {
+              "date": "2026-09-04",
+              "premium": 3.68
+            },
+            {
+              "date": "2026-09-07",
+              "premium": 3.31
+            },
+            {
+              "date": "2026-09-08",
+              "premium": 3.44
+            },
+            {
+              "date": "2026-09-09",
+              "premium": 3.36
+            },
+            {
+              "date": "2026-09-10",
+              "premium": 3.81
+            },
+            {
+              "date": "2026-09-11",
+              "premium": 3.89
+            },
+            {
+              "date": "2026-09-14",
+              "premium": 3.25
+            },
+            {
+              "date": "2026-09-15",
+              "premium": 3.35
+            },
+            {
+              "date": "2026-09-16",
+              "premium": 4.19
+            },
+            {
+              "date": "2026-09-17",
+              "premium": 3.92
+            },
+            {
+              "date": "2026-09-18",
+              "premium": 4.54
+            },
+            {
+              "date": "2026-09-21",
+              "premium": 4.76
+            },
+            {
+              "date": "2026-09-22",
+              "premium": 6.6
+            },
+            {
+              "date": "2026-09-23",
+              "premium": 8.19
+            },
+            {
+              "date": "2026-09-24",
+              "premium": 4.38
+            },
+            {
+              "date": "2026-09-28",
+              "premium": 3.8
+            },
+            {
+              "date": "2026-09-29",
+              "premium": 4.05
+            },
+            {
+              "date": "2026-09-30",
+              "premium": 4.71
+            },
+            {
+              "date": "2026-10-08",
+              "premium": 4.3
+            },
+            {
+              "date": "2026-10-09",
+              "premium": 4.24
+            }
+          ],
+          "current": 4.23,
+          "current_source": "iopv",
+          "median": 4.07,
+          "mean": 4.1,
+          "max": 8.19,
+          "percentile": 56.7,
+          "trend_10d": 4.96,
+          "trend_60d": 4.1,
+          "trend_gap": 0.86,
+          "n": 60
+        }
+      }
+    },
+    {
+      "code": "159920",
+      "name": "恒生ETF",
+      "score": 62,
+      "technical_score": 66,
+      "cross_sectional_adj": 0.2,
+      "blended_technical": 66,
+      "max_score": 100,
+      "grade": "C_观察",
+      "price": 1.43,
+      "indicators": {
+        "rsi": 39.5,
+        "volatility_pct": 14.1,
+        "sharpe": -0.38,
+        "sortino": -0.65,
+        "max_dd_pct": 20.5,
+        "consecutive_up": 2,
+        "consecutive_down": 0,
+        "ma_alignment": 0,
+        "bb_position": 21.0,
+        "atr_pct": 0.76,
+        "vol_ratio_5d": 1.1,
+        "macd_dif": -0.0155,
+        "macd_hist": -0.0063
+      },
+      "returns": {
+        "r5d": -1.5,
+        "r10d": -1.5,
+        "r20d": -5.2,
+        "r60d": -0.3,
+        "r120d": -5.7
+      },
+      "vs_ma": {
+        "pct_ma5": 0.1,
+        "pct_ma10": -1.0,
+        "pct_ma20": -1.7,
+        "pct_ma60": -3.5
+      },
+      "factors": {
+        "F1_趋势强度": 0.5,
+        "F2_动量": 5.5,
+        "F3_反转": 4.8,
+        "F4_RSI": 7.8,
+        "F5_均线偏离": 5.9,
+        "F6_低波动": 5.9,
+        "F7_成交量": 6.0,
+        "F8_回调": 3.0,
+        "F9_Sortino": 2.9,
+        "F10_MaxDD": 3.6,
+        "F11_布林带": 5.7,
+        "F12_多周期": 1.0,
+        "F13_均线排列": 0,
+        "F14_长期": 2.4,
+        "F15_夏普": 3.2,
+        "F16_量价关系": 5.0,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": null,
+        "strength": 0,
+        "description": ""
+      },
+      "premium_multiplier": 0.94,
+      "premium_warning": "🚨 历史分位98%（中枢-0.84%），溢价处自身极高位",
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": 0.21,
+        "nav": 1.423,
+        "nav_date": "20261012",
+        "data_source": "iopv",
+        "is_qdii": true,
+        "history": {
+          "has_history": true,
+          "series": [
+            {
+              "date": "2026-07-10",
+              "premium": -0.18
+            },
+            {
+              "date": "2026-07-13",
+              "premium": -0.41
+            },
+            {
+              "date": "2026-07-14",
+              "premium": 0.25
+            },
+            {
+              "date": "2026-07-15",
+              "premium": 0.15
+            },
+            {
+              "date": "2026-07-16",
+              "premium": -0.07
+            },
+            {
+              "date": "2026-07-17",
+              "premium": -0.44
+            },
+            {
+              "date": "2026-07-20",
+              "premium": -0.24
+            },
+            {
+              "date": "2026-07-21",
+              "premium": -0.02
+            },
+            {
+              "date": "2026-07-22",
+              "premium": -0.28
+            },
+            {
+              "date": "2026-07-23",
+              "premium": -0.19
+            },
+            {
+              "date": "2026-07-24",
+              "premium": -0.97
+            },
+            {
+              "date": "2026-07-27",
+              "premium": -0.29
+            },
+            {
+              "date": "2026-07-28",
+              "premium": -0.46
+            },
+            {
+              "date": "2026-07-29",
+              "premium": -0.29
+            },
+            {
+              "date": "2026-07-30",
+              "premium": -0.17
+            },
+            {
+              "date": "2026-07-31",
+              "premium": -0.91
+            },
+            {
+              "date": "2026-08-03",
+              "premium": -0.56
+            },
+            {
+              "date": "2026-08-04",
+              "premium": -0.55
+            },
+            {
+              "date": "2026-08-05",
+              "premium": -0.64
+            },
+            {
+              "date": "2026-08-06",
+              "premium": -1.12
+            },
+            {
+              "date": "2026-08-07",
+              "premium": -1.18
+            },
+            {
+              "date": "2026-08-10",
+              "premium": -1.27
+            },
+            {
+              "date": "2026-08-11",
+              "premium": -0.83
+            },
+            {
+              "date": "2026-08-12",
+              "premium": -0.96
+            },
+            {
+              "date": "2026-08-13",
+              "premium": -0.96
+            },
+            {
+              "date": "2026-08-14",
+              "premium": -0.71
+            },
+            {
+              "date": "2026-08-17",
+              "premium": -0.56
+            },
+            {
+              "date": "2026-08-18",
+              "premium": -0.76
+            },
+            {
+              "date": "2026-08-19",
+              "premium": -0.92
+            },
+            {
+              "date": "2026-08-20",
+              "premium": -0.5
+            },
+            {
+              "date": "2026-08-21",
+              "premium": -1.16
+            },
+            {
+              "date": "2026-08-24",
+              "premium": -0.96
+            },
+            {
+              "date": "2026-08-25",
+              "premium": -1.17
+            },
+            {
+              "date": "2026-08-26",
+              "premium": -0.85
+            },
+            {
+              "date": "2026-08-27",
+              "premium": -0.99
+            },
+            {
+              "date": "2026-08-28",
+              "premium": -1.01
+            },
+            {
+              "date": "2026-08-31",
+              "premium": -1.4
+            },
+            {
+              "date": "2026-09-01",
+              "premium": -0.97
+            },
+            {
+              "date": "2026-09-02",
+              "premium": -1.38
+            },
+            {
+              "date": "2026-09-03",
+              "premium": -1.1
+            },
+            {
+              "date": "2026-09-04",
+              "premium": -0.95
+            },
+            {
+              "date": "2026-09-07",
+              "premium": -0.92
+            },
+            {
+              "date": "2026-09-08",
+              "premium": -1.17
+            },
+            {
+              "date": "2026-09-09",
+              "premium": -1.29
+            },
+            {
+              "date": "2026-09-10",
+              "premium": -1.12
+            },
+            {
+              "date": "2026-09-11",
+              "premium": -1.13
+            },
+            {
+              "date": "2026-09-14",
+              "premium": -1.16
+            },
+            {
+              "date": "2026-09-15",
+              "premium": -0.8
+            },
+            {
+              "date": "2026-09-16",
+              "premium": -0.98
+            },
+            {
+              "date": "2026-09-17",
+              "premium": -1.17
+            },
+            {
+              "date": "2026-09-18",
+              "premium": -0.91
+            },
+            {
+              "date": "2026-09-21",
+              "premium": -1.36
+            },
+            {
+              "date": "2026-09-22",
+              "premium": -0.73
+            },
+            {
+              "date": "2026-09-23",
+              "premium": -0.65
+            },
+            {
+              "date": "2026-09-24",
+              "premium": -0.85
+            },
+            {
+              "date": "2026-09-28",
+              "premium": -0.33
+            },
+            {
+              "date": "2026-09-29",
+              "premium": -0.37
+            },
+            {
+              "date": "2026-09-30",
+              "premium": -0.58
+            },
+            {
+              "date": "2026-10-08",
+              "premium": -0.13
+            },
+            {
+              "date": "2026-10-09",
+              "premium": -0.64
+            }
+          ],
+          "current": 0.21,
+          "current_source": "iopv",
+          "median": -0.84,
+          "mean": -0.74,
+          "max": 0.25,
+          "percentile": 98.3,
+          "trend_10d": -0.66,
+          "trend_60d": -0.74,
+          "trend_gap": 0.08,
+          "n": 60
+        }
+      }
+    },
+    {
+      "code": "518880",
+      "name": "黄金ETF华安",
+      "score": 72,
+      "technical_score": 70,
+      "cross_sectional_adj": 1.8,
+      "blended_technical": 72,
+      "max_score": 100,
+      "grade": "B_买入",
+      "price": 8.59,
+      "indicators": {
+        "rsi": 39.3,
+        "volatility_pct": 18.0,
+        "sharpe": 0.5,
+        "sortino": 0.59,
+        "max_dd_pct": 30.5,
+        "consecutive_up": 0,
+        "consecutive_down": 1,
+        "ma_alignment": 0,
+        "bb_position": 18.6,
+        "atr_pct": 1.11,
+        "vol_ratio_5d": 0.81,
+        "macd_dif": -0.1197,
+        "macd_hist": -0.0733
+      },
+      "returns": {
+        "r5d": 0.3,
+        "r10d": -4.7,
+        "r20d": -6.3,
+        "r60d": 0.6,
+        "r120d": -13.4
+      },
+      "vs_ma": {
+        "pct_ma5": 0.3,
+        "pct_ma10": -1.1,
+        "pct_ma20": -2.7,
+        "pct_ma60": -2.7
+      },
+      "factors": {
+        "F1_趋势强度": 0.5,
+        "F2_动量": 5.1,
+        "F3_反转": 3.9,
+        "F4_RSI": 7.8,
+        "F5_均线偏离": 5.8,
+        "F6_低波动": 6.0,
+        "F7_成交量": 5.5,
+        "F8_回调": 6.5,
+        "F9_Sortino": 4.6,
+        "F10_MaxDD": 2.4,
+        "F11_布林带": 5.8,
+        "F12_多周期": 2.0,
+        "F13_均线排列": 0,
+        "F14_长期": 1.9,
+        "F15_夏普": 4.4,
+        "F16_量价关系": 5.0,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": null,
+        "strength": 0,
+        "description": ""
+      },
+      "premium_multiplier": 1.0,
+      "premium_warning": null,
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": -0.11,
+        "nav": 8.5995,
+        "nav_date": "2026-10-09",
+        "data_source": "official_nav",
+        "is_qdii": false
+      }
+    },
+    {
+      "code": "159529",
+      "name": "标普消费ETF景顺",
+      "score": 41,
+      "technical_score": 55,
+      "cross_sectional_adj": -3.4,
+      "blended_technical": 52,
+      "max_score": 100,
+      "grade": "E_回避",
+      "price": 1.305,
+      "indicators": {
+        "rsi": 72.6,
+        "volatility_pct": 13.7,
+        "sharpe": -0.82,
+        "sortino": -1.28,
+        "max_dd_pct": 18.5,
+        "consecutive_up": 2,
+        "consecutive_down": 0,
+        "ma_alignment": 2,
+        "bb_position": 118.1,
+        "atr_pct": 0.64,
+        "vol_ratio_5d": 6.47,
+        "macd_dif": -0.0001,
+        "macd_hist": 0.0098
+      },
+      "returns": {
+        "r5d": 4.0,
+        "r10d": 3.7,
+        "r20d": 1.7,
+        "r60d": 1.2,
+        "r120d": 2.9
+      },
+      "vs_ma": {
+        "pct_ma5": 2.4,
+        "pct_ma10": 2.7,
+        "pct_ma20": 3.1,
+        "pct_ma60": 2.1
+      },
+      "factors": {
+        "F1_趋势强度": 7.2,
+        "F2_动量": 8.0,
+        "F3_反转": 2.6,
+        "F4_RSI": 1.9,
+        "F5_均线偏离": 4.4,
+        "F6_低波动": 5.8,
+        "F7_成交量": 1.0,
+        "F8_回调": 3.0,
+        "F9_Sortino": 2.6,
+        "F10_MaxDD": 3.9,
+        "F11_布林带": 0.5,
+        "F12_多周期": 5.9,
+        "F13_均线排列": 2,
+        "F14_长期": 3.3,
+        "F15_夏普": 2.8,
+        "F16_量价关系": 5.0,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": null,
+        "strength": 0,
+        "description": ""
+      },
+      "premium_multiplier": 0.7912,
+      "premium_warning": "⚡ 溢价4.4%，略高于安全线，关注溢价收敛趋势；🚨 历史分位98%（中枢1.14%），溢价处自身极高位；⚠️ 近10日溢价3.06%快速扩大（+1.6pp）",
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": 4.39,
+        "nav": 1.2501,
+        "nav_date": "20261012",
+        "data_source": "iopv",
+        "is_qdii": true,
+        "history": {
+          "has_history": true,
+          "series": [
+            {
+              "date": "2026-07-09",
+              "premium": 1.27
+            },
+            {
+              "date": "2026-07-10",
+              "premium": 0.43
+            },
+            {
+              "date": "2026-07-13",
+              "premium": 0.3
+            },
+            {
+              "date": "2026-07-14",
+              "premium": 1.01
+            },
+            {
+              "date": "2026-07-15",
+              "premium": 0.42
+            },
+            {
+              "date": "2026-07-16",
+              "premium": -0.43
+            },
+            {
+              "date": "2026-07-17",
+              "premium": 0.56
+            },
+            {
+              "date": "2026-07-20",
+              "premium": 0.73
+            },
+            {
+              "date": "2026-07-21",
+              "premium": 0.91
+            },
+            {
+              "date": "2026-07-22",
+              "premium": 0.72
+            },
+            {
+              "date": "2026-07-23",
+              "premium": 3.92
+            },
+            {
+              "date": "2026-07-24",
+              "premium": 0.98
+            },
+            {
+              "date": "2026-07-27",
+              "premium": 0.01
+            },
+            {
+              "date": "2026-07-28",
+              "premium": -1.8
+            },
+            {
+              "date": "2026-07-29",
+              "premium": 0.3
+            },
+            {
+              "date": "2026-07-30",
+              "premium": 1.42
+            },
+            {
+              "date": "2026-07-31",
+              "premium": 0.58
+            },
+            {
+              "date": "2026-08-03",
+              "premium": -0.51
+            },
+            {
+              "date": "2026-08-04",
+              "premium": -0.07
+            },
+            {
+              "date": "2026-08-05",
+              "premium": 0.98
+            },
+            {
+              "date": "2026-08-06",
+              "premium": 0.67
+            },
+            {
+              "date": "2026-08-07",
+              "premium": -0.43
+            },
+            {
+              "date": "2026-08-10",
+              "premium": 0.73
+            },
+            {
+              "date": "2026-08-11",
+              "premium": 0.55
+            },
+            {
+              "date": "2026-08-12",
+              "premium": 1.45
+            },
+            {
+              "date": "2026-08-13",
+              "premium": 0.12
+            },
+            {
+              "date": "2026-08-14",
+              "premium": 0.84
+            },
+            {
+              "date": "2026-08-17",
+              "premium": 3.24
+            },
+            {
+              "date": "2026-08-18",
+              "premium": 2.0
+            },
+            {
+              "date": "2026-08-19",
+              "premium": -0.53
+            },
+            {
+              "date": "2026-08-20",
+              "premium": 2.68
+            },
+            {
+              "date": "2026-08-21",
+              "premium": 0.93
+            },
+            {
+              "date": "2026-08-24",
+              "premium": 0.22
+            },
+            {
+              "date": "2026-08-25",
+              "premium": 2.61
+            },
+            {
+              "date": "2026-08-26",
+              "premium": 3.04
+            },
+            {
+              "date": "2026-08-27",
+              "premium": 3.23
+            },
+            {
+              "date": "2026-08-28",
+              "premium": 1.94
+            },
+            {
+              "date": "2026-08-31",
+              "premium": 2.07
+            },
+            {
+              "date": "2026-09-01",
+              "premium": 1.85
+            },
+            {
+              "date": "2026-09-02",
+              "premium": 0.53
+            },
+            {
+              "date": "2026-09-03",
+              "premium": 0.1
+            },
+            {
+              "date": "2026-09-04",
+              "premium": 2.09
+            },
+            {
+              "date": "2026-09-07",
+              "premium": 1.29
+            },
+            {
+              "date": "2026-09-08",
+              "premium": 1.48
+            },
+            {
+              "date": "2026-09-09",
+              "premium": 2.6
+            },
+            {
+              "date": "2026-09-10",
+              "premium": 2.45
+            },
+            {
+              "date": "2026-09-11",
+              "premium": 0.91
+            },
+            {
+              "date": "2026-09-14",
+              "premium": 0.37
+            },
+            {
+              "date": "2026-09-15",
+              "premium": 1.63
+            },
+            {
+              "date": "2026-09-16",
+              "premium": 2.26
+            },
+            {
+              "date": "2026-09-17",
+              "premium": 1.54
+            },
+            {
+              "date": "2026-09-18",
+              "premium": 2.66
+            },
+            {
+              "date": "2026-09-21",
+              "premium": 2.65
+            },
+            {
+              "date": "2026-09-22",
+              "premium": 3.37
+            },
+            {
+              "date": "2026-09-23",
+              "premium": 3.99
+            },
+            {
+              "date": "2026-09-24",
+              "premium": 3.15
+            },
+            {
+              "date": "2026-09-28",
+              "premium": 3.41
+            },
+            {
+              "date": "2026-09-29",
+              "premium": 3.42
+            },
+            {
+              "date": "2026-09-30",
+              "premium": 5.0
+            },
+            {
+              "date": "2026-10-08",
+              "premium": 1.44
+            }
+          ],
+          "current": 4.39,
+          "current_source": "iopv",
+          "median": 1.14,
+          "mean": 1.42,
+          "max": 5.0,
+          "percentile": 98.3,
+          "trend_10d": 3.06,
+          "trend_60d": 1.42,
+          "trend_gap": 1.64,
+          "n": 60
+        }
+      }
+    },
+    {
+      "code": "510300",
+      "name": "510300",
+      "score": 70,
+      "technical_score": 67,
+      "cross_sectional_adj": 3.3,
+      "blended_technical": 70,
+      "max_score": 100,
+      "grade": "B_买入",
+      "price": 4.36,
+      "indicators": {
+        "rsi": 28.2,
+        "volatility_pct": 12.0,
+        "sharpe": 0.31,
+        "sortino": 0.45,
+        "max_dd_pct": 14.4,
+        "consecutive_up": 0,
+        "consecutive_down": 3,
+        "ma_alignment": 0,
+        "bb_position": 4.0,
+        "atr_pct": 0.72,
+        "vol_ratio_5d": 1.04,
+        "macd_dif": -0.0714,
+        "macd_hist": -0.0334
+      },
+      "returns": {
+        "r5d": -1.3,
+        "r10d": -4.8,
+        "r20d": -5.5,
+        "r60d": -9.7,
+        "r120d": -6.3
+      },
+      "vs_ma": {
+        "pct_ma5": -0.8,
+        "pct_ma10": -2.5,
+        "pct_ma20": -3.7,
+        "pct_ma60": -6.1
+      },
+      "factors": {
+        "F1_趋势强度": 0.5,
+        "F2_动量": 5.4,
+        "F3_反转": 4.6,
+        "F4_RSI": 4.5,
+        "F5_均线偏离": 6.0,
+        "F6_低波动": 5.6,
+        "F7_成交量": 6.0,
+        "F8_回调": 9.5,
+        "F9_Sortino": 4.3,
+        "F10_MaxDD": 4.5,
+        "F11_布林带": 4.2,
+        "F12_多周期": 1.0,
+        "F13_均线排列": 0,
+        "F14_长期": 2.4,
+        "F15_夏普": 4.0,
+        "F16_量价关系": 3.2,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": "bearish",
+        "strength": 5,
+        "description": "看跌背离: 价格创新高(+6.2%)但量缩16%",
+        "vol_change": 0.84,
+        "price_action": "新高量缩"
+      },
+      "premium_multiplier": 1.0,
+      "premium_warning": null,
+      "is_watchlist": false,
+      "is_holding": true,
+      "premium_info": {
+        "premium_pct": -0.68,
+        "nav": 4.3898,
+        "nav_date": "2026-10-09",
+        "data_source": "official_nav",
+        "is_qdii": false
+      }
+    },
+    {
+      "code": "513030",
+      "name": "德国DAX30ETF华安",
+      "score": 66,
+      "technical_score": 65,
+      "cross_sectional_adj": 2.2,
+      "blended_technical": 67,
+      "max_score": 100,
+      "grade": "B_买入",
+      "price": 1.766,
+      "indicators": {
+        "rsi": 30.5,
+        "volatility_pct": 12.7,
+        "sharpe": -0.25,
+        "sortino": -0.35,
+        "max_dd_pct": 20.1,
+        "consecutive_up": 0,
+        "consecutive_down": 0,
+        "ma_alignment": 0,
+        "bb_position": 7.8,
+        "atr_pct": 0.57,
+        "vol_ratio_5d": 1.01,
+        "macd_dif": -0.0251,
+        "macd_hist": -0.0119
+      },
+      "returns": {
+        "r5d": -1.5,
+        "r10d": -3.9,
+        "r20d": -5.7,
+        "r60d": -1.7,
+        "r120d": 0.2
+      },
+      "vs_ma": {
+        "pct_ma5": -0.6,
+        "pct_ma10": -1.8,
+        "pct_ma20": -2.9,
+        "pct_ma60": -4.2
+      },
+      "factors": {
+        "F1_趋势强度": 0.5,
+        "F2_动量": 5.4,
+        "F3_反转": 4.7,
+        "F4_RSI": 5.1,
+        "F5_均线偏离": 6.0,
+        "F6_低波动": 5.7,
+        "F7_成交量": 6.0,
+        "F8_回调": 5.0,
+        "F9_Sortino": 3.2,
+        "F10_MaxDD": 3.7,
+        "F11_布林带": 5.3,
+        "F12_多周期": 1.0,
+        "F13_均线排列": 0,
+        "F14_长期": 3.0,
+        "F15_夏普": 3.3,
+        "F16_量价关系": 5.0,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": null,
+        "strength": 0,
+        "description": ""
+      },
+      "premium_multiplier": 0.98,
+      "premium_warning": "⚠️ 历史分位85%（中枢0.72%），偏高",
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": 2.48,
+        "nav": 1.7232,
+        "nav_date": "20261012",
+        "data_source": "iopv",
+        "is_qdii": true,
+        "history": {
+          "has_history": true,
+          "series": [
+            {
+              "date": "2026-07-09",
+              "premium": 0.23
+            },
+            {
+              "date": "2026-07-10",
+              "premium": 0.9
+            },
+            {
+              "date": "2026-07-13",
+              "premium": 0.23
+            },
+            {
+              "date": "2026-07-14",
+              "premium": -0.65
+            },
+            {
+              "date": "2026-07-15",
+              "premium": 0.17
+            },
+            {
+              "date": "2026-07-16",
+              "premium": 0.33
+            },
+            {
+              "date": "2026-07-17",
+              "premium": -0.69
+            },
+            {
+              "date": "2026-07-20",
+              "premium": -0.61
+            },
+            {
+              "date": "2026-07-21",
+              "premium": -0.31
+            },
+            {
+              "date": "2026-07-22",
+              "premium": -0.87
+            },
+            {
+              "date": "2026-07-23",
+              "premium": 1.18
+            },
+            {
+              "date": "2026-07-24",
+              "premium": -1.58
+            },
+            {
+              "date": "2026-07-27",
+              "premium": -0.03
+            },
+            {
+              "date": "2026-07-28",
+              "premium": -0.58
+            },
+            {
+              "date": "2026-07-29",
+              "premium": -0.35
+            },
+            {
+              "date": "2026-07-30",
+              "premium": -1.5
+            },
+            {
+              "date": "2026-07-31",
+              "premium": -0.16
+            },
+            {
+              "date": "2026-08-03",
+              "premium": -0.92
+            },
+            {
+              "date": "2026-08-04",
+              "premium": -0.37
+            },
+            {
+              "date": "2026-08-05",
+              "premium": 1.97
+            },
+            {
+              "date": "2026-08-06",
+              "premium": 0.46
+            },
+            {
+              "date": "2026-08-07",
+              "premium": 1.01
+            },
+            {
+              "date": "2026-08-10",
+              "premium": 2.36
+            },
+            {
+              "date": "2026-08-11",
+              "premium": 0.11
+            },
+            {
+              "date": "2026-08-12",
+              "premium": 2.29
+            },
+            {
+              "date": "2026-08-13",
+              "premium": 4.18
+            },
+            {
+              "date": "2026-08-14",
+              "premium": 3.04
+            },
+            {
+              "date": "2026-08-17",
+              "premium": 5.79
+            },
+            {
+              "date": "2026-08-18",
+              "premium": 5.14
+            },
+            {
+              "date": "2026-08-19",
+              "premium": 1.87
+            },
+            {
+              "date": "2026-08-20",
+              "premium": 2.54
+            },
+            {
+              "date": "2026-08-21",
+              "premium": 0.24
+            },
+            {
+              "date": "2026-08-24",
+              "premium": 0.41
+            },
+            {
+              "date": "2026-08-25",
+              "premium": 1.22
+            },
+            {
+              "date": "2026-08-26",
+              "premium": 1.13
+            },
+            {
+              "date": "2026-08-27",
+              "premium": 1.29
+            },
+            {
+              "date": "2026-08-28",
+              "premium": 0.68
+            },
+            {
+              "date": "2026-08-31",
+              "premium": 2.04
+            },
+            {
+              "date": "2026-09-01",
+              "premium": 1.98
+            },
+            {
+              "date": "2026-09-02",
+              "premium": 0.88
+            },
+            {
+              "date": "2026-09-03",
+              "premium": 0.32
+            },
+            {
+              "date": "2026-09-04",
+              "premium": 0.52
+            },
+            {
+              "date": "2026-09-07",
+              "premium": 0.44
+            },
+            {
+              "date": "2026-09-08",
+              "premium": -0.15
+            },
+            {
+              "date": "2026-09-09",
+              "premium": 2.17
+            },
+            {
+              "date": "2026-09-10",
+              "premium": 1.52
+            },
+            {
+              "date": "2026-09-11",
+              "premium": -0.01
+            },
+            {
+              "date": "2026-09-14",
+              "premium": 0.44
+            },
+            {
+              "date": "2026-09-15",
+              "premium": 0.68
+            },
+            {
+              "date": "2026-09-16",
+              "premium": 0.49
+            },
+            {
+              "date": "2026-09-17",
+              "premium": 0.76
+            },
+            {
+              "date": "2026-09-18",
+              "premium": 3.1
+            },
+            {
+              "date": "2026-09-21",
+              "premium": 1.81
+            },
+            {
+              "date": "2026-09-22",
+              "premium": 2.03
+            },
+            {
+              "date": "2026-09-23",
+              "premium": 2.98
+            },
+            {
+              "date": "2026-09-24",
+              "premium": 1.72
+            },
+            {
+              "date": "2026-09-28",
+              "premium": 1.14
+            },
+            {
+              "date": "2026-09-29",
+              "premium": 0.99
+            },
+            {
+              "date": "2026-09-30",
+              "premium": 2.95
+            },
+            {
+              "date": "2026-10-08",
+              "premium": 3.35
+            }
+          ],
+          "current": 2.48,
+          "current_source": "iopv",
+          "median": 0.72,
+          "mean": 1.04,
+          "max": 5.79,
+          "percentile": 85.0,
+          "trend_10d": 2.08,
+          "trend_60d": 1.04,
+          "trend_gap": 1.04,
+          "n": 60
+        }
+      }
+    },
+    {
+      "code": "513530",
+      "name": "港股通红利ETF华泰柏瑞",
+      "score": 65,
+      "technical_score": 69,
+      "cross_sectional_adj": 0.3,
+      "blended_technical": 69,
+      "max_score": 100,
+      "grade": "B_买入",
+      "price": 1.58,
+      "indicators": {
+        "rsi": 46.5,
+        "volatility_pct": 11.0,
+        "sharpe": -0.23,
+        "sortino": -0.34,
+        "max_dd_pct": 18.4,
+        "consecutive_up": 2,
+        "consecutive_down": 0,
+        "ma_alignment": 2,
+        "bb_position": 62.8,
+        "atr_pct": 0.64,
+        "vol_ratio_5d": 1.11,
+        "macd_dif": -0.0055,
+        "macd_hist": -0.0002
+      },
+      "returns": {
+        "r5d": 1.1,
+        "r10d": 1.5,
+        "r20d": -1.4,
+        "r60d": 7.8,
+        "r120d": -2.6
+      },
+      "vs_ma": {
+        "pct_ma5": 1.2,
+        "pct_ma10": 1.2,
+        "pct_ma20": 0.6,
+        "pct_ma60": 0.6
+      },
+      "factors": {
+        "F1_趋势强度": 2.9,
+        "F2_动量": 7.3,
+        "F3_反转": 3.6,
+        "F4_RSI": 8.0,
+        "F5_均线偏离": 5.2,
+        "F6_低波动": 5.4,
+        "F7_成交量": 6.0,
+        "F8_回调": 3.0,
+        "F9_Sortino": 3.2,
+        "F10_MaxDD": 3.9,
+        "F11_布林带": 3.2,
+        "F12_多周期": 3.2,
+        "F13_均线排列": 2,
+        "F14_长期": 2.7,
+        "F15_夏普": 3.3,
+        "F16_量价关系": 7.8,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": "bullish",
+        "strength": 8,
+        "description": "看涨背离: 价格创新低(-7.2%)但量增59%",
+        "vol_change": 1.59,
+        "price_action": "新低量增"
+      },
+      "premium_multiplier": 0.94,
+      "premium_warning": "🚨 历史分位100%（中枢-1.64%），溢价处自身极高位",
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": 0.23,
+        "nav": 1.5714,
+        "nav_date": "20261012",
+        "data_source": "iopv",
+        "is_qdii": true,
+        "history": {
+          "has_history": true,
+          "series": [
+            {
+              "date": "2026-07-10",
+              "premium": -1.9
+            },
+            {
+              "date": "2026-07-13",
+              "premium": -2.13
+            },
+            {
+              "date": "2026-07-14",
+              "premium": -2.31
+            },
+            {
+              "date": "2026-07-15",
+              "premium": -2.11
+            },
+            {
+              "date": "2026-07-16",
+              "premium": -2.35
+            },
+            {
+              "date": "2026-07-17",
+              "premium": -2.75
+            },
+            {
+              "date": "2026-07-20",
+              "premium": -1.95
+            },
+            {
+              "date": "2026-07-21",
+              "premium": -2.19
+            },
+            {
+              "date": "2026-07-22",
+              "premium": -1.79
+            },
+            {
+              "date": "2026-07-23",
+              "premium": -1.75
+            },
+            {
+              "date": "2026-07-24",
+              "premium": -2.0
+            },
+            {
+              "date": "2026-07-27",
+              "premium": -1.9
+            },
+            {
+              "date": "2026-07-28",
+              "premium": -1.65
+            },
+            {
+              "date": "2026-07-29",
+              "premium": -1.68
+            },
+            {
+              "date": "2026-07-30",
+              "premium": -1.74
+            },
+            {
+              "date": "2026-07-31",
+              "premium": -1.65
+            },
+            {
+              "date": "2026-08-03",
+              "premium": -2.03
+            },
+            {
+              "date": "2026-08-04",
+              "premium": -2.14
+            },
+            {
+              "date": "2026-08-05",
+              "premium": -1.97
+            },
+            {
+              "date": "2026-08-06",
+              "premium": -1.97
+            },
+            {
+              "date": "2026-08-07",
+              "premium": -1.95
+            },
+            {
+              "date": "2026-08-10",
+              "premium": -1.93
+            },
+            {
+              "date": "2026-08-11",
+              "premium": -1.8
+            },
+            {
+              "date": "2026-08-12",
+              "premium": -1.94
+            },
+            {
+              "date": "2026-08-13",
+              "premium": -1.76
+            },
+            {
+              "date": "2026-08-14",
+              "premium": -1.39
+            },
+            {
+              "date": "2026-08-17",
+              "premium": -1.21
+            },
+            {
+              "date": "2026-08-18",
+              "premium": -1.46
+            },
+            {
+              "date": "2026-08-19",
+              "premium": -1.54
+            },
+            {
+              "date": "2026-08-20",
+              "premium": -1.45
+            },
+            {
+              "date": "2026-08-21",
+              "premium": -2.18
+            },
+            {
+              "date": "2026-08-24",
+              "premium": -1.56
+            },
+            {
+              "date": "2026-08-25",
+              "premium": -1.73
+            },
+            {
+              "date": "2026-08-26",
+              "premium": -1.63
+            },
+            {
+              "date": "2026-08-27",
+              "premium": -1.34
+            },
+            {
+              "date": "2026-08-28",
+              "premium": -1.58
+            },
+            {
+              "date": "2026-08-31",
+              "premium": -1.68
+            },
+            {
+              "date": "2026-09-01",
+              "premium": -1.09
+            },
+            {
+              "date": "2026-09-02",
+              "premium": -1.74
+            },
+            {
+              "date": "2026-09-03",
+              "premium": -1.42
+            },
+            {
+              "date": "2026-09-04",
+              "premium": -1.37
+            },
+            {
+              "date": "2026-09-07",
+              "premium": -1.48
+            },
+            {
+              "date": "2026-09-08",
+              "premium": -1.88
+            },
+            {
+              "date": "2026-09-09",
+              "premium": -1.52
+            },
+            {
+              "date": "2026-09-10",
+              "premium": -1.43
+            },
+            {
+              "date": "2026-09-11",
+              "premium": -1.42
+            },
+            {
+              "date": "2026-09-14",
+              "premium": -0.8
+            },
+            {
+              "date": "2026-09-15",
+              "premium": -0.85
+            },
+            {
+              "date": "2026-09-16",
+              "premium": -0.81
+            },
+            {
+              "date": "2026-09-17",
+              "premium": -1.02
+            },
+            {
+              "date": "2026-09-18",
+              "premium": -0.41
+            },
+            {
+              "date": "2026-09-21",
+              "premium": -0.68
+            },
+            {
+              "date": "2026-09-22",
+              "premium": -0.71
+            },
+            {
+              "date": "2026-09-23",
+              "premium": -0.31
+            },
+            {
+              "date": "2026-09-24",
+              "premium": -0.6
+            },
+            {
+              "date": "2026-09-28",
+              "premium": -0.32
+            },
+            {
+              "date": "2026-09-29",
+              "premium": -0.37
+            },
+            {
+              "date": "2026-09-30",
+              "premium": -0.47
+            },
+            {
+              "date": "2026-10-08",
+              "premium": -0.3
+            },
+            {
+              "date": "2026-10-09",
+              "premium": -0.67
+            }
+          ],
+          "current": 0.23,
+          "current_source": "iopv",
+          "median": -1.64,
+          "mean": -1.5,
+          "max": -0.3,
+          "percentile": 100.0,
+          "trend_10d": -0.48,
+          "trend_60d": -1.5,
+          "trend_gap": 1.02,
+          "n": 60
+        }
+      }
+    },
+    {
+      "code": "511260",
+      "name": "十年国债ETF国泰",
+      "score": 58,
+      "technical_score": 59,
+      "cross_sectional_adj": -0.8,
+      "blended_technical": 58,
+      "max_score": 100,
+      "grade": "C_观察",
+      "price": 134.97,
+      "indicators": {
+        "rsi": 73.7,
+        "volatility_pct": 0.7,
+        "sharpe": -0.29,
+        "sortino": -0.26,
+        "max_dd_pct": 1.7,
+        "consecutive_up": 2,
+        "consecutive_down": 0,
+        "ma_alignment": 3,
+        "bb_position": 102.4,
+        "atr_pct": 0.04,
+        "vol_ratio_5d": 0.48,
+        "macd_dif": 0.118,
+        "macd_hist": -0.0055
+      },
+      "returns": {
+        "r5d": 0.1,
+        "r10d": 0.2,
+        "r20d": 0.3,
+        "r60d": 1.0,
+        "r120d": 2.1
+      },
+      "vs_ma": {
+        "pct_ma5": 0.1,
+        "pct_ma10": 0.1,
+        "pct_ma20": 0.2,
+        "pct_ma60": 0.5
+      },
+      "factors": {
+        "F1_趋势强度": 6.7,
+        "F2_动量": 8.0,
+        "F3_反转": 4.0,
+        "F4_RSI": 1.8,
+        "F5_均线偏离": 5.9,
+        "F6_低波动": 3.0,
+        "F7_成交量": 2.9,
+        "F8_回调": 3.0,
+        "F9_Sortino": 3.3,
+        "F10_MaxDD": 6.0,
+        "F11_布林带": 0.5,
+        "F12_多周期": 4.4,
+        "F13_均线排列": 3,
+        "F14_长期": 3.2,
+        "F15_夏普": 3.3,
+        "F16_量价关系": 4.0,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": "bearish",
+        "strength": 3,
+        "description": "看跌背离: 价格创新高(+2.2%)但量缩17%",
+        "vol_change": 0.83,
+        "price_action": "新高量缩"
+      },
+      "premium_multiplier": 1.0,
+      "premium_warning": null,
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": 0.13,
+        "nav": 134.798,
+        "nav_date": "2026-10-09",
+        "data_source": "official_nav",
+        "is_qdii": false
+      }
+    },
+    {
+      "code": "563360",
+      "name": "A500ETF华泰柏瑞",
+      "score": 67,
+      "technical_score": 64,
+      "cross_sectional_adj": 2.6,
+      "blended_technical": 67,
+      "max_score": 100,
+      "grade": "B_买入",
+      "price": 1.184,
+      "indicators": {
+        "rsi": 29.9,
+        "volatility_pct": 15.3,
+        "sharpe": 0.32,
+        "sortino": 0.48,
+        "max_dd_pct": 17.3,
+        "consecutive_up": 0,
+        "consecutive_down": 1,
+        "ma_alignment": 0,
+        "bb_position": -0.7,
+        "atr_pct": 0.95,
+        "vol_ratio_5d": 1.02,
+        "macd_dif": -0.0226,
+        "macd_hist": -0.0116
+      },
+      "returns": {
+        "r5d": -2.1,
+        "r10d": -6.3,
+        "r20d": -6.5,
+        "r60d": -12.6,
+        "r120d": -8.5
+      },
+      "vs_ma": {
+        "pct_ma5": -1.4,
+        "pct_ma10": -3.5,
+        "pct_ma20": -4.7,
+        "pct_ma60": -7.3
+      },
+      "factors": {
+        "F1_趋势强度": 0.5,
+        "F2_动量": 5.0,
+        "F3_反转": 5.0,
+        "F4_RSI": 5.0,
+        "F5_均线偏离": 6.0,
+        "F6_低波动": 6.0,
+        "F7_成交量": 6.0,
+        "F8_回调": 6.5,
+        "F9_Sortino": 4.4,
+        "F10_MaxDD": 4.1,
+        "F11_布林带": 1.0,
+        "F12_多周期": 1.0,
+        "F13_均线排列": 0,
+        "F14_长期": 2.1,
+        "F15_夏普": 4.0,
+        "F16_量价关系": 2.6,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": "bearish",
+        "strength": 7,
+        "description": "看跌背离: 价格创新高(+7.0%)但量缩36%",
+        "vol_change": 0.64,
+        "price_action": "新高量缩"
+      },
+      "premium_multiplier": 1.0,
+      "premium_warning": null,
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": -1.21,
+        "nav": 1.1985,
+        "nav_date": "2026-10-09",
+        "data_source": "official_nav",
+        "is_qdii": false
+      }
+    },
+    {
+      "code": "159750",
+      "name": "港股科技50ETF招商",
+      "score": 59,
+      "technical_score": 62,
+      "cross_sectional_adj": -1.6,
+      "blended_technical": 60,
+      "max_score": 100,
+      "grade": "C_观察",
+      "price": 0.794,
+      "indicators": {
+        "rsi": 40.7,
+        "volatility_pct": 18.7,
+        "sharpe": -0.98,
+        "sortino": -1.71,
+        "max_dd_pct": 37.1,
+        "consecutive_up": 0,
+        "consecutive_down": 1,
+        "ma_alignment": 0,
+        "bb_position": 14.5,
+        "atr_pct": 0.97,
+        "vol_ratio_5d": 1.02,
+        "macd_dif": -0.0159,
+        "macd_hist": -0.0029
+      },
+      "returns": {
+        "r5d": -2.5,
+        "r10d": -3.4,
+        "r20d": -7.1,
+        "r60d": -9.8,
+        "r120d": -12.3
+      },
+      "vs_ma": {
+        "pct_ma5": -0.4,
+        "pct_ma10": -2.1,
+        "pct_ma20": -2.7,
+        "pct_ma60": -7.5
+      },
+      "factors": {
+        "F1_趋势强度": 0.5,
+        "F2_动量": 4.7,
+        "F3_反转": 5.2,
+        "F4_RSI": 8.0,
+        "F5_均线偏离": 6.0,
+        "F6_低波动": 6.0,
+        "F7_成交量": 6.0,
+        "F8_回调": 6.5,
+        "F9_Sortino": 2.4,
+        "F10_MaxDD": 1.9,
+        "F11_布林带": 5.9,
+        "F12_多周期": 1.0,
+        "F13_均线排列": 0,
+        "F14_长期": 1.9,
+        "F15_夏普": 2.8,
+        "F16_量价关系": 5.0,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": null,
+        "strength": 0,
+        "description": ""
+      },
+      "premium_multiplier": 0.98,
+      "premium_warning": "⚠️ 历史分位80%（中枢-0.5%），偏高",
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": -0.24,
+        "nav": 0.7959,
+        "nav_date": "20261012",
+        "data_source": "iopv",
+        "is_qdii": true,
+        "history": {
+          "has_history": true,
+          "series": [
+            {
+              "date": "2026-07-10",
+              "premium": 0.62
+            },
+            {
+              "date": "2026-07-13",
+              "premium": -0.59
+            },
+            {
+              "date": "2026-07-14",
+              "premium": -0.37
+            },
+            {
+              "date": "2026-07-15",
+              "premium": -0.67
+            },
+            {
+              "date": "2026-07-16",
+              "premium": -0.29
+            },
+            {
+              "date": "2026-07-17",
+              "premium": -0.33
+            },
+            {
+              "date": "2026-07-20",
+              "premium": -0.26
+            },
+            {
+              "date": "2026-07-21",
+              "premium": -0.17
+            },
+            {
+              "date": "2026-07-22",
+              "premium": -0.22
+            },
+            {
+              "date": "2026-07-23",
+              "premium": -0.41
+            },
+            {
+              "date": "2026-07-24",
+              "premium": -0.88
+            },
+            {
+              "date": "2026-07-27",
+              "premium": -0.23
+            },
+            {
+              "date": "2026-07-28",
+              "premium": -1.14
+            },
+            {
+              "date": "2026-07-29",
+              "premium": -0.54
+            },
+            {
+              "date": "2026-07-30",
+              "premium": -0.29
+            },
+            {
+              "date": "2026-07-31",
+              "premium": -0.53
+            },
+            {
+              "date": "2026-08-03",
+              "premium": -0.82
+            },
+            {
+              "date": "2026-08-04",
+              "premium": -0.63
+            },
+            {
+              "date": "2026-08-05",
+              "premium": -0.44
+            },
+            {
+              "date": "2026-08-06",
+              "premium": -0.71
+            },
+            {
+              "date": "2026-08-07",
+              "premium": -0.84
+            },
+            {
+              "date": "2026-08-10",
+              "premium": -1.16
+            },
+            {
+              "date": "2026-08-11",
+              "premium": -0.38
+            },
+            {
+              "date": "2026-08-12",
+              "premium": -0.54
+            },
+            {
+              "date": "2026-08-13",
+              "premium": -0.67
+            },
+            {
+              "date": "2026-08-14",
+              "premium": -0.52
+            },
+            {
+              "date": "2026-08-17",
+              "premium": -0.21
+            },
+            {
+              "date": "2026-08-18",
+              "premium": -0.48
+            },
+            {
+              "date": "2026-08-19",
+              "premium": -0.61
+            },
+            {
+              "date": "2026-08-20",
+              "premium": 0.16
+            },
+            {
+              "date": "2026-08-21",
+              "premium": -0.78
+            },
+            {
+              "date": "2026-08-24",
+              "premium": -0.16
+            },
+            {
+              "date": "2026-08-25",
+              "premium": -0.3
+            },
+            {
+              "date": "2026-08-26",
+              "premium": -0.06
+            },
+            {
+              "date": "2026-08-27",
+              "premium": -0.31
+            },
+            {
+              "date": "2026-08-28",
+              "premium": -0.54
+            },
+            {
+              "date": "2026-08-31",
+              "premium": -0.26
+            },
+            {
+              "date": "2026-09-01",
+              "premium": 0.06
+            },
+            {
+              "date": "2026-09-02",
+              "premium": -0.55
+            },
+            {
+              "date": "2026-09-03",
+              "premium": -0.37
+            },
+            {
+              "date": "2026-09-04",
+              "premium": -0.73
+            },
+            {
+              "date": "2026-09-07",
+              "premium": -0.34
+            },
+            {
+              "date": "2026-09-08",
+              "premium": -0.6
+            },
+            {
+              "date": "2026-09-09",
+              "premium": -0.79
+            },
+            {
+              "date": "2026-09-10",
+              "premium": -0.48
+            },
+            {
+              "date": "2026-09-11",
+              "premium": -0.36
+            },
+            {
+              "date": "2026-09-14",
+              "premium": -0.77
+            },
+            {
+              "date": "2026-09-15",
+              "premium": -0.01
+            },
+            {
+              "date": "2026-09-16",
+              "premium": -0.4
+            },
+            {
+              "date": "2026-09-17",
+              "premium": -0.65
+            },
+            {
+              "date": "2026-09-18",
+              "premium": -0.52
+            },
+            {
+              "date": "2026-09-21",
+              "premium": -0.81
+            },
+            {
+              "date": "2026-09-22",
+              "premium": -0.89
+            },
+            {
+              "date": "2026-09-23",
+              "premium": -0.72
+            },
+            {
+              "date": "2026-09-24",
+              "premium": -0.68
+            },
+            {
+              "date": "2026-09-28",
+              "premium": -0.23
+            },
+            {
+              "date": "2026-09-29",
+              "premium": -0.26
+            },
+            {
+              "date": "2026-09-30",
+              "premium": -0.55
+            },
+            {
+              "date": "2026-10-08",
+              "premium": 0.08
+            },
+            {
+              "date": "2026-10-09",
+              "premium": -0.81
+            }
+          ],
+          "current": -0.24,
+          "current_source": "iopv",
+          "median": -0.5,
+          "mean": -0.47,
+          "max": 0.62,
+          "percentile": 80.0,
+          "trend_10d": -0.54,
+          "trend_60d": -0.47,
+          "trend_gap": -0.07,
+          "n": 60
+        }
+      }
+    },
+    {
+      "code": "513180",
+      "name": "恒生科技ETF",
+      "score": 55,
+      "technical_score": 60,
+      "cross_sectional_adj": -1.4,
+      "blended_technical": 59,
+      "max_score": 100,
+      "grade": "C_观察",
+      "price": 0.523,
+      "indicators": {
+        "rsi": 35.5,
+        "volatility_pct": 18.3,
+        "sharpe": -1.2,
+        "sortino": -2.13,
+        "max_dd_pct": 41.1,
+        "consecutive_up": 0,
+        "consecutive_down": 1,
+        "ma_alignment": 0,
+        "bb_position": 7.8,
+        "atr_pct": 1.04,
+        "vol_ratio_5d": 1.15,
+        "macd_dif": -0.0137,
+        "macd_hist": -0.0031
+      },
+      "returns": {
+        "r5d": -3.5,
+        "r10d": -5.4,
+        "r20d": -8.9,
+        "r60d": -13.7,
+        "r120d": -15.6
+      },
+      "vs_ma": {
+        "pct_ma5": -0.7,
+        "pct_ma10": -3.0,
+        "pct_ma20": -4.1,
+        "pct_ma60": -9.8
+      },
+      "factors": {
+        "F1_趋势强度": 0.5,
+        "F2_动量": 4.0,
+        "F3_反转": 5.5,
+        "F4_RSI": 6.7,
+        "F5_均线偏离": 6.0,
+        "F6_低波动": 6.0,
+        "F7_成交量": 6.0,
+        "F8_回调": 6.5,
+        "F9_Sortino": 2.2,
+        "F10_MaxDD": 1.7,
+        "F11_布林带": 5.3,
+        "F12_多周期": 1.0,
+        "F13_均线排列": 0,
+        "F14_长期": 1.8,
+        "F15_夏普": 2.6,
+        "F16_量价关系": 5.0,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": null,
+        "strength": 0,
+        "description": ""
+      },
+      "premium_multiplier": 0.94,
+      "premium_warning": "🚨 历史分位97%（中枢-0.54%），溢价处自身极高位",
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": 0.23,
+        "nav": 0.5218,
+        "nav_date": "20261012",
+        "data_source": "iopv",
+        "is_qdii": true,
+        "history": {
+          "has_history": true,
+          "series": [
+            {
+              "date": "2026-07-10",
+              "premium": 0.7
+            },
+            {
+              "date": "2026-07-13",
+              "premium": -0.42
+            },
+            {
+              "date": "2026-07-14",
+              "premium": -0.23
+            },
+            {
+              "date": "2026-07-15",
+              "premium": -0.08
+            },
+            {
+              "date": "2026-07-16",
+              "premium": -0.39
+            },
+            {
+              "date": "2026-07-17",
+              "premium": -0.42
+            },
+            {
+              "date": "2026-07-20",
+              "premium": -0.51
+            },
+            {
+              "date": "2026-07-21",
+              "premium": -0.46
+            },
+            {
+              "date": "2026-07-22",
+              "premium": -0.37
+            },
+            {
+              "date": "2026-07-23",
+              "premium": -0.47
+            },
+            {
+              "date": "2026-07-24",
+              "premium": -0.71
+            },
+            {
+              "date": "2026-07-27",
+              "premium": -0.18
+            },
+            {
+              "date": "2026-07-28",
+              "premium": -1.0
+            },
+            {
+              "date": "2026-07-29",
+              "premium": -0.6
+            },
+            {
+              "date": "2026-07-30",
+              "premium": -0.31
+            },
+            {
+              "date": "2026-07-31",
+              "premium": -0.83
+            },
+            {
+              "date": "2026-08-03",
+              "premium": -0.87
+            },
+            {
+              "date": "2026-08-04",
+              "premium": -0.77
+            },
+            {
+              "date": "2026-08-05",
+              "premium": -0.61
+            },
+            {
+              "date": "2026-08-06",
+              "premium": -0.57
+            },
+            {
+              "date": "2026-08-07",
+              "premium": -0.86
+            },
+            {
+              "date": "2026-08-10",
+              "premium": -1.42
+            },
+            {
+              "date": "2026-08-11",
+              "premium": -0.64
+            },
+            {
+              "date": "2026-08-12",
+              "premium": -0.61
+            },
+            {
+              "date": "2026-08-13",
+              "premium": -0.77
+            },
+            {
+              "date": "2026-08-14",
+              "premium": -0.47
+            },
+            {
+              "date": "2026-08-17",
+              "premium": -0.35
+            },
+            {
+              "date": "2026-08-18",
+              "premium": -0.68
+            },
+            {
+              "date": "2026-08-19",
+              "premium": -0.91
+            },
+            {
+              "date": "2026-08-20",
+              "premium": -0.1
+            },
+            {
+              "date": "2026-08-21",
+              "premium": -1.3
+            },
+            {
+              "date": "2026-08-24",
+              "premium": -0.75
+            },
+            {
+              "date": "2026-08-25",
+              "premium": -0.87
+            },
+            {
+              "date": "2026-08-26",
+              "premium": -0.41
+            },
+            {
+              "date": "2026-08-27",
+              "premium": -0.8
+            },
+            {
+              "date": "2026-08-28",
+              "premium": -0.77
+            },
+            {
+              "date": "2026-08-31",
+              "premium": -0.92
+            },
+            {
+              "date": "2026-09-01",
+              "premium": -0.26
+            },
+            {
+              "date": "2026-09-02",
+              "premium": -0.94
+            },
+            {
+              "date": "2026-09-03",
+              "premium": -0.56
+            },
+            {
+              "date": "2026-09-04",
+              "premium": -1.15
+            },
+            {
+              "date": "2026-09-07",
+              "premium": -0.75
+            },
+            {
+              "date": "2026-09-08",
+              "premium": -0.72
+            },
+            {
+              "date": "2026-09-09",
+              "premium": -0.43
+            },
+            {
+              "date": "2026-09-10",
+              "premium": -0.16
+            },
+            {
+              "date": "2026-09-11",
+              "premium": -0.26
+            },
+            {
+              "date": "2026-09-14",
+              "premium": -0.49
+            },
+            {
+              "date": "2026-09-15",
+              "premium": 0.0
+            },
+            {
+              "date": "2026-09-16",
+              "premium": -0.35
+            },
+            {
+              "date": "2026-09-17",
+              "premium": -0.68
+            },
+            {
+              "date": "2026-09-18",
+              "premium": -0.75
+            },
+            {
+              "date": "2026-09-21",
+              "premium": -0.91
+            },
+            {
+              "date": "2026-09-22",
+              "premium": -0.46
+            },
+            {
+              "date": "2026-09-23",
+              "premium": -0.25
+            },
+            {
+              "date": "2026-09-24",
+              "premium": -0.44
+            },
+            {
+              "date": "2026-09-28",
+              "premium": -0.06
+            },
+            {
+              "date": "2026-09-29",
+              "premium": -0.09
+            },
+            {
+              "date": "2026-09-30",
+              "premium": -0.47
+            },
+            {
+              "date": "2026-10-08",
+              "premium": 0.45
+            },
+            {
+              "date": "2026-10-09",
+              "premium": -0.76
+            }
+          ],
+          "current": 0.23,
+          "current_source": "iopv",
+          "median": -0.54,
+          "mean": -0.54,
+          "max": 0.7,
+          "percentile": 96.7,
+          "trend_10d": -0.37,
+          "trend_60d": -0.54,
+          "trend_gap": 0.17,
+          "n": 60
+        }
+      }
+    },
+    {
+      "code": "511010",
+      "name": "国债ETF国泰",
+      "score": 61,
+      "technical_score": 62,
+      "cross_sectional_adj": -1.2,
+      "blended_technical": 61,
+      "max_score": 100,
+      "grade": "C_观察",
+      "price": 140.82,
+      "indicators": {
+        "rsi": 76.5,
+        "volatility_pct": 0.4,
+        "sharpe": -0.63,
+        "sortino": -0.67,
+        "max_dd_pct": 0.7,
+        "consecutive_up": 2,
+        "consecutive_down": 0,
+        "ma_alignment": 3,
+        "bb_position": 104.6,
+        "atr_pct": 0.03,
+        "vol_ratio_5d": 1.1,
+        "macd_dif": 0.063,
+        "macd_hist": 0.0142
+      },
+      "returns": {
+        "r5d": 0.1,
+        "r10d": 0.1,
+        "r20d": 0.2,
+        "r60d": 0.5,
+        "r120d": 1.3
+      },
+      "vs_ma": {
+        "pct_ma5": 0.1,
+        "pct_ma10": 0.1,
+        "pct_ma20": 0.1,
+        "pct_ma60": 0.2
+      },
+      "factors": {
+        "F1_趋势强度": 6.4,
+        "F2_动量": 8.0,
+        "F3_反转": 4.0,
+        "F4_RSI": 1.5,
+        "F5_均线偏离": 6.0,
+        "F6_低波动": 3.0,
+        "F7_成交量": 6.0,
+        "F8_回调": 3.0,
+        "F9_Sortino": 2.9,
+        "F10_MaxDD": 6.0,
+        "F11_布林带": 0.5,
+        "F12_多周期": 4.2,
+        "F13_均线排列": 3,
+        "F14_长期": 3.1,
+        "F15_夏普": 2.9,
+        "F16_量价关系": 5.0,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": null,
+        "strength": 0,
+        "description": ""
+      },
+      "premium_multiplier": 1.0,
+      "premium_warning": null,
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": 0.07,
+        "nav": 140.719,
+        "nav_date": "2026-10-09",
+        "data_source": "official_nav",
+        "is_qdii": false
+      }
+    },
+    {
+      "code": "512100",
+      "name": "中证1000ETF南方",
+      "score": 63,
+      "technical_score": 62,
+      "cross_sectional_adj": 1.1,
+      "blended_technical": 63,
+      "max_score": 100,
+      "grade": "C_观察",
+      "price": 2.86,
+      "indicators": {
+        "rsi": 32.3,
+        "volatility_pct": 22.8,
+        "sharpe": 0.23,
+        "sortino": 0.32,
+        "max_dd_pct": 22.2,
+        "consecutive_up": 0,
+        "consecutive_down": 1,
+        "ma_alignment": 1,
+        "bb_position": -4.1,
+        "atr_pct": 1.22,
+        "vol_ratio_5d": 1.33,
+        "macd_dif": -0.0456,
+        "macd_hist": -0.048
+      },
+      "returns": {
+        "r5d": -3.6,
+        "r10d": -8.6,
+        "r20d": -6.0,
+        "r60d": -13.6,
+        "r120d": -11.0
+      },
+      "vs_ma": {
+        "pct_ma5": -2.2,
+        "pct_ma10": -5.0,
+        "pct_ma20": -6.0,
+        "pct_ma60": -5.9
+      },
+      "factors": {
+        "F1_趋势强度": 0.5,
+        "F2_动量": 5.2,
+        "F3_反转": 5.5,
+        "F4_RSI": 5.7,
+        "F5_均线偏离": 6.0,
+        "F6_低波动": 6.0,
+        "F7_成交量": 4.7,
+        "F8_回调": 6.5,
+        "F9_Sortino": 4.0,
+        "F10_MaxDD": 3.4,
+        "F11_布林带": 1.0,
+        "F12_多周期": 1.0,
+        "F13_均线排列": 1,
+        "F14_长期": 2.0,
+        "F15_夏普": 3.9,
+        "F16_量价关系": 3.6,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": "panic_sell",
+        "strength": 7,
+        "description": "放量下跌: 价格下跌+量暴增至152%，恐慌抛售中(RSI=32)",
+        "vol_change": 1.52,
+        "price_action": "放量下跌"
+      },
+      "premium_multiplier": 1.0,
+      "premium_warning": null,
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": -1.68,
+        "nav": 2.9089,
+        "nav_date": "2026-10-09",
+        "data_source": "official_nav",
+        "is_qdii": false
+      }
+    },
+    {
+      "code": "159659",
+      "name": "纳斯达克100ETF招商",
+      "score": 30,
+      "technical_score": 71,
+      "cross_sectional_adj": 0.1,
+      "blended_technical": 71,
+      "max_score": 100,
+      "grade": "E_回避",
+      "price": 2.529,
+      "indicators": {
+        "rsi": 84.4,
+        "volatility_pct": 13.6,
+        "sharpe": 1.39,
+        "sortino": 2.37,
+        "max_dd_pct": 15.8,
+        "consecutive_up": 5,
+        "consecutive_down": 0,
+        "ma_alignment": 3,
+        "bb_position": 102.7,
+        "atr_pct": 0.87,
+        "vol_ratio_5d": 1.33,
+        "macd_dif": 0.0419,
+        "macd_hist": 0.0284
+      },
+      "returns": {
+        "r5d": 4.9,
+        "r10d": 6.8,
+        "r20d": 7.6,
+        "r60d": 10.0,
+        "r120d": 32.7
+      },
+      "vs_ma": {
+        "pct_ma5": 2.1,
+        "pct_ma10": 3.2,
+        "pct_ma20": 5.6,
+        "pct_ma60": 8.3
+      },
+      "factors": {
+        "F1_趋势强度": 10.0,
+        "F2_动量": 8.0,
+        "F3_反转": 2.3,
+        "F4_RSI": 0.6,
+        "F5_均线偏离": 4.6,
+        "F6_低波动": 5.8,
+        "F7_成交量": 4.7,
+        "F8_回调": 1.0,
+        "F9_Sortino": 6.0,
+        "F10_MaxDD": 4.3,
+        "F11_布林带": 0.5,
+        "F12_多周期": 6.0,
+        "F13_均线排列": 3,
+        "F14_长期": 4.0,
+        "F15_夏普": 5.8,
+        "F16_量价关系": 1.5,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": "bearish",
+        "strength": 10,
+        "description": "看跌背离: 价格创新高(+19.7%)但量缩14%",
+        "vol_change": 0.86,
+        "price_action": "新高量缩"
+      },
+      "premium_multiplier": 0.423,
+      "premium_warning": "🚨 溢价12.9%极度危险！市价远超净值，面临停牌+溢价回归双重风险；🚨 历史分位100%（中枢8.96%），溢价处自身极高位",
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": 12.94,
+        "nav": 2.2392,
+        "nav_date": "20261012",
+        "data_source": "iopv",
+        "is_qdii": true,
+        "history": {
+          "has_history": true,
+          "series": [
+            {
+              "date": "2026-07-09",
+              "premium": 5.28
+            },
+            {
+              "date": "2026-07-10",
+              "premium": 5.33
+            },
+            {
+              "date": "2026-07-13",
+              "premium": 6.77
+            },
+            {
+              "date": "2026-07-14",
+              "premium": 5.76
+            },
+            {
+              "date": "2026-07-15",
+              "premium": 7.58
+            },
+            {
+              "date": "2026-07-16",
+              "premium": 8.08
+            },
+            {
+              "date": "2026-07-17",
+              "premium": 6.42
+            },
+            {
+              "date": "2026-07-20",
+              "premium": 6.36
+            },
+            {
+              "date": "2026-07-21",
+              "premium": 6.09
+            },
+            {
+              "date": "2026-07-22",
+              "premium": 6.31
+            },
+            {
+              "date": "2026-07-23",
+              "premium": 8.38
+            },
+            {
+              "date": "2026-07-24",
+              "premium": 8.03
+            },
+            {
+              "date": "2026-07-27",
+              "premium": 9.2
+            },
+            {
+              "date": "2026-07-28",
+              "premium": 7.35
+            },
+            {
+              "date": "2026-07-29",
+              "premium": 10.0
+            },
+            {
+              "date": "2026-07-30",
+              "premium": 4.79
+            },
+            {
+              "date": "2026-07-31",
+              "premium": 8.13
+            },
+            {
+              "date": "2026-08-03",
+              "premium": 6.72
+            },
+            {
+              "date": "2026-08-04",
+              "premium": 6.03
+            },
+            {
+              "date": "2026-08-05",
+              "premium": 10.8
+            },
+            {
+              "date": "2026-08-06",
+              "premium": 9.68
+            },
+            {
+              "date": "2026-08-07",
+              "premium": 8.9
+            },
+            {
+              "date": "2026-08-10",
+              "premium": 9.71
+            },
+            {
+              "date": "2026-08-11",
+              "premium": 8.56
+            },
+            {
+              "date": "2026-08-12",
+              "premium": 8.26
+            },
+            {
+              "date": "2026-08-13",
+              "premium": 7.34
+            },
+            {
+              "date": "2026-08-14",
+              "premium": 9.09
+            },
+            {
+              "date": "2026-08-17",
+              "premium": 9.78
+            },
+            {
+              "date": "2026-08-18",
+              "premium": 9.94
+            },
+            {
+              "date": "2026-08-19",
+              "premium": 8.3
+            },
+            {
+              "date": "2026-08-20",
+              "premium": 10.14
+            },
+            {
+              "date": "2026-08-21",
+              "premium": 8.92
+            },
+            {
+              "date": "2026-08-24",
+              "premium": 8.82
+            },
+            {
+              "date": "2026-08-25",
+              "premium": 9.19
+            },
+            {
+              "date": "2026-08-26",
+              "premium": 9.27
+            },
+            {
+              "date": "2026-08-27",
+              "premium": 8.97
+            },
+            {
+              "date": "2026-08-28",
+              "premium": 9.87
+            },
+            {
+              "date": "2026-08-31",
+              "premium": 9.02
+            },
+            {
+              "date": "2026-09-01",
+              "premium": 10.8
+            },
+            {
+              "date": "2026-09-02",
+              "premium": 8.68
+            },
+            {
+              "date": "2026-09-03",
+              "premium": 7.61
+            },
+            {
+              "date": "2026-09-04",
+              "premium": 8.97
+            },
+            {
+              "date": "2026-09-07",
+              "premium": 9.66
+            },
+            {
+              "date": "2026-09-08",
+              "premium": 9.51
+            },
+            {
+              "date": "2026-09-09",
+              "premium": 9.98
+            },
+            {
+              "date": "2026-09-10",
+              "premium": 10.42
+            },
+            {
+              "date": "2026-09-11",
+              "premium": 8.85
+            },
+            {
+              "date": "2026-09-14",
+              "premium": 9.13
+            },
+            {
+              "date": "2026-09-15",
+              "premium": 9.69
+            },
+            {
+              "date": "2026-09-16",
+              "premium": 10.06
+            },
+            {
+              "date": "2026-09-17",
+              "premium": 8.64
+            },
+            {
+              "date": "2026-09-18",
+              "premium": 9.87
+            },
+            {
+              "date": "2026-09-21",
+              "premium": 7.56
+            },
+            {
+              "date": "2026-09-22",
+              "premium": 8.95
+            },
+            {
+              "date": "2026-09-23",
+              "premium": 10.92
+            },
+            {
+              "date": "2026-09-24",
+              "premium": 9.36
+            },
+            {
+              "date": "2026-09-28",
+              "premium": 9.72
+            },
+            {
+              "date": "2026-09-29",
+              "premium": 10.0
+            },
+            {
+              "date": "2026-09-30",
+              "premium": 11.3
+            },
+            {
+              "date": "2026-10-08",
+              "premium": 11.17
+            }
+          ],
+          "current": 12.94,
+          "current_source": "iopv",
+          "median": 8.96,
+          "mean": 8.63,
+          "max": 11.3,
+          "percentile": 100.0,
+          "trend_10d": 9.75,
+          "trend_60d": 8.63,
+          "trend_gap": 1.12,
+          "n": 60
+        }
+      }
+    },
+    {
+      "code": "510500",
+      "name": "中证500ETF",
+      "score": 70,
+      "technical_score": 68,
+      "cross_sectional_adj": 1.9,
+      "blended_technical": 70,
+      "max_score": 100,
+      "grade": "B_买入",
+      "price": 7.13,
+      "indicators": {
+        "rsi": 30.0,
+        "volatility_pct": 20.3,
+        "sharpe": 0.53,
+        "sortino": 0.77,
+        "max_dd_pct": 21.2,
+        "consecutive_up": 0,
+        "consecutive_down": 1,
+        "ma_alignment": 0,
+        "bb_position": -9.2,
+        "atr_pct": 1.17,
+        "vol_ratio_5d": 0.99,
+        "macd_dif": -0.142,
+        "macd_hist": -0.1082
+      },
+      "returns": {
+        "r5d": -4.2,
+        "r10d": -8.9,
+        "r20d": -7.1,
+        "r60d": -16.6,
+        "r120d": -9.5
+      },
+      "vs_ma": {
+        "pct_ma5": -2.7,
+        "pct_ma10": -5.3,
+        "pct_ma20": -6.4,
+        "pct_ma60": -8.0
+      },
+      "factors": {
+        "F1_趋势强度": 0.5,
+        "F2_动量": 4.8,
+        "F3_反转": 5.7,
+        "F4_RSI": 5.0,
+        "F5_均线偏离": 6.0,
+        "F6_低波动": 6.0,
+        "F7_成交量": 6.0,
+        "F8_回调": 6.5,
+        "F9_Sortino": 4.9,
+        "F10_MaxDD": 3.5,
+        "F11_布林带": 1.0,
+        "F12_多周期": 1.0,
+        "F13_均线排列": 0,
+        "F14_长期": 2.0,
+        "F15_夏普": 4.5,
+        "F16_量价关系": 5.0,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": null,
+        "strength": 0,
+        "description": ""
+      },
+      "premium_multiplier": 1.0,
+      "premium_warning": null,
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": -2.1,
+        "nav": 7.2833,
+        "nav_date": "2026-10-09",
+        "data_source": "official_nav",
+        "is_qdii": false
+      }
+    },
+    {
+      "code": "159915",
+      "name": "创业板ETF",
+      "score": 69,
+      "technical_score": 68,
+      "cross_sectional_adj": 1.2,
+      "blended_technical": 69,
+      "max_score": 100,
+      "grade": "B_买入",
+      "price": 2.98,
+      "indicators": {
+        "rsi": 26.1,
+        "volatility_pct": 28.7,
+        "sharpe": 0.74,
+        "sortino": 1.16,
+        "max_dd_pct": 32.2,
+        "consecutive_up": 0,
+        "consecutive_down": 1,
+        "ma_alignment": 0,
+        "bb_position": -6.7,
+        "atr_pct": 1.63,
+        "vol_ratio_5d": 1.06,
+        "macd_dif": -0.1048,
+        "macd_hist": -0.0581
+      },
+      "returns": {
+        "r5d": -5.7,
+        "r10d": -12.1,
+        "r20d": -9.8,
+        "r60d": -22.8,
+        "r120d": -14.1
+      },
+      "vs_ma": {
+        "pct_ma5": -3.3,
+        "pct_ma10": -7.2,
+        "pct_ma20": -9.1,
+        "pct_ma60": -13.5
+      },
+      "factors": {
+        "F1_趋势强度": 0.5,
+        "F2_动量": 3.6,
+        "F3_反转": 6.4,
+        "F4_RSI": 3.8,
+        "F5_均线偏离": 5.8,
+        "F6_低波动": 6.0,
+        "F7_成交量": 6.0,
+        "F8_回调": 6.5,
+        "F9_Sortino": 5.5,
+        "F10_MaxDD": 2.3,
+        "F11_布林带": 1.0,
+        "F12_多周期": 1.0,
+        "F13_均线排列": 0,
+        "F14_长期": 1.9,
+        "F15_夏普": 4.9,
+        "F16_量价关系": 5.0,
+        "F17_换手率分位": 3.0,
+        "F18_份额申赎": 5.0
+      },
+      "volume_divergence": {
+        "divergence_type": null,
+        "strength": 0,
+        "description": ""
+      },
+      "premium_multiplier": 1.0,
+      "premium_warning": null,
+      "is_watchlist": true,
+      "is_holding": false,
+      "premium_info": {
+        "premium_pct": -2.7,
+        "nav": 3.0626,
+        "nav_date": "2026-10-09",
+        "data_source": "official_nav",
+        "is_qdii": false
+      }
+    }
+  ],
+  "plan": {
+    "buy_list": [],
+    "sell_list": [
+      {
+        "code": "510300",
+        "name": "沪深300ETF华泰柏瑞",
+        "action": "SELL",
+        "shares": 14900,
+        "price": 4.36,
+        "pnl_pct": -7.8,
+        "reason": "止损触发(-5%)"
+      },
+      {
+        "code": "513800",
+        "name": "日本东证指数ETF南方",
+        "action": "SELL",
+        "shares": 6900,
+        "price": 1.906,
+        "pnl_pct": -0.8,
+        "reason": "目标仓位收敛(24%→5%, 超额92312元, 本日减30771元)"
+      }
+    ],
+    "hold_list": [
+      {
+        "code": "513800",
+        "name": "日本东证指数ETF南方",
+        "score": 73,
+        "grade": "B_买入",
+        "pnl_pct": -0.8,
+        "premium_pct": null
+      },
+      {
+        "code": "512890",
+        "name": "红利低波ETF华泰柏瑞",
+        "score": 71,
+        "grade": "B_买入",
+        "pnl_pct": 3.9,
+        "premium_pct": null
+      }
+    ],
+    "target_position": 0.05,
+    "available": 375552.86,
+    "timing_advice": "防御(仓位5%) — 几乎无看多信号，强制限制生效"
+  },
+  "executed_trades": [],
+  "pending": [
+    {
+      "code": "510300",
+      "name": "沪深300ETF华泰柏瑞",
+      "action": "SELL",
+      "shares": 14900,
+      "signal_date": "20261012",
+      "retries": 0,
+      "reason": "止损触发(-5%)"
+    },
+    {
+      "code": "513800",
+      "name": "日本东证指数ETF南方",
+      "action": "SELL",
+      "shares": 6900,
+      "signal_date": "20261012",
+      "retries": 0,
+      "reason": "目标仓位收敛(24%→5%, 超额92312元, 本日减30771元)"
+    }
+  ],
+  "portfolio": {
+    "holdings": [
+      {
+        "code": "510300",
+        "name": "沪深300ETF华泰柏瑞",
+        "shares": 14900,
+        "cost": 4.73,
+        "price": 4.36,
+        "prev_close": 4.385,
+        "value": 64964.0,
+        "pnl": -5513.0,
+        "pnl_pct": -7.82,
+        "daily_pnl": -372.5,
+        "daily_pnl_pct": -0.57,
+        "score": 70,
+        "grade": "B_买入",
+        "weight": 13.2
+      },
+      {
+        "code": "513800",
+        "name": "日本东证指数ETF南方",
+        "shares": 26300,
+        "cost": 1.921,
+        "price": 1.906,
+        "prev_close": 1.899,
+        "value": 50127.8,
+        "pnl": -394.5,
+        "pnl_pct": -0.78,
+        "daily_pnl": 184.1,
+        "daily_pnl_pct": 0.37,
+        "score": 73,
+        "grade": "B_买入",
+        "weight": 10.2
+      },
+      {
+        "code": "512890",
+        "name": "红利低波ETF华泰柏瑞",
+        "shares": 1500,
+        "cost": 1.184,
+        "price": 1.23,
+        "prev_close": 1.208,
+        "value": 1845.0,
+        "pnl": 69.0,
+        "pnl_pct": 3.89,
+        "daily_pnl": 33.0,
+        "daily_pnl_pct": 1.82,
+        "score": 71,
+        "grade": "B_买入",
+        "weight": 0.4
+      }
+    ],
+    "available_cash": 375552.86329,
+    "total_value": 116936.8,
+    "total_cost": 122775.3,
+    "total_assets": 492489.66,
+    "total_pnl": -5838.5,
+    "total_pnl_pct": -4.76,
+    "total_daily_pnl": -155.4,
+    "cash_ratio": 76.3,
+    "stale_codes": [],
+    "total_invested": 500000.0,
+    "total_deposits": 500000.0,
+    "total_withdrawals": 0,
+    "total_pnl_all": -7510.34,
+    "total_pnl_all_pct": -1.5,
+    "lifetime_invested": null,
+    "lifetime_pnl": null,
+    "total_invested_note": null
+  },
+  "benchmark": {
+    "start_date": "20260812",
+    "portfolio_start_value": 500000.0,
+    "benchmark_start": 4690.92,
+    "benchmark_end": 4287.98,
+    "benchmark_return": -0.08589786225303364,
+    "benchmark_name": "沪深300 (000300)",
+    "has_history": true,
+    "portfolio_return": -0.015,
+    "net_cash_outflow": 0.0,
+    "excess_return": 0.0709,
+    "beat_benchmark": true,
+    "message": "模拟组合 -1.50% vs 沪深300 -8.59%，超额 +7.09% ✅ 跑赢基准"
+  },
+  "account": {
+    "initial_capital": 500000.0,
+    "total_assets": 492489.66,
+    "total_return_pct": -1.5
+  },
+  "report": "================================================================\n【模拟盘日报】 20261012\n虚拟账户: 初始 500,000 元 | 总资产 492,489.66 元 | 累计收益 -1.50%\n历史平仓: 8笔 | 胜率 0% | 平均盈亏 -2.0%\n现金 375,552.86 元 | 持仓仓位 23.7% | 今日盈亏 -155.40 元\n----------------------------------------------------------------\n今日无成交\n----------------------------------------------------------------\n当前持仓:\n  沪深300ETF华泰柏瑞(510300) 14900股 成本4.7300 现价4.3600 盈亏-7.82% 仓位13.2%\n  日本东证指数ETF南方(513800) 26300股 成本1.9210 现价1.9060 盈亏-0.78% 仓位10.2%\n  红利低波ETF华泰柏瑞(512890) 1500股 成本1.1840 现价1.2300 盈亏+3.89% 仓位0.4%\n----------------------------------------------------------------\n市场状态: 危机模式 (CRISIS) | 看多信号 1/7 | 建议仓位 5%\n明日卖出计划: 沪深300ETF华泰柏瑞(510300)、日本东证指数ETF南方(513800)\n基准对比: 模拟组合 -1.50% vs 沪深300 -8.59%，超额 +7.09% ✅ 跑赢基准\n待执行订单: 2 笔\n================================================================"
+}
