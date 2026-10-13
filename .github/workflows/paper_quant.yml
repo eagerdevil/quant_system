@@ -1,14 +1,11 @@
 name: 每日ETF量化模拟盘
 
-# 北京时间周一至周五18:10运行；A股休市日由程序安全跳过。
-# GitHub Actions cron 使用UTC（10:10 UTC = 18:10 Asia/Shanghai）。
+# 每日定时运行由仓库现有“模拟盘日报”工作流负责；本工作流保留手动运行入口，避免同日重复记账。
 on:
-  schedule:
-    - cron: "10 10 * * 1-5"
   workflow_dispatch:
 
 concurrency:
-  group: paper-quant-${{ github.ref }}
+  group: paper-trading
   cancel-in-progress: false
 
 jobs:
