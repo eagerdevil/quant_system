@@ -169,6 +169,22 @@ def compute_score_accuracy(reports):
     if len(reports) < 4:
         return {"error": "至少需要4天数据（3个预测样本）"}
 
+    def adjacent_report_days(date_a, date_b):
+        """Conservatively accept only near-consecutive sessions (weekend included).
+
+        The report history can have outages. Treating the next available report
+        weeks later as a T+1 outcome materially overstates/understates signal
+        accuracy. A four-calendar-day ceiling covers ordinary weekends while
+        excluding long outages and extended exchange holidays.
+        """
+        try:
+            a = datetime.strptime(str(date_a), "%Y%m%d").date()
+            b = datetime.strptime(str(date_b), "%Y%m%d").date()
+        except (TypeError, ValueError):
+            return False
+        gap = (b - a).days
+        return 1 <= gap <= 4
+
     # 按ETF代码聚合
     etf_tracks = {}
     for r in reports:
@@ -196,6 +212,9 @@ def compute_score_accuracy(reports):
         strong_correct = 0    # 强信号正确次数
 
         for i in range(1, len(track) - 1):
+            if (not adjacent_report_days(track[i-1]["date"], track[i]["date"])
+                    or not adjacent_report_days(track[i]["date"], track[i+1]["date"])):
+                continue
             # T-1 → T 评分变化（信号）
             ds = track[i]["score"] - track[i-1]["score"]
             # T → T+1 价格变化（结果）
@@ -220,6 +239,8 @@ def compute_score_accuracy(reports):
         same_day_signals = 0
         same_day_correct = 0
         for i in range(1, len(track)):
+            if not adjacent_report_days(track[i-1]["date"], track[i]["date"]):
+                continue
             ds = track[i]["score"] - track[i-1]["score"]
             dp = track[i]["price"] - track[i-1]["price"]
             if ds != 0 and dp != 0:

@@ -67,6 +67,7 @@ from risk_engine import (portfolio_risk_report, format_risk_section,
                          stress_test_portfolio, format_stress_test_section,
                          monte_carlo_simulation, format_monte_carlo_section)
 from performance_tracker import generate_performance_summary
+from dca_advisor import evaluate_dca_guidance
 
 TODAY = datetime.now().strftime("%Y%m%d")
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -114,6 +115,38 @@ def update_portfolio_prices(portfolio, etf_data, stock_data=None):
                 last_bar = str(kline[-1].get("date", "")).replace("-", "")
                 portfolio[code]["stale_date"] = "" if last_bar == TODAY else last_bar
     return portfolio
+
+
+
+def gate_stale_buy_orders(plan, stale_codes):
+    """Remove new buys whose signal K-line is not from today; keep risk-reducing sells."""
+    stale = set(stale_codes or [])
+    if not stale:
+        return plan
+    original = plan.get("buy_list") or []
+    blocked = [order for order in original if order.get("code") in stale]
+    plan["buy_list"] = [order for order in original if order.get("code") not in stale]
+    if blocked:
+        codes = sorted({order.get("code", "") for order in blocked if order.get("code")})
+        plan.setdefault("data_warnings", []).append(
+            "已阻止K线非当日标的的买入计划: " + ", ".join(codes)
+        )
+    return plan
+
+
+def _stale_signal_codes(scores, portfolio, etf_data, stock_data, today):
+    """Find scored or held symbols without a K-line for today's session."""
+    data_by_code = dict(etf_data or {})
+    data_by_code.update(stock_data or {})
+    codes = {s.get("code") for s in scores if s.get("code")}
+    codes.update(code for code in portfolio if not code.startswith("_"))
+    stale = set()
+    for code in codes:
+        kline = (data_by_code.get(code) or {}).get("kline") or []
+        last_date = str(kline[-1].get("date", "")).replace("-", "") if kline else ""
+        if last_date != today:
+            stale.add(code)
+    return stale
 
 
 def compute_portfolio_summary(portfolio, scores):
@@ -560,6 +593,9 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
     if ps.get("stale_codes"):
         lines.append(f"  ⚠️ 数据滞后: {', '.join(ps['stale_codes'])} 现价非当日K线, 今日盈亏≠当日实际(数据源更新失败)")
 
+    for warning in (plan or {}).get("data_warnings", []):
+        lines.append(f"  ⚠️ {warning}")
+
     # ===== 持仓明细 =====
     lines.append(f"\n  {'─'*60}")
     lines.append(f"  [三] 持仓明细")
@@ -602,7 +638,9 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
         analysis = analyze_watchlist_etf(score_data, timing, portfolio, kline_data=kd)
         action_label = {"BUY":"[加仓]","SELL":"[卖出]","REDUCE":"[减仓]","WATCH":"[持有观察]","HOLD":"[持有]","AVOID":"[回避]"}.get(analysis["action"], "[?]")
 
-        lines.append(f"  {action_label} {pos['name']}({code}) | 评分{analysis['score']}分 | 现价{analysis['price']:.3f}")
+        lines.append(f"  [技术风险观察] {pos['name']}({code}) | 技术分{analysis['score']}（非胜率） | 现价{analysis['price']:.3f}")
+        guidance = score_data.get("dca_guidance") or {}
+        lines.append(f"    定投参考：{guidance.get('action', '数据不足，暂不给时机提示')}；长期适配度未评级")
         # 溢价信息（v2.1 新增）
         p_info = score_data.get("premium_info", {})
         tech_score = score_data.get("technical_score", analysis["score"])
@@ -616,9 +654,9 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
             lines.append(f"    历史溢价: 中枢{hist_p.get('median')}% | 分位{hist_p.get('percentile')}% | 近10日均{hist_p.get('trend_10d')}%")
         stop_pct_h = analysis.get("stop_pct", -5)
         stop_method_h = analysis.get("stop_method", "固定")
-        lines.append(f"    止损线:{analysis['stop_loss']:.3f}({stop_pct_h:+.1f}% {stop_method_h}) | 止盈线:{analysis['take_profit']:.3f}")
+        lines.append(f"    短线模型风险参考线:{analysis['stop_loss']:.3f}({stop_pct_h:+.1f}% {stop_method_h}) | 模型止盈参考:{analysis['take_profit']:.3f}（不等同长期定投卖出指令）")
         if analysis.get("holding_advice"):
-            lines.append(f"    {analysis['holding_advice']}")
+            lines.append(f"    短线模型提示（请结合长期持有逻辑人工复核）：{analysis['holding_advice']}")
         for r in analysis.get("reasons_avoid", []):
             lines.append(f"    [注意] {r}")
 
@@ -656,35 +694,22 @@ def format_report(plan, scores, timing, portfolio, all_data=None, stock_scores=N
     lines.append(f"  {'─'*60}")
 
     watchlist = [s for s in scores if s.get("is_watchlist") and s["code"] not in portfolio]
+    lines.append("  技术分只反映近期行情特征，不代表长期质量或未来上涨概率；本系统尚未接入基金费率、跟踪误差、规模和指数成分。")
+    lines.append("  " + (watchlist[0].get("dca_guidance") or {}).get("budget_context", ""))
+    lines.append("  观察池包含不同市场和资产类别，不要把约1000元机械均分给所有标的；请人工选定少数关注对象并核对风险。")
     for s in watchlist:
-        # v7.2: 提取K线数据用于ATR动态止损
-        kd_w = None
-        if all_data:
-            etf_info = all_data.get("etfs", {}).get(s["code"], {})
-            kline_w = etf_info.get("kline", [])
-            if len(kline_w) >= 15:
-                kd_w = {"closes": [k["close"] for k in kline_w],
-                        "highs": [k["high"] for k in kline_w],
-                        "lows": [k["low"] for k in kline_w]}
-
-        analysis = analyze_watchlist_etf(s, timing, portfolio, kline_data=kd_w)
-        action_label = {"BUY":"[可买入]","SELL":"[卖出]","REDUCE":"[减仓]","WATCH":"[观望]","HOLD":"[持有]","AVOID":"[回避]"}.get(analysis["action"], "[?]")
-
-        lines.append(f"  {action_label} {s['name']}({s['code']}) | 评分{s['score']}分 | 现价{s['price']:.4f}")
-        lines.append(f"    RSI:{analysis['rsi']:.0f} | 连涨:{analysis['consecutive_up']}天 | 5日:{analysis['r5d']:+.1f}% | 20日:{analysis['r20d']:+.1f}%")
-        # 历史溢价（v7.5，8/5新增 — 跨境ETF结合历史各时期溢价）
-        p_info_w = s.get("premium_info", {})
-        hist_w = p_info_w.get("history") or {}
-        if hist_w.get("has_history"):
-            lines.append(f"    溢价{hist_w.get('current')}% | 历史中枢{hist_w.get('median')}% | 分位{hist_w.get('percentile')}% | 近10日均{hist_w.get('trend_10d')}%")
-        for r in analysis.get("reasons_buy", []):
-            lines.append(f"    [+] {r}")
-        for r in analysis.get("reasons_avoid", []):
-            lines.append(f"    [-] {r}")
-        if analysis["action"] == "BUY":
-            stop_pct = analysis.get("stop_pct", -5)
-            stop_method = analysis.get("stop_method", "固定")
-            lines.append(f"    建议买入价:{analysis['price']:.4f} | 止损:{analysis['stop_loss']:.4f}({stop_pct:+.1f}% {stop_method}) | 止盈:{analysis['take_profit']:.4f}")
+        guidance = s.get("dca_guidance") or {}
+        ind = s.get("indicators", {})
+        ret = s.get("returns", {})
+        lines.append(f"  [定投参考] {guidance.get('action', '数据不足，暂不给时机提示')} | {s['name']}({s['code']}) | 技术分{s.get('score', 0)}（非胜率） | 现价{s.get('price', 0):.4f}")
+        lines.append(f"    长期适配度：{guidance.get('long_term_fit', '未评级')} | 信号数据：{guidance.get('data_confidence', '低')}")
+        lines.append(f"    RSI:{ind.get('rsi', 0):.0f} | 5日:{ret.get('r5d', 0):+.1f}% | 20日:{ret.get('r20d', 0):+.1f}% | 60日:{ret.get('r60d', 0):+.1f}%")
+        for reason in guidance.get("reasons", []):
+            lines.append(f"    依据：{reason}")
+        p_info = s.get("premium_info", {})
+        hist = p_info.get("history") or {}
+        if hist.get("has_history"):
+            lines.append(f"    溢价：当前{hist.get('current')}% | 历史分位{hist.get('percentile')}% | 中位数{hist.get('median')}%")
 
     # ===== 个股评分 =====
     if stock_scores:
@@ -1099,6 +1124,21 @@ def main():
 
     decider = TradeDecider(scores, timing_result, portfolio)
     plan = decider.generate_plan()
+    # Use only current-session bars to create new exposure. A stale quote may
+    # still inform a risk-reducing sell, but it cannot authorize a new buy.
+    freshness_scores = scores + stock_scores
+    stale_signal_codes = _stale_signal_codes(
+        freshness_scores, portfolio, etf_data, all_data.get("stocks", {}), TODAY
+    )
+    for score in scores:
+        bars = (etf_data.get(score.get("code")) or {}).get("kline") or []
+        score["dca_guidance"] = evaluate_dca_guidance(
+            score, data_is_current=score.get("code") not in stale_signal_codes,
+            history_len=len(bars), regime=timing_result.get("regime")
+        )
+    plan = gate_stale_buy_orders(plan, stale_signal_codes)
+    if plan.get("data_warnings"):
+        logger.warning("  [新鲜度门禁] %s", " | ".join(plan["data_warnings"]))
 
     # v8.0: 基准对比
     benchmark = compute_benchmark_comparison(portfolio, all_data.get("indices", {}))

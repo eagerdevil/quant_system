@@ -1,0 +1,69 @@
+name: 每日ETF量化模拟盘
+
+# 北京时间周一至周五18:10运行；A股休市日由程序安全跳过。
+# GitHub Actions cron 使用UTC（10:10 UTC = 18:10 Asia/Shanghai）。
+on:
+  schedule:
+    - cron: "10 10 * * 1-5"
+  workflow_dispatch:
+
+concurrency:
+  group: paper-quant-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  paper-trading:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 安装依赖
+        run: pip install -r quant_system/requirements.txt
+
+      - name: 恢复K线缓存
+        uses: actions/cache@v4
+        with:
+          path: quant_system/kline_cache
+          key: paper-kline-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            paper-kline-${{ runner.os }}-
+
+      - name: 运行模拟盘
+        working-directory: quant_system
+        env:
+          TZ: Asia/Shanghai
+          QQMAIL_AUTH_CODE: ${{ secrets.QQMAIL_AUTH_CODE }}
+        run: python paper_trading.py
+
+      # 将虚拟账户账本和历史报告保存到默认分支，保证临时Runner之间状态连续。
+      - name: 保存模拟账户状态到默认分支
+        if: always() && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- quant_system/portfolio_paper.json quant_system/report_paper_*.json
+          if git diff --cached --quiet; then
+            echo "模拟账户和日报没有变化"
+          else
+            git commit -m "paper(trade): 更新模拟盘账户状态 [skip ci]"
+            git push origin HEAD:main
+          fi
+
+      - name: 上传本次日报
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paper-report-${{ github.run_id }}
+          path: quant_system/report_paper_*.json
+          if-no-files-found: warn
+          retention-days: 30

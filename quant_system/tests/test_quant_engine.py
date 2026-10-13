@@ -417,10 +417,11 @@ class TestEdgeCases:
             compute_indicators([], [], [], [])
 
     def test_single_point_kline(self):
-        """单点K线：std=0产生NaN是可接受的（调用方保证≥30条数据）"""
+        """单点K线返回有限的中性风险指标，不产生NaN或运行时告警"""
         ind = compute_indicators([2.0], [2.01], [1.99], [1e6])
-        # volatility由np.diff产生空数组→mean返回NaN，这是numpy标准行为
         assert "rsi" in ind
+        assert ind["volatility"] == 0.0
+        assert ind["sharpe"] == 0.0
 
     def test_nan_price_handling(self):
         """NaN价格：numpy运算产生NaN但不崩溃即可"""

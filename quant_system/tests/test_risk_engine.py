@@ -93,6 +93,14 @@ class TestCorrelation:
         assert result["n_assets"] == 1
         assert result["avg_correlation"] == 0
 
+    def test_constant_return_asset_has_finite_correlations(self):
+        etf_data = make_etf_data(["A"], 70)
+        etf_data["FLAT"] = {"name": "FLAT", "kline": [{"close": 2.0} for _ in range(70)]}
+        result = compute_correlation_matrix(etf_data)
+        assert result["matrix"]["FLAT"]["FLAT"] == 1.0
+        assert result["matrix"]["FLAT"]["A"] == 0.0
+        assert np.isfinite(result["avg_correlation"])
+
     def test_insufficient_data(self):
         etf_data = {"X": {"name": "X", "kline": [{"close": 1.0}] * 10}}
         result = compute_correlation_matrix(etf_data)
@@ -120,6 +128,15 @@ class TestVaR:
         result = compute_var_cvar(1000, etf_data, holdings)
         if not result.get("error"):
             assert result["cvar_95"] >= result["var_95"]
+
+    def test_positive_only_history_has_no_downside_loss(self):
+        closes = [100.0 + i for i in range(61)]
+        etf_data = {"X": {"kline": [{"close": c} for c in closes]}}
+        holdings = {"X": {"shares": 100, "current_price": closes[-1]}}
+        result = compute_var_cvar(10000, etf_data, holdings, window=60)
+        assert result["var_95"] == 0
+        assert result["cvar_95"] == 0
+        assert result["worst_day"] == 0
 
     def test_var_insufficient_data(self):
         result = compute_var_cvar(1000, {}, {})
@@ -298,8 +315,9 @@ class TestRiskEdgeCases:
         assert percentile([], 50) == 0
 
     def test_pearson_constant_series(self):
-        """常数列→相关系数0"""
+        """常数列→相关系数0且不触发除零运算"""
         r = pearson_correlation([1.0]*10, [1.0, 2.0, 3.0, 4.0, 5.0]*2)
+        assert r == 0.0
         assert not np.isnan(r) and not np.isinf(r)
 
     def test_stress_test_missing_industry(self):

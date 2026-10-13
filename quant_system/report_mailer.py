@@ -274,6 +274,11 @@ def generate_html_report(report_data):
 
     html += f"<p>{timing.get('advice', '')}</p></div>"
 
+    if report_data.get("type") == "paper":
+        initial_capital = report_data.get("account", {}).get("initial_capital", 0)
+        html += (f'<div class="card"><h2>模拟盘口径</h2><p>本模拟盘以虚拟本金{initial_capital:,.0f}元验证策略交易流程，'
+                 '不等同于每月约1000元的长期定投收益回测；模拟成绩不能直接外推到个人账户。</p></div>')
+
     # 账户概览
     if port:
         total_assets = port.get("total_assets", 0)
@@ -386,15 +391,15 @@ def generate_html_report(report_data):
     hold_map = {h["code"]: h for h in hold_list}
     sell_map = {s["code"]: s for s in sell_list}
     if holdings:
-        html += '<div class="card"><h2>持仓明细</h2><table style="font-size:12px"><tr><th>代码</th><th>名称</th><th>持股</th><th>成本</th><th>现价</th><th>市值</th><th>持仓盈亏</th><th>今日盈亏</th><th>仓位</th><th>评分</th><th>建议</th></tr>'
+        html += '<div class="card"><h2>持仓明细</h2><p>持有/卖出为短线模型风险信号，不是长期定投下单指令，请结合基金和指数逻辑人工判断。</p><table style="font-size:12px"><tr><th>代码</th><th>名称</th><th>持股</th><th>成本</th><th>现价</th><th>市值</th><th>持仓盈亏</th><th>今日盈亏</th><th>仓位</th><th>技术分</th><th>模型信号（非定投指令）</th></tr>'
         for h in holdings:
             code = h["code"]
             action_html = ""
             if code in sell_map:
                 reason = "止损触发" if sell_map[code].get("pnl_pct", 0) < -8 else "评分下滑"
-                action_html = f'<span class="sell">卖出</span><br><small style="color:#ff4757">{reason}</small>'
+                action_html = f'<span class="sell">模型卖出提示</span><br><small style="color:#ff4757">{reason}</small>'
             elif code in hold_map:
-                action_html = '<span class="watch">持有</span>'
+                action_html = '<span class="watch">模型持有提示</span>'
             else:
                 action_html = '<span class="watch">—</span>'
 
@@ -418,35 +423,32 @@ def generate_html_report(report_data):
             html += f'</tr>'
         html += '</table></div>'
 
-    # 买入建议
+    # Legacy plan sizing uses uncalibrated score-to-Kelly mapping; label it as a model signal.
     buy_list = plan.get("buy_list", [])
     if buy_list:
-        html += '<div class="card"><h2>买入建议</h2><table><tr><th>标的</th><th>数量</th><th>价格</th><th>金额</th><th>止损</th><th>止盈</th><th>理由</th></tr>'
+        html += '<div class="card"><h2>策略模型仓位信号（非定投建议）</h2><p>数量由未校准的技术评分仓位模型生成，仅作模型观察；请优先参考下方定投提示。</p><table><tr><th>标的</th><th>数量</th><th>价格</th><th>金额</th><th>止损</th><th>止盈</th><th>理由</th></tr>'
         for b in buy_list:
             sl = round(b["price"]*stop_mult, 3); tp = round(b["price"]*1.08, 3)  # v7.6: 止损用regime止损
             reasons = "; ".join(b.get("reasons", [])[:2])
             html += f'<tr><td class="buy">{b["name"]}<br><small>{b["code"]}</small></td><td>{b["shares"]}股</td><td>{b["price"]:.3f}</td><td>{b["amount"]:.0f}元</td><td class="limit">{sl:.3f}</td><td style="color:#00ff88">{tp:.3f}</td><td style="font-size:11px">{reasons}</td></tr>'
         html += '</table></div>'
 
-    # 关注ETF逐只分析
+    # 观察池定投提示：不将短期技术分伪装成可买入概率。
     if watchlist:
-        html += '<div class="card"><h2>关注ETF逐只分析</h2>'
+        budget_note = (watchlist[0].get("dca_guidance") or {}).get("budget_context", "")
+        html += '<div class="card"><h2>观察池定投参考</h2><p>基础定投不因单日评分改变；技术分不是收益概率。长期适配度尚未评级，因基金费率、跟踪误差、规模及指数成分数据未接入。</p>'
+        html += f'<p>{budget_note} 不要机械地把月预算均分到整个观察池。</p>'
         for s in watchlist:
             ind = s.get("indicators", {})
             ret = s.get("returns", {})
-            score = s["score"]
-            rsi = ind.get("rsi", 50)
-            is_overbought = rsi > 68
-            is_extended = ind.get("consecutive_up", 0) >= 5
-            action = "buy" if (score >= 65 and not is_overbought and not is_extended) else ("watch" if score >= 50 else "avoid")
-            act_color = {"buy":"#00ff88","watch":"#ffa502","avoid":"#666"}[action]
-            act_text = {"buy":"[可买入]","watch":"[观望]","avoid":"[回避]"}[action]
-            html += f'<div style="border-left:3px solid {act_color}; padding:8px 12px; margin:8px 0; background:#111827;">'
-            html += f'<b style="color:{act_color}">{act_text}</b> <b>{s["name"]}</b> <small>({s["code"]})</small> | {score}分 | RSI:{rsi:.0f} | 现价:{s["price"]:.4f}<br>'
-            html += f'<small>5日:{ret.get("r5d",0):+.1f}% | 20日:{ret.get("r20d",0):+.1f}% | 60日:{ret.get("r60d",0):+.1f}% | 连涨:{ind.get("consecutive_up",0)}天</small>'
-            if action == "buy":
-                sl = round(s["price"]*stop_mult,4); tp = round(s["price"]*1.08,4)  # v7.6: 止损用regime止损
-                html += f'<br><small>止损:{sl:.4f}({stop_label}) | 止盈:{tp:.4f}(+8%)</small>'
+            guidance = s.get("dca_guidance") or {}
+            action_text = guidance.get("action", "数据不足，暂不给时机提示")
+            confidence = guidance.get("data_confidence", "低")
+            html += '<div style="border-left:3px solid #58a6ff; padding:8px 12px; margin:8px 0; background:#111827;">'
+            html += f'<b>{s["name"]}</b> <small>({s["code"]})</small> | 技术分{s.get("score", "—")}（非胜率） | 现价:{s.get("price", 0):.4f}<br>'
+            html += f'<b>定投参考：</b>{action_text}<br><small>数据可信度：{confidence} | RSI:{ind.get("rsi",0):.0f} | 5日:{ret.get("r5d",0):+.1f}% | 20日:{ret.get("r20d",0):+.1f}% | 60日:{ret.get("r60d",0):+.1f}%</small>'
+            for reason in guidance.get("reasons", []):
+                html += f'<br><small>依据：{reason}</small>'
             html += '</div>'
         html += '</div>'
 
@@ -643,8 +645,8 @@ def generate_wechat_markdown(report_data):
     hold_codes = {h["code"] for h in hold_list}
 
     if holdings:
-        lines.append(f"### 持仓明细 ({len(holdings)}只)")
-        lines.append(f"| 名称 | 代码 | 持股 | 成本 | 现价 | 市值 | 盈亏 | 今日 | 仓位 | 评分 | 建议 |")
+        lines.append(f"### 持仓明细 ({len(holdings)}只；模型信号仅供风险复核，不是长期定投指令)")
+        lines.append(f"| 名称 | 代码 | 持股 | 成本 | 现价 | 市值 | 盈亏 | 今日 | 仓位 | 技术分 | 模型信号（非定投指令） |")
         lines.append(f"|------|------|------|------|------|------|------|------|------|------|------|")
         for h in holdings:
             pnl_s = f"{h['pnl']:+.0f}"
@@ -653,9 +655,9 @@ def generate_wechat_markdown(report_data):
 
             code = h["code"]
             if code in sell_codes:
-                action = "🔴卖出"
+                action = "🔴模型卖出提示"
             elif code in hold_codes:
-                action = "🟡持有"
+                action = "🟡模型持有提示"
             else:
                 action = "—"
 
@@ -663,51 +665,42 @@ def generate_wechat_markdown(report_data):
         lines.append("")
 
     # ══════════════════════════════════════
-    # 买入建议
+    # 未校准仓位模型信号（不是定投建议）
     # ══════════════════════════════════════
     buy_list = plan.get("buy_list", [])
     if buy_list:
-        lines.append(f"### 买入建议 ({len(buy_list)}只)")
+        lines.append(f"### 策略模型仓位信号（非定投建议，{len(buy_list)}只）")
+        lines.append("以下数量依赖未经概率校准的技术评分仓位模型，仅供参考；长期投资请看后面的定投提示。")
         for b in buy_list:
             # v7.6: 止损用regime止损，与决策引擎统一
             w_stop = timing.get("regime_stop_loss", -0.08)
             sl = round(b["price"]*(1+w_stop), 3)
             tp = round(b["price"]*1.08, 3)
             reasons = "; ".join(b.get("reasons", [])[:2])
-            lines.append(f"- 🟢 **{b['name']}**({b['code']}) {b['shares']}股 @{b['price']:.3f} | 止损{sl:.3f} 止盈{tp:.3f}")
+            lines.append(f"- 模型信号：**{b['name']}**({b['code']}) {b['shares']}股 @{b['price']:.3f} | 模型止损{sl:.3f} 模型止盈{tp:.3f}")
             if reasons:
                 lines.append(f"  > {reasons}")
         lines.append("")
 
     # ══════════════════════════════════════
-    # 关注ETF逐只分析
+    # 观察池定投参考
     # ══════════════════════════════════════
     watchlist = [s for s in scores if s.get("is_watchlist") and not s.get("is_holding")]
     if watchlist:
-        lines.append(f"### 关注ETF逐只分析 ({len(watchlist)}只)")
+        lines.append(f"### 观察池定投参考 ({len(watchlist)}只)")
+        lines.append("技术分是近期行情特征，不代表长期质量或未来收益概率；基金费率、跟踪误差、规模和指数成分未接入，因此长期适配度未评级。")
+        lines.append((watchlist[0].get("dca_guidance") or {}).get("budget_context", ""))
+        lines.append("观察池含不同市场和资产类别，不要把约1000元机械均分到全池；按实际预算人工筛选并核对风险。")
         for s in watchlist:
             ind = s.get("indicators", {})
             ret = s.get("returns", {})
-            score = s["score"]
-            rsi = ind.get("rsi", 50)
-            is_overbought = rsi > 68
-            is_extended = ind.get("consecutive_up", 0) >= 5
-
-            if score >= 65 and not is_overbought and not is_extended:
-                action = "🟢可买入"
-            elif score >= 50:
-                action = "🟡观望"
-            else:
-                action = "🔴回避"
-
-            lines.append(f"- {action} **{s['name']}**({s['code']}) | {score}分 | RSI:{rsi:.0f} | 现价:{s['price']:.4f}")
-            lines.append(f"  > 5日:{ret.get('r5d',0):+.1f}% | 20日:{ret.get('r20d',0):+.1f}% | 60日:{ret.get('r60d',0):+.1f}% | 连涨:{ind.get('consecutive_up',0)}天")
-
-            if is_overbought or is_extended:
-                warnings = []
-                if is_overbought: warnings.append(f"RSI过热({rsi:.0f})")
-                if is_extended: warnings.append(f"连涨{ind.get('consecutive_up',0)}天")
-                lines.append(f"  > ⚠️ {', '.join(warnings)}，追高风险大")
+            guidance = s.get("dca_guidance") or {}
+            lines.append(f"- **{s['name']}**({s['code']}) | 技术分{s.get('score', '—')}（非胜率） | "
+                         f"定投参考：{guidance.get('action', '数据不足，暂不给时机提示')}")
+            lines.append(f"  > 数据可信度：{guidance.get('data_confidence', '低')} | RSI:{ind.get('rsi',0):.0f} | "
+                         f"5日:{ret.get('r5d',0):+.1f}% | 20日:{ret.get('r20d',0):+.1f}% | 60日:{ret.get('r60d',0):+.1f}%")
+            for reason in guidance.get("reasons", []):
+                lines.append(f"  > 依据：{reason}")
         lines.append("")
 
     # ══════════════════════════════════════

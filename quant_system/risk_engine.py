@@ -45,6 +45,10 @@ def pearson_correlation(x, y):
         return 0
     x_arr = np.array(x, dtype=np.float64)
     y_arr = np.array(y, dtype=np.float64)
+    if not np.all(np.isfinite(x_arr)) or not np.all(np.isfinite(y_arr)):
+        return 0.0
+    if np.std(x_arr) == 0 or np.std(y_arr) == 0:
+        return 0.0
     corr = np.corrcoef(x_arr, y_arr)[0, 1]
     return float(corr) if not np.isnan(corr) else 0.0
 
@@ -83,8 +87,22 @@ def compute_correlation_matrix(etf_data, window=60):
         np.array(returns_map[code][-min_len:], dtype=np.float64)
         for code in codes
     ])
-    # 计算相关性矩阵
-    corr_matrix = np.corrcoef(ret_matrix, rowvar=False)
+    # Pairwise finite correlations; constant/invalid return columns map to 0 off-diagonal
+    # instead of propagating NaN through portfolio risk output.
+    corr_matrix = np.eye(len(codes), dtype=np.float64)
+    for i in range(len(codes)):
+        for j in range(i + 1, len(codes)):
+            xi, xj = ret_matrix[:, i], ret_matrix[:, j]
+            valid = np.isfinite(xi) & np.isfinite(xj)
+            if valid.sum() < 3:
+                corr = 0.0
+            else:
+                xi, xj = xi[valid], xj[valid]
+                sx, sy = np.std(xi), np.std(xj)
+                corr = float(np.corrcoef(xi, xj)[0, 1]) if sx > 0 and sy > 0 else 0.0
+                if not np.isfinite(corr):
+                    corr = 0.0
+            corr_matrix[i, j] = corr_matrix[j, i] = corr
 
     # 构建输出
     matrix = {c: {} for c in codes}
@@ -181,13 +199,17 @@ def compute_var_cvar(portfolio_value, etf_data, holdings,
 
     worst_ret = sorted_rets[0]
 
+    # Loss-positive convention: gains at the selected quantile are zero downside risk.
+    var_loss = max(0.0, -float(var_ret))
+    cvar_loss = max(0.0, -float(cvar_ret))
+    worst_loss = max(0.0, -float(worst_ret))
     return {
-        "var_95": round(abs(float(var_ret)) * portfolio_value, 2),
-        "var_95_pct": round(abs(float(var_ret)) * 100, 2),
-        "cvar_95": round(abs(float(cvar_ret)) * portfolio_value, 2),
-        "cvar_95_pct": round(abs(float(cvar_ret)) * 100, 2),
-        "worst_day": round(abs(float(worst_ret)) * portfolio_value, 2),
-        "worst_day_pct": round(abs(float(worst_ret)) * 100, 2),
+        "var_95": round(var_loss * portfolio_value, 2),
+        "var_95_pct": round(var_loss * 100, 2),
+        "cvar_95": round(cvar_loss * portfolio_value, 2),
+        "cvar_95_pct": round(cvar_loss * 100, 2),
+        "worst_day": round(worst_loss * portfolio_value, 2),
+        "worst_day_pct": round(worst_loss * 100, 2),
         "method": "historical",
         "confidence": confidence,
         "lookback_days": min_len
@@ -206,7 +228,7 @@ def compute_var_weight_uncertainty(etf_data, holdings, total_value,
 
     返回 {"var_pct_p5", "var_pct_p50", "var_pct_p95", "n_sims"} 或 None(数据不足)
     """
-    np.random.seed(42)  # 固定种子保证日报可复现
+    rng = np.random.default_rng(42)  # 固定种子但不污染进程级随机状态
     codes = []
     weights = []
     rets_map = {}
@@ -232,7 +254,7 @@ def compute_var_weight_uncertainty(etf_data, holdings, total_value,
     matrix = np.column_stack([rets_map[c][-min_len:] for c in codes])
     var_list = []
     for _ in range(n_sims):
-        perturb = np.random.dirichlet(w_arr * 50 + 1e-6)
+        perturb = rng.dirichlet(w_arr * 50 + 1e-6)
         pr = matrix @ perturb
         sorted_pr = np.sort(pr)
         idx = min(int(len(sorted_pr) * (1 - confidence)), len(sorted_pr) - 1)

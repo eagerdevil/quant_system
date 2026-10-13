@@ -3,7 +3,7 @@
 量化系统 v7.1 — 自进化参数优化引擎
 ===================================
 每月自动运行（或手动执行）
-- 回测历史数据，评估因子+阈值+溢价惩罚的预测能力
+- 回测历史数据，评估因子权重的逐日横截面预测能力
 - 时间加权IC（近期数据权重更高 → 自适应市场变化）
 - 随机搜索 + 局部精化 → 最优参数
 - 自动保存 + 进化日志 → 可追溯每次变化
@@ -65,9 +65,9 @@ DEFAULT_GRADE_THRESHOLDS = {"A_强烈买入": 78, "B_买入": 65, "C_观察": 55
 DEFAULT_ADX_THRESHOLD = 22.0
 
 
-def random_params():
+def random_params(base_params=None):
     """
-    生成随机参数向量（v4.0: 权重+惩罚曲线）
+    生成随机因子权重；未提供历史标签的参数保持基准值
     返回: {
         "factor_weights": {F1: 1.2, ...},
         "grade_thresholds": {A:78, B:65, C:55, D:42},  # 固定，不参与搜索
@@ -76,13 +76,14 @@ def random_params():
         "adx_trend_threshold": 22  # 固定，不参与搜索
     }
     """
+    base_params = base_params or {}
     return {
         "factor_weights": {
             k: round(random.uniform(0.5, 2.0), 2) for k in FACTOR_NAMES
         },
         "grade_thresholds": dict(DEFAULT_GRADE_THRESHOLDS),
-        "premium_steepness": round(random.uniform(0.04, 0.10), 3),
-        "premium_threshold": round(random.uniform(1.0, 3.5), 1),
+        "premium_steepness": float(base_params.get("premium_steepness", 0.07)),
+        "premium_threshold": float(base_params.get("premium_threshold", 2.5)),
         "adx_trend_threshold": DEFAULT_ADX_THRESHOLD
     }
 
@@ -96,16 +97,10 @@ def perturb_params(base, scale=0.10):
 
     return {
         "factor_weights": new_weights,
-        "grade_thresholds": dict(base["grade_thresholds"]),  # 无IC目标，不扰动
-        "premium_steepness": round(
-            max(0.03, min(0.12,
-                base["premium_steepness"] * (1.0 + random.uniform(-scale, scale))
-            )), 3),
-        "premium_threshold": round(
-            max(0.5, min(4.0,
-                base["premium_threshold"] + random.uniform(-0.5, 0.5)
-            )), 1),
-        "adx_trend_threshold": float(base["adx_trend_threshold"])  # 无IC目标，不扰动
+        "grade_thresholds": dict(base.get("grade_thresholds", DEFAULT_GRADE_THRESHOLDS)),  # 固定参数
+        "premium_steepness": float(base["premium_steepness"]),
+        "premium_threshold": float(base["premium_threshold"]),
+        "adx_trend_threshold": float(base.get("adx_trend_threshold", DEFAULT_ADX_THRESHOLD))  # 固定参数
     }
 
 
@@ -129,10 +124,8 @@ def compute_scores_with_params(params, precomputed):
 
         # Step 2: 溢价惩罚 — 仅对QDII ETF，模拟quant_engine._apply_premium_penalty()
         code = pt.get('code', '')
-        if code in QDII_ETFS:
-            # 使用3%作为QDII ETF的默认溢价（A股QDII ETF历史中位水平）
-            # 在3%溢价下，penalty取决于premium_threshold和steepness两个参数
-            premium_pct = 3.0
+        premium_pct = pt.get("premium_pct")
+        if code in QDII_ETFS and premium_pct is not None:
             if premium_pct >= premium_threshold_val:
                 excess = premium_pct - premium_threshold_val
                 if premium_pct <= 5.0:
@@ -150,46 +143,44 @@ def compute_scores_with_params(params, precomputed):
 
 
 def evaluate_params(params, precomputed):
+    """Compute time-decayed mean daily cross-sectional IC.
+
+    Averaging each session's cross-sectional IC prevents dates with more ETF
+    rows from dominating, and applies decay by trading session rather than by
+    individual ETF rows.
     """
-    v7.1: 完整参数评估函数
-    使用全部可IC评估的参数（因子权重+溢价参数）计算IC
-    """
+    if not precomputed:
+        return 0.0
     scores = compute_scores_with_params(params, precomputed)
-    rets = [pt['forward_return'] for pt in precomputed]
+    rets = [pt.get("forward_return") for pt in precomputed]
 
-    # 时间加权：近期数据权重更高（半衰期=60交易日）
-    n = len(precomputed)
-    half_life = 60
-    decay = math.log(2) / half_life
-    time_weights = [math.exp(-decay * (n - 1 - i)) for i in range(n)]
-
-    total_w = sum(time_weights)
-    if total_w < 1e-10 or n < 10:
-        return spearman_ic(scores, rets)
-
-    # 加权重采样
-    n_eff = min(n, 500)
-    step = total_w / n_eff
-    sampled_scores = []
-    sampled_rets = []
-    cumsum = 0.0
-    j = 0
-    for i in range(n_eff):
-        target = (i + 0.5) * step
-        while j < n - 1 and cumsum + time_weights[j] < target:
-            cumsum += time_weights[j]
-            j += 1
-        idx = min(j, n - 1)
-        sampled_scores.append(scores[idx])
-        sampled_rets.append(rets[idx])
-
-    return spearman_ic(sampled_scores, sampled_rets)
+    groups = {}
+    for i, pt in enumerate(precomputed):
+        date_key = str(pt.get("date", "")).replace("-", "") or f"row{i:012d}"
+        groups.setdefault(date_key, []).append(i)
+    dates = sorted(groups)
+    decay = math.log(2) / 60.0  # 60-trading-session half-life
+    weighted_ic = 0.0
+    weight_total = 0.0
+    for rank, date_key in enumerate(dates):
+        indices = groups[date_key]
+        if len(indices) < 10:
+            continue
+        ic = spearman_ic([scores[i] for i in indices], [rets[i] for i in indices])
+        if not math.isfinite(ic):
+            continue
+        weight = math.exp(-decay * (len(dates) - 1 - rank))
+        weighted_ic += weight * ic
+        weight_total += weight
+    if weight_total <= 0:
+        return spearman_ic(scores, rets) if len(scores) >= 10 else 0.0
+    return weighted_ic / weight_total
 
 
 # ============================================================
 # 数据准备（与v1.0相同但新增时间标记）
 # ============================================================
-def collect_backtest_data(etf_list, max_days=250, min_days=65):
+def collect_backtest_data(etf_list, max_days=750, min_days=65):
     """采集回测所需历史数据并预计算因子"""
     logger.info(f"  采集 {len(etf_list)} 只ETF历史K线...")
 
@@ -221,9 +212,12 @@ def collect_backtest_data(etf_list, max_days=250, min_days=65):
                     lows[:t + 1], volumes[:t + 1]
                 )
                 factors = score_factors(ind)
-                forward_ret = closes[t + 15] / closes[t] - 1.0  # v7.1: 15日forward
-
-                if abs(forward_ret) > 0.50:
+                base_close = closes[t]
+                future_close = closes[t + 15]
+                if base_close <= 0 or future_close <= 0:
+                    continue
+                forward_ret = future_close / base_close - 1.0  # 15-session forward return
+                if not math.isfinite(forward_ret):
                     continue
 
                 all_points.append({
@@ -462,7 +456,8 @@ def compute_factor_correlation(precomputed):
 # v8.0: 滚动窗口样本外验证 (Walk-Forward Cross Validation)
 # ============================================================
 def walk_forward_cv(precomputed, best_params, current_params, baseline_params,
-                     n_windows=5, train_days=120, test_days=20, min_start=0):
+                     n_windows=5, train_days=120, test_days=20, min_start=0,
+                     embargo_days=15):
     """
     P0-1: 滚动窗口 Walk-Forward 交叉验证。
 
@@ -493,28 +488,36 @@ def walk_forward_cv(precomputed, best_params, current_params, baseline_params,
     logger.info(f"\n  [Walk-Forward CV] 滚动窗口样本外验证 (v8.0)")
     logger.info(f"  窗口数={n_windows}, 训练={train_days}天, 测试={test_days}天")
 
-    n_total = len(precomputed)
-    window_size = train_days + test_days
-
-    if n_total < window_size * 2:
-        logger.info(f"  [WARNING] 数据点不足({n_total} < {window_size*2})，回退到单窗口验证")
-        n_windows = 1
-
-    # v7.6 泄漏修复: 窗口测试段起点不得早于min_start(主切分测试集起点=参数未见过数据)
-    min_start = max(int(min_start), 0)
-    max_test_start = n_total - test_days
-    if min_start >= max_test_start:
-        logger.warning(f"  [WARNING] min_start={min_start} ≥ 可用测试空间{max_test_start}，WFCV跳过(数据不足)")
-        return {
-            "windows": [], "mean_oos_ic": None, "std_oos_ic": None,
-            "positive_rate": None, "note": "WFCV跳过: 主测试集起点之后空间不足"
-        }
-
-    # 测试段起点均匀分布且全部 ≥ min_start（窗口间测试段不重叠，步进=test_days）
-    if n_windows > 1:
-        step = max(test_days, (max_test_start - min_start) // (n_windows - 1))
+    # Treat records as an ETF-by-date panel: window sizes and embargo are
+    # measured in distinct trading sessions, never raw rows.
+    date_keys = [str(row.get("date", "")).replace("-", "") for row in precomputed]
+    all_dates = sorted(set(d for d in date_keys if d))
+    if not all_dates:
+        return {"error": "无有效日期", "windows": []}
+    if min_start < len(precomputed):
+        holdout_date = date_keys[max(int(min_start), 0)]
     else:
-        step = 0
+        holdout_date = all_dates[-1]
+    holdout_dates = [d for d in all_dates if d >= holdout_date]
+    if len(holdout_dates) < test_days:
+        logger.warning("[WFCV] 样本外交易日不足: %d < %d", len(holdout_dates), test_days)
+        return {"error": "样本外交易日不足", "windows": []}
+
+    stride = max(int(test_days) + max(int(embargo_days), 0), 1)
+    possible_windows = 1 + max(0, len(holdout_dates) - test_days) // stride
+    n_windows = min(max(int(n_windows), 1), possible_windows)
+    max_offset = len(holdout_dates) - test_days
+    if n_windows > 1:
+        step = max(stride, max_offset // (n_windows - 1))
+        test_offsets = [w * step for w in range(n_windows)]
+    else:
+        test_offsets = [0]
+
+    rows_by_date = {}
+    for row, date_key in zip(precomputed, date_keys):
+        if date_key:
+            rows_by_date.setdefault(date_key, []).append(row)
+    global_date_index = {d: i for i, d in enumerate(all_dates)}
 
     windows = []
     oos_ics_best = []
@@ -524,22 +527,24 @@ def walk_forward_cv(precomputed, best_params, current_params, baseline_params,
     # v8.0: 因子级OOS追踪 — 每个窗口的因子IC
     factor_oos_ics = {k: [] for k in FACTOR_NAMES}
 
-    for w in range(n_windows):
-        start = min(min_start + w * step, max_test_start)
-        test_end = min(start + test_days, n_total)
-        # 窗口训练段用于过拟合差距参照(ic_best_train)，可落在拟合数据内；
-        # 窗口测试段必须完全在参数拟合数据之外（start >= min_start 已保证）
-        train_start = max(0, start - train_days)
-        if train_start >= start:
-            continue  # 训练段为空(窗口起点为0), 无法计算过拟合差距, 跳过
-        window_train = precomputed[train_start:start]
-        window_test = precomputed[start:test_end]
+    for w, offset in enumerate(test_offsets):
+        test_start = offset
+        test_end = test_start + test_days
+        test_dates = holdout_dates[test_start:test_end]
+        first_test_idx = global_date_index[test_dates[0]]
+        train_end_idx = max(0, first_test_idx - max(int(embargo_days), 0))
+        train_start_idx = max(0, train_end_idx - train_days)
+        train_dates = all_dates[train_start_idx:train_end_idx]
+        if not train_dates:
+            continue
+        window_train = [row for d in train_dates for row in rows_by_date.get(d, [])]
+        window_test = [row for d in test_dates for row in rows_by_date.get(d, [])]
 
-        if len(window_test) < 10:
-            continue  # 测试集太小
+        if len(window_train) < 10 or len(window_test) < 10:
+            continue
 
-        train_date_range = (window_train[0].get('date','?'), window_train[-1].get('date','?'))
-        test_date_range = (window_test[0].get('date','?'), window_test[-1].get('date','?'))
+        train_date_range = (train_dates[0], train_dates[-1])
+        test_date_range = (test_dates[0], test_dates[-1])
 
         ic_best = evaluate_params(best_params, window_test)
         ic_current = evaluate_params(current_params, window_test)
@@ -665,6 +670,46 @@ def walk_forward_cv(precomputed, best_params, current_params, baseline_params,
 # ============================================================
 # 主流程
 # ============================================================
+
+def purged_temporal_split(precomputed, train_fraction=0.70, embargo_days=15):
+    """Split a date-sorted panel chronologically and purge labels crossing the split.
+
+    Each sample's target is a forward 15-session return. Training samples whose
+    label window can overlap the holdout are excluded by the date-based embargo.
+    Returns train rows, holdout rows, holdout row index and split metadata.
+    """
+    if not 0.0 < train_fraction < 1.0:
+        raise ValueError("train_fraction must be between 0 and 1")
+    dates = sorted({str(row.get("date", "")).replace("-", "") for row in precomputed
+                    if row.get("date")})
+    if len(dates) < 2:
+        return [], [], 0, {"split_date": None, "train_end_date": None, "embargo_dates": 0}
+    split_date_idx = min(max(int(len(dates) * train_fraction), 1), len(dates) - 1)
+    train_end_idx = max(0, split_date_idx - max(int(embargo_days), 0))
+    train_dates = set(dates[:train_end_idx])
+    test_dates = set(dates[split_date_idx:])
+    train = [row for row in precomputed if str(row.get("date", "")).replace("-", "") in train_dates]
+    test = [row for row in precomputed if str(row.get("date", "")).replace("-", "") in test_dates]
+    test_start_row = next((i for i, row in enumerate(precomputed)
+                           if str(row.get("date", "")).replace("-", "") >= dates[split_date_idx]), len(precomputed))
+    metadata = {
+        "split_date": dates[split_date_idx],
+        "train_end_date": dates[train_end_idx - 1] if train_end_idx else None,
+        "embargo_dates": split_date_idx - train_end_idx,
+    }
+    return train, test, test_start_row, metadata
+
+
+def oos_gate_passed(gate_stats):
+    """Fail closed: missing or undersized out-of-sample evidence never passes."""
+    return bool(gate_stats) and (
+        gate_stats.get("n", 0) >= 4
+        and gate_stats.get("t", 0) >= 2.0
+        and gate_stats.get("positive_rate", 0) >= 0.60
+        and gate_stats.get("overfit_windows", 999) < 2
+    )
+
+
 def main():
     dry_run = "--dry-run" in sys.argv
     fast_mode = "--fast" in sys.argv
@@ -676,7 +721,7 @@ def main():
     logger.info(f"  [量化系统 v7.1] 自进化参数优化引擎")
     logger.info(f"  [时间] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info(f"  [模式] {'预览(不保存)' if dry_run else ('快速' if fast_mode else '标准')}")
-    logger.info(f"  [搜索范围] 16因子权重 + 溢价惩罚曲线(IC评估) + 等级阈值 + ADX(随机搜索)")
+    logger.info("  [搜索范围] 因子权重；溢价、等级阈值和ADX因缺少相应历史标签而固定")
     logger.info("=" * 60)
 
     # Load current config
@@ -705,20 +750,24 @@ def main():
     # ================================================================
     factor_corr_result = compute_factor_correlation(precomputed)
 
-    # v7.2: 按时间切分训练/测试集（时序数据不可随机打乱）
-    # 训练集: 前70%时间 → 优化参数
-    # 测试集: 后30%时间 → 验证过拟合
-    split_idx = int(len(precomputed) * 0.70)
-    train_data = precomputed[:split_idx]
-    test_data = precomputed[split_idx:]
+    # Date-wise split with a 15-session purge because targets use 15-session forward returns.
+    train_data, test_data, split_idx, split_meta = purged_temporal_split(
+        precomputed, train_fraction=0.70, embargo_days=15
+    )
+    if len(train_data) < 50 or len(test_data) < 50:
+        logger.error(
+            "样本外数据不足，拒绝优化和写入参数: train=%d test=%d",
+            len(train_data), len(test_data)
+        )
+        sys.exit(1)
     train_dates = (train_data[0].get('date', '?'), train_data[-1].get('date', '?'))
     test_dates = (test_data[0].get('date', '?'), test_data[-1].get('date', '?'))
-    logger.info(f"  [样本外验证] 训练集: {len(train_data)}点 ({train_dates[0]}~{train_dates[1]})")
-    logger.info(f"  [样本外验证] 测试集: {len(test_data)}点 ({test_dates[0]}~{test_dates[1]})")
-    if len(test_data) < 50:
-        logger.info(f"\n  [WARNING] 测试集数据点不足({len(test_data)}个)，回退全量优化")
-        train_data = precomputed
-        test_data = []
+    logger.info(f"  [净化样本外验证] 训练集: {len(train_data)}点 ({train_dates[0]}~{train_dates[1]})")
+    logger.info(f"  [净化样本外验证] 测试集: {len(test_data)}点 ({test_dates[0]}~{test_dates[1]})")
+    logger.info(
+        "  [前向标签隔离] 训练末日=%s, 隔离=%d个交易日, 测试起点=%s",
+        split_meta["train_end_date"], split_meta["embargo_dates"], split_meta["split_date"]
+    )
 
     # ================================================================
     # Phase 2: 基线测试（在训练集上计算IC）
@@ -750,7 +799,7 @@ def main():
 
     milestone = max(10, n_random // 5)
     for i in range(n_random):
-        params = random_params()
+        params = random_params(current_params)
         ic = evaluate_params(params, train_data)
         if ic > best_ic_train:
             best_ic_train = ic
@@ -801,7 +850,7 @@ def main():
     wfcv_result = walk_forward_cv(
         precomputed, refine_best_params, current_params, baseline_params,
         n_windows=5, train_days=120, test_days=20,
-        min_start=split_idx  # v7.6: 泄漏修复 — 测试段不早于主切分测试集起点
+        min_start=split_idx, embargo_days=15
     )
 
     # ================================================================
@@ -833,11 +882,7 @@ def main():
             "positive_rate": wfcv_result.get("positive_rate", 0) or 0,
             "overfit_windows": wfcv_result.get("overfit_windows", 0),
         }
-    wfcv_passed = (not oos_gate) or (
-        oos_gate["n"] >= 4 and oos_gate["t"] >= 2.0
-        and oos_gate["positive_rate"] >= 0.60
-        and oos_gate["overfit_windows"] < 2
-    )
+    wfcv_passed = oos_gate_passed(oos_gate)
 
     # v7.2: 过拟合检测
     overfitting = (refine_best_ic_train > current_ic_train + 0.003
@@ -933,6 +978,11 @@ def main():
         "reason": reason,
         "train_points": len(train_data),
         "test_points": len(test_data),
+        "validation_split": {
+            **split_meta,
+            "method": "date-wise with forward-label embargo",
+            "forward_horizon_sessions": 15,
+        },
         # v8.0: WFCV 指标
         "wfcv": {
             "n_windows": wfcv_result.get("n_windows", 0),

@@ -10,7 +10,7 @@
 
 用法: python paper_trading.py [--force-weekend]
 """
-import json, sys, os, io, logging, traceback
+import json, sys, os, io, logging, traceback, math
 from datetime import datetime
 
 # 先配置日志（再 import daily_runner，其 basicConfig 因 root 已有 handler 而 no-op，
@@ -32,7 +32,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from daily_runner import (
     update_portfolio_prices, compute_portfolio_summary,
-    compute_benchmark_comparison, is_rest_day, send_failure_alert, OUTPUT_DIR
+    compute_benchmark_comparison, is_rest_day, send_failure_alert, OUTPUT_DIR,
+    _stale_signal_codes, gate_stale_buy_orders
 )
 from data_engine import (
     collect_all_data, KEY_ETFS, USER_WATCHLIST,
@@ -47,10 +48,11 @@ from quant_engine import (
 from backtest_engine import trade_cost, COMMISSION_RATE, SLIPPAGE_BPS
 from report_mailer import generate_html_report, send_email
 from performance_tracker import load_history, compute_equity_curve
+from dca_advisor import evaluate_dca_guidance
 
 TODAY = datetime.now().strftime("%Y%m%d")
 PAPER_PORTFOLIO_FILE = os.path.join(OUTPUT_DIR, "portfolio_paper.json")
-INITIAL_CAPITAL = 500000.0   # 虚拟初始资金
+INITIAL_CAPITAL = 500000.0   # 虚拟初始资金（50万元）
 MAX_PENDING_RETRY = 2        # 连续2个交易日无开盘价则放弃该笔计划
 # 9/19: 单笔最低金额 — 低于此额度的买单不成单(原实现会做几百元的"零钱补仓",
 # 如8/31那笔1,781元, 只是手续费磨损)。同时适用于目标仓位收敛的减仓笔。
@@ -62,23 +64,63 @@ REPORT_PREFIX = "report_paper_"
 # 虚拟账户: 加载 / 原子保存（与实盘 portfolio.json 完全隔离）
 # ============================================================
 def load_paper_portfolio():
-    """加载模拟盘虚拟账户。首次运行创建初始账户（初始资金10万）。
+    """加载模拟盘虚拟账户。首次运行创建初始账户（初始资金50万）。
     只读写 portfolio_paper.json，绝不触碰实盘 portfolio.json"""
     if os.path.exists(PAPER_PORTFOLIO_FILE):
         with open(PAPER_PORTFOLIO_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return {
-        "_comment": "模拟盘虚拟账户（与 portfolio.json 完全隔离）| 初始资金10万 | 由 paper_trading.py 每日18:10自动运行",
+            portfolio = json.load(f)
+        return validate_paper_portfolio(portfolio)
+    return validate_paper_portfolio({
+        "_comment": "模拟盘虚拟账户（与 portfolio.json 完全隔离）| 初始资金50万 | 由 paper_trading.py 每日18:10自动运行",
         "_initial_capital": INITIAL_CAPITAL,
         "_available_cash": INITIAL_CAPITAL,
         "_cash_flows": [{"date": TODAY, "type": "deposit", "amount": INITIAL_CAPITAL,
                          "note": "模拟盘初始资金"}],
         "_pending": [],
-    }
+    })
+
+
+def validate_paper_portfolio(portfolio):
+    """Fail closed on corrupt paper state before it can create or fill orders."""
+    if not isinstance(portfolio, dict):
+        raise ValueError("模拟账户状态必须是JSON对象")
+
+    def finite_number(value, field):
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            raise ValueError(f"模拟账户字段{field}不是有效数字")
+        if not math.isfinite(number):
+            raise ValueError(f"模拟账户字段{field}必须是有限数字")
+        return number
+
+    initial = finite_number(portfolio.get("_initial_capital", INITIAL_CAPITAL), "_initial_capital")
+    cash = finite_number(portfolio.get("_available_cash", 0), "_available_cash")
+    if initial <= 0:
+        raise ValueError("模拟账户初始资金必须大于0")
+    if cash < 0:
+        raise ValueError("模拟账户可用现金不能为负")
+    if not isinstance(portfolio.get("_pending", []), list):
+        raise ValueError("模拟账户待执行订单必须是列表")
+
+    for code, position in portfolio.items():
+        if code.startswith("_"):
+            continue
+        if not isinstance(position, dict):
+            raise ValueError(f"模拟持仓{code}必须是对象")
+        try:
+            shares = int(position.get("shares", 0))
+        except (TypeError, ValueError):
+            raise ValueError(f"模拟持仓{code}股数无效")
+        cost = finite_number(position.get("cost"), f"持仓{code}.cost")
+        if shares <= 0 or cost <= 0:
+            raise ValueError(f"模拟持仓{code}股数和成本必须大于0")
+    return portfolio
 
 
 def save_paper_portfolio(portfolio):
     """原子写虚拟账户（先写临时文件再替换）"""
+    validate_paper_portfolio(portfolio)
     tmp = PAPER_PORTFOLIO_FILE + ".tmp"
     with open(tmp, 'w', encoding='utf-8') as f:
         json.dump(portfolio, f, ensure_ascii=False, indent=2)
@@ -171,6 +213,39 @@ def execute_pending(cash, holdings, pending, price_map):
     return cash, holdings, executed, remaining
 
 
+def gate_paper_plan_freshness(plan, scores, portfolio, etf_data, today):
+    """Keep stale/missing-bar scores from authorizing new paper-trading buys."""
+    stale_codes = _stale_signal_codes(scores, portfolio, etf_data, {}, today)
+    return gate_stale_buy_orders(plan, stale_codes)
+
+
+def expire_stale_pending(pending, etf_data, today):
+    """Expire orders whose signal was not from the immediately prior trading bar.
+
+    This prevents a missed/failed scheduled run from filling an old signal at a
+    much later open. When today's bar is unavailable, keep the existing retry
+    behavior; only expire when the current session and preceding bar are known.
+    """
+    today = str(today).replace("-", "")
+    kept, expired = [], []
+    for order in pending or []:
+        code = order.get("code", "")
+        bars = ((etf_data or {}).get(code) or {}).get("kline") or []
+        if not bars or str(bars[-1].get("date", "")).replace("-", "") != today:
+            kept.append(order)
+            continue
+        if len(bars) < 2:
+            expired.append(order)
+            continue
+        previous_session = str(bars[-2].get("date", "")).replace("-", "")
+        signal_date = str(order.get("signal_date", "")).replace("-", "")
+        if not previous_session or signal_date != previous_session:
+            expired.append(order)
+        else:
+            kept.append(order)
+    return kept, expired
+
+
 def build_pending_from_plan(plan):
     """将今日生成的计划转为明日待执行订单（T+1语义）。
     sell_list 全额卖出; buy_list 按计划股数（次日按开盘价重算可负担量）"""
@@ -194,13 +269,14 @@ def build_pending_from_plan(plan):
 # 报告文本
 # ============================================================
 def format_paper_report(executed_trades, port_summary, timing_result, plan,
-                        benchmark, final_pending, account, trades_history=None):
+                        benchmark, final_pending, account, trades_history=None, scores=None):
     """【模拟盘日报】简洁文本"""
     lines = []
     lines.append("=" * 64)
     lines.append(f"【模拟盘日报】 {TODAY}")
     lines.append(f"虚拟账户: 初始 {INITIAL_CAPITAL:,.0f} 元 | 总资产 {port_summary['total_assets']:,.2f} 元 "
                  f"| 累计收益 {account.get('total_return_pct', 0):+.2f}%")
+    lines.append("说明: 本模拟盘验证50万元策略交易流程，不等同于每月约1000元的长期定投收益回测。")
     # 8/14: 历史平仓胜率(真实交易口径, 来自_trades流水)
     sell_pnls = [t.get("pnl_pct") for t in (trades_history or [])
                  if t.get("action") == "SELL" and t.get("pnl_pct") is not None]
@@ -219,6 +295,13 @@ def format_paper_report(executed_trades, port_summary, timing_result, plan,
                          f"金额 {t['amount']:.2f} 元 {t.get('reason', '')}")
     else:
         lines.append("今日无成交")
+    watch_scores = [s for s in (scores or []) if s.get("is_watchlist")]
+    if watch_scores:
+        lines.append("观察池定投参考（仅供人工判断；技术分不是未来收益概率）:")
+        for score in watch_scores:
+            guidance = score.get("dca_guidance") or {}
+            lines.append(f"  {score.get('name', score.get('code'))}({score.get('code')}): "
+                         f"{guidance.get('action', '数据不足，暂不给时机提示')}；长期适配度未评级")
     if port_summary.get("holdings"):
         lines.append("-" * 64)
         lines.append("当前持仓:")
@@ -241,6 +324,9 @@ def format_paper_report(executed_trades, port_summary, timing_result, plan,
         lines.append(f"基准对比: {benchmark['message']}")
     if final_pending:
         lines.append(f"待执行订单: {len(final_pending)} 笔")
+    expired = plan.get("expired_pending") or []
+    if expired:
+        lines.append(f"过期信号已取消: {len(expired)} 笔（未按过时信号成交）")
     lines.append("=" * 64)
     return "\n".join(lines)
 
@@ -291,6 +377,9 @@ def main():
             price_map[p["code"]] = kline[-1]["open"]
         else:
             price_map[p["code"]] = None
+    pending, expired_pending = expire_stale_pending(pending, etf_data, TODAY)
+    if expired_pending:
+        logger.warning("  [过期信号] 已取消%d笔非上一交易日计划", len(expired_pending))
     cash, holdings, executed_trades, remaining = execute_pending(cash, holdings, pending, price_map)
     if executed_trades:
         logger.info("  成交 " + " | ".join(
@@ -473,6 +562,16 @@ def main():
     # 实盘日报(daily_runner)不传此参数, 行为与改造前一致(用户决策: 先只放模拟盘)。
     decider = TradeDecider(scores, timing_result, portfolio, autonomous=True)
     plan = decider.generate_plan(min_order_amount=PAPER_MIN_ORDER_AMOUNT)
+    dca_stale_codes = _stale_signal_codes(scores, portfolio, etf_data, {}, TODAY)
+    for score in scores:
+        bars = (etf_data.get(score.get("code")) or {}).get("kline") or []
+        score["dca_guidance"] = evaluate_dca_guidance(
+            score, data_is_current=score.get("code") not in dca_stale_codes,
+            history_len=len(bars), regime=timing_result.get("regime")
+        )
+    plan = gate_paper_plan_freshness(plan, scores, portfolio, etf_data, TODAY)
+    if plan.get("data_warnings"):
+        logger.warning("  [新鲜度门禁] %s", " | ".join(plan["data_warnings"]))
 
     # S5. 基准对比（模拟盘无出入金, 口径简单: 总资产/初始资金）
     benchmark = compute_benchmark_comparison(portfolio, indices_data, report_prefix=REPORT_PREFIX)
@@ -503,6 +602,7 @@ def main():
     # 防堆积: 数据滞后时旧订单未执行会不断累积 — 同代码同方向的旧订单被今日新信号覆盖
     # (执行过的订单已从remaining移除; 不同方向如SELL+BUY同日保留, 先卖后买)
     new_pending = build_pending_from_plan(plan)
+    plan["expired_pending"] = expired_pending
     pending_keys = {(p["code"], p["action"]) for p in new_pending}
     # 8/14修复: 停牌订单的retries不因新信号覆盖而归零(原覆盖后重试上限失效, 订单无限滞留)
     retry_carry = {}
@@ -518,7 +618,7 @@ def main():
 
     report = format_paper_report(executed_trades, port_summary, timing_result, plan,
                                  benchmark, final_pending, account,
-                                 trades_history=portfolio.get("_trades"))
+                                 trades_history=portfolio.get("_trades"), scores=scores)
     # 8/19加固: stale数据时报告顶部显著告警(邮件正文+HTML同源)
     if stale_codes:
         report = ("⚠️⚠️⚠️ 数据滞后告警 ⚠️⚠️⚠️\n"
@@ -539,6 +639,7 @@ def main():
         "scores": scores,
         "plan": plan,
         "executed_trades": executed_trades,
+        "expired_pending": expired_pending,
         "pending": final_pending,
         "portfolio": port_summary,
         "benchmark": benchmark,

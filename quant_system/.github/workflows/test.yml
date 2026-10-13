@@ -8,6 +8,7 @@ on:
       - '**.py'
       - '**.json'
       - '.github/workflows/test.yml'
+      - 'quant_system/.github/workflows/paper_quant.yml'
   pull_request:
     branches: [main]
   workflow_dispatch:  # 也支持手动触发

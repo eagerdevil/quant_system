@@ -172,7 +172,7 @@ SYSTEM_CONFIG = {
     "default_stop_loss": -0.08,         # 默认止损线
     "default_take_profit": 0.08,        # 默认止盈线
     # --- 回测 ---
-    "commission_rate": 0.0005,          # 手续费率(万5)
+    "commission_rate": 0.00025,         # ETF佣金率(千分之0.25，账户记录口径)
     "min_klines_for_backtest": 300,     # 回测最少K线条数
     "backtest_lookback_days": 250,      # 回测预加载天数
 }
@@ -320,6 +320,8 @@ def sharpe(closes, rf=0.025):
     """夏普比率 — numpy 向量化，返回标量"""
     arr = _to_np(closes)
     rets = np.diff(arr) / arr[:-1]
+    if len(rets) == 0:
+        return 0.0
     avg_ret = np.mean(rets)
     std_ret = np.std(rets, ddof=1) if len(rets) > 1 else 0.01
     if std_ret == 0:
@@ -331,6 +333,8 @@ def sortino(closes, rf=0.025):
     """Sortino比率 — numpy 向量化，返回标量"""
     arr = _to_np(closes)
     rets = np.diff(arr) / arr[:-1]
+    if len(rets) == 0:
+        return 1.0  # 数据不足时中性回退, 不制造NaN
     avg_ret = np.mean(rets)
     down_rets = rets[rets < 0]
     if len(down_rets) < 2:

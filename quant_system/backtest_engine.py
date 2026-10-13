@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_engine import fetch_etf_kline, fetch_index_daily, KEY_ETFS
 from quant_engine import (
     compute_indicators, score_factors, sma, FACTOR_MAX,
-    CURRENT_WEIGHTS, FACTOR_NAMES, SYSTEM_CONFIG
+    DEFAULT_WEIGHTS, FACTOR_NAMES, SYSTEM_CONFIG
 )
 
 # 8/14: 权重历史加载 — 回测按时间切片消除前视偏差
@@ -34,29 +34,35 @@ def _load_weight_history():
             hist = json.load(f)
         if not isinstance(hist, list):
             return []
-        hist.sort(key=lambda h: str(h.get("date", "")))
+        hist.sort(key=lambda h: str(h.get("date", "")).replace("-", ""))
         return [h for h in hist if isinstance(h.get("factor_weights"), dict)]
     except (OSError, json.JSONDecodeError):
         return []
 
 def _weight_slice_for(date_str, history=None):
-    """
-    返回date_str(YYYYMMDD)当日适用的权重 — 取<=date的最晚版本
-    无匹配(回测早于首版权重) → 返回None, 调用方需警告前视
-    """
+    """Return the latest factor weights published on or before date_str."""
     if history is None:
         history = _load_weight_history()
-    best = None
-    for h in history:
-        hd = str(h.get("date", "")).replace("-", "")
-        if hd and hd <= str(date_str).replace("-", ""):
-            best = h["factor_weights"]
-        else:
-            break
-    return best
+    target = str(date_str).replace("-", "")
+    eligible = [
+        h for h in history
+        if isinstance(h, dict)
+        and isinstance(h.get("factor_weights"), dict)
+        and str(h.get("date", "")).replace("-", "")
+        and str(h.get("date", "")).replace("-", "") <= target
+    ]
+    if not eligible:
+        return None
+    best = max(eligible, key=lambda h: str(h.get("date", "")).replace("-", ""))
+    return best["factor_weights"]
+
+
+def _weights_for_backtest_date(date_str, history=None):
+    """Use only weights available at the simulated date; equal weights before first version."""
+    return _weight_slice_for(date_str, history) or dict(DEFAULT_WEIGHTS)
 
 TODAY = datetime.now().strftime("%Y%m%d")
-COMMISSION_RATE = SYSTEM_CONFIG['commission_rate']  # 万5 (0.0005)
+COMMISSION_RATE = SYSTEM_CONFIG['commission_rate']  # ETF佣金0.25‰ (0.00025)
 MIN_COMMISSION = 5.0       # A股最低佣金5元/笔
 SLIPPAGE_BPS = 1.0         # 滑点1bp (0.01%)，ETF流动性好取低值
 STAMP_DUTY_SELL = 0.0      # ETF免印花税（个股为0.05%）
@@ -65,7 +71,7 @@ def trade_cost(shares, price, is_buy=True):
     """计算真实交易成本（含最低佣金+滑点）
 
     A股ETF交易成本:
-    - 佣金: 万2.5(双向), 最低5元/笔
+    - 佣金: 千分之0.25(双向), 最低5元/笔
     - 印花税: 0 (ETF免)
     - 滑点: 约1bp
 
@@ -294,9 +300,11 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
     weight_history = _load_weight_history()
     if weight_history:
         logger.info(f"[回测] 权重历史: {len(weight_history)}个版本, 按日期切片生效 "
-                    f"(最早{weight_history[0].get('date')}~最新{weight_history[-1].get('date')})")
+                    f"(最早{weight_history[0].get('date')}~最新{weight_history[-1].get('date')}); "
+                    "首版本前使用等权，禁止使用未来权重")
     else:
-        logger.info("[回测] ⚠️ 无权重历史文件, 全程使用当前权重(区间早于权重生效日时存在前视)")
+        logger.info("[回测] 无权重历史文件, 全程使用等权，不使用当前优化权重回填历史")
+    weight_fallback_observations = 0
 
     # v7.6 (8/5): 消除前视偏差 — T日收盘计算信号 → T+1日开盘价执行
     # pending: [{code, name, action, shares, reason}]，每个T日信号层生成，次日执行层用开盘价成交
@@ -332,13 +340,14 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
                 if pos is None:
                     continue
                 sell_shares = min(p["shares"], pos["shares"])
-                sell_amount, _ = trade_cost(sell_shares, exec_price, is_buy=False)
+                sell_amount, sell_fee = trade_cost(sell_shares, exec_price, is_buy=False)
                 cash += sell_amount
                 pnl_pct = (exec_price / pos["cost"] - 1) * 100
                 trades_log.append({
                     "date": today, "code": code, "name": pos["name"],
                     "action": p["action"], "price": exec_price,
                     "shares": sell_shares, "amount": round(sell_amount, 2),
+                    "fee": round(sell_fee, 2),
                     "pnl_pct": round(pnl_pct, 1), "reason": p["reason"]
                 })
                 if sell_shares >= pos["shares"]:
@@ -350,13 +359,13 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
                 if code in holdings:
                     continue
                 buy_shares = p["shares"]
-                cost_with_fee, _ = trade_cost(buy_shares, exec_price, is_buy=True)
+                cost_with_fee, buy_fee = trade_cost(buy_shares, exec_price, is_buy=True)
                 if cost_with_fee > cash:
                     affordable = int(cash / (exec_price * (1 + COMMISSION_RATE) + exec_price * SLIPPAGE_BPS / 10000) / 100) * 100
                     if affordable < 100:
                         continue
                     buy_shares = affordable
-                    cost_with_fee, _ = trade_cost(buy_shares, exec_price, is_buy=True)
+                    cost_with_fee, buy_fee = trade_cost(buy_shares, exec_price, is_buy=True)
                     if cost_with_fee > cash:  # P0修复: 最低5元佣金使实际成本可超估算, 现金永不为负
                         continue
                 if buy_shares < 100:
@@ -367,7 +376,8 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
                 trades_log.append({
                     "date": today, "code": code, "name": p["name"],
                     "action": "BUY", "price": exec_price, "shares": buy_shares,
-                    "amount": round(cost_with_fee, 2), "reason": p["reason"]
+                    "amount": round(cost_with_fee, 2), "fee": round(buy_fee, 2),
+                    "reason": p["reason"]
                 })
         pending.clear()
 
@@ -395,7 +405,10 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
                 indicators = compute_indicators(closes, highs, lows, volumes)
                 factors = score_factors(indicators)
                 # 8/14: 权重时间切片 — 按日期取当时生效的权重版本(无历史时用当前+警告)
-                weights = _weight_slice_for(today, weight_history) or CURRENT_WEIGHTS
+                weights = _weight_slice_for(today, weight_history)
+                if weights is None:
+                    weights = DEFAULT_WEIGHTS
+                    weight_fallback_observations += 1
                 weighted_sum = sum(factors[k] * weights.get(k, 1.0) for k in FACTOR_NAMES)
                 max_weighted = sum(FACTOR_MAX[k] * weights.get(k, 1.0) for k in FACTOR_NAMES)
                 score = round(weighted_sum / max_weighted * 100) if max_weighted > 0 else 50
@@ -578,6 +591,13 @@ def run_backtest(data, initial_capital=DEFAULT_CAPITAL):
             "min_commission": MIN_COMMISSION,
             "slippage_bps": SLIPPAGE_BPS,
             "pool_size": len(valid_etfs), "trading_days": len(equity_days),
+            "weight_fallback_observations": weight_fallback_observations,
+            "weight_fallback_policy": "equal weights before first historically available weight version",
+            "universe_method": "fixed ETF universe supplied to this run",
+            "survivorship_bias_warning": (
+                "This run uses a fixed ETF universe and does not reconstruct historical listings or delistings; "
+                "returns may contain survivorship bias."
+            ),
         }
     }
 
@@ -640,18 +660,71 @@ def _calc_metrics(equity_curve, initial_capital, trades):
     # 超额收益 vs 基准
     excess_return = total_return - float((bench_navs[-1] / bench_navs[0] - 1) * 100)
 
-    # 交易统计
-    buys = [t for t in trades if t["action"] == "BUY"]
-    sells = [t for t in trades if t["action"] == "SELL"]
-    sell_pnls = []
-    for t in sells:
-        matching_buys = [b for b in buys if b["code"] == t["code"] and b["date"] <= t["date"]]
-        if matching_buys:
-            buy_price = matching_buys[-1]["price"]
-            sell_pnls.append((t["price"] / buy_price - 1) * 100)
+    # Closed-trade performance: FIFO lots, including entry/exit commission and slippage.
+    # Legacy trade logs without a fee field are repriced with the current cost model.
+    lots_by_code = {}
+    net_trade_returns = []
+    gross_trade_returns = []
+    net_trade_pnls = []
+    ordered_trades = sorted(enumerate(trades), key=lambda item: (item[1].get("date", ""), item[0]))
+    for _, trade in ordered_trades:
+        code = trade.get("code")
+        shares = int(trade.get("shares", 0) or 0)
+        price = float(trade.get("price", 0) or 0)
+        if not code or shares <= 0 or price <= 0:
+            continue
+        fee = trade.get("fee")
+        if fee is None:
+            fee = trade_cost(shares, price, is_buy=(trade.get("action") == "BUY"))[1]
+        fee = float(fee or 0)
 
-    winning_trades = len([p for p in sell_pnls if p > 0])
-    trade_win_rate = winning_trades / len(sell_pnls) * 100 if sell_pnls else 0
+        if trade.get("action") == "BUY":
+            lots_by_code.setdefault(code, []).append({
+                "shares": shares,
+                "unit_basis": (shares * price + fee) / shares,
+                "unit_gross_basis": price,
+            })
+            continue
+        if trade.get("action") != "SELL":
+            continue
+
+        remaining = shares
+        matched_shares = 0
+        net_basis = 0.0
+        gross_basis = 0.0
+        lots = lots_by_code.setdefault(code, [])
+        while remaining > 0 and lots:
+            lot = lots[0]
+            matched = min(remaining, lot["shares"])
+            matched_shares += matched
+            net_basis += matched * lot["unit_basis"]
+            gross_basis += matched * lot["unit_gross_basis"]
+            lot["shares"] -= matched
+            remaining -= matched
+            if lot["shares"] == 0:
+                lots.pop(0)
+
+        if matched_shares == 0:
+            continue
+        allocated_exit_fee = fee * matched_shares / shares
+        net_proceeds = matched_shares * price - allocated_exit_fee
+        gross_proceeds = matched_shares * price
+        net_trade_pnls.append(net_proceeds - net_basis)
+        net_trade_returns.append((net_proceeds / net_basis - 1) * 100 if net_basis > 0 else 0.0)
+        gross_trade_returns.append((gross_proceeds / gross_basis - 1) * 100 if gross_basis > 0 else 0.0)
+
+    realized_wins = sum(pnl for pnl in net_trade_pnls if pnl > 0)
+    realized_losses = abs(sum(pnl for pnl in net_trade_pnls if pnl < 0))
+    trade_profit_factor = (
+        realized_wins / realized_losses if realized_losses > 0
+        else (999.0 if realized_wins > 0 else 0.0)
+    )
+    winning_trades = sum(1 for ret in net_trade_returns if ret > 0)
+    trade_win_rate = winning_trades / len(net_trade_returns) * 100 if net_trade_returns else 0.0
+    gross_trade_win_rate = (
+        sum(1 for ret in gross_trade_returns if ret > 0) / len(gross_trade_returns) * 100
+        if gross_trade_returns else 0.0
+    )
 
     return {
         "total_return_pct": round(total_return, 2),
@@ -663,9 +736,13 @@ def _calc_metrics(equity_curve, initial_capital, trades):
         "calmar_ratio": round(calmar, 2),
         "win_rate": round(win_rate, 1),
         "profit_factor": round(profit_factor, 2) if profit_factor != 999 else 999,
+        "daily_payoff_ratio": round(profit_factor, 2) if profit_factor != 999 else 999,
+        "trade_profit_factor": round(trade_profit_factor, 2),
         "total_trades": len(trades),
         "winning_trades": winning_trades,
-        "trade_win_rate": round(trade_win_rate, 1) if sell_pnls else 0,
+        "trade_win_rate": round(trade_win_rate, 1),
+        "gross_trade_win_rate": round(gross_trade_win_rate, 1),
+        "closed_trades": len(net_trade_returns),
         "excess_return_pct": round(excess_return, 2),
         "final_nav": round(float(final_nav), 2),
         "initial_capital": initial_capital,
@@ -781,6 +858,7 @@ def generate_full_report(start_date=None, end_date=None, output_path=None):
   .metric {{ background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }}
   .metric .label {{ font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }}
   .metric .value {{ font-size: 24px; font-weight: 700; margin-top: 4px; }}
+  .notice {{ background: #3b2e12; border: 1px solid #8a6d1d; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; color: #f0d98c; font-size: 13px; }}
   .pos {{ color: var(--green); }} .neg {{ color: var(--red); }} .neutral {{ color: var(--blue); }}
   .chart-box {{ background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }}
   .chart-box h2 {{ color: var(--blue); font-size: 16px; margin-bottom: 12px; }}
@@ -791,6 +869,7 @@ def generate_full_report(start_date=None, end_date=None, output_path=None):
 </style></head><body><div class="container">
 <h1>📊 量化策略回测报告</h1>
 <div class="subtitle">回测区间: {start_date} → {end_date} | 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M')} | 初始资金: {metrics['initial_capital']:,.0f}元</div>
+<div class="notice">⚠️ {result['config']['survivorship_bias_warning']}</div>
 
 <!-- 绩效指标 -->
 <div class="metrics">
@@ -799,8 +878,10 @@ def generate_full_report(start_date=None, end_date=None, output_path=None):
 <div class="metric"><div class="label">夏普比率</div><div class="value neutral">{metrics['sharpe_ratio']:.2f}</div></div>
 <div class="metric"><div class="label">最大回撤</div><div class="value neg">{metrics['max_drawdown_pct']:.1f}%</div></div>
 <div class="metric"><div class="label">Calmar</div><div class="value neutral">{metrics['calmar_ratio']:.2f}</div></div>
-<div class="metric"><div class="label">胜率</div><div class="value {'pos' if metrics['trade_win_rate']>=50 else 'neg'}">{metrics['trade_win_rate']:.0f}%</div></div>
-<div class="metric"><div class="label">盈亏比</div><div class="value neutral">{metrics.get('profit_factor', 0):.2f}</div></div>
+<div class="metric"><div class="label">平仓净胜率</div><div class="value {'pos' if metrics['trade_win_rate']>=50 else 'neg'}">{metrics['trade_win_rate']:.0f}%</div></div>
+<div class="metric"><div class="label">平仓毛胜率</div><div class="value neutral">{metrics['gross_trade_win_rate']:.0f}%</div></div>
+<div class="metric"><div class="label">交易盈亏比</div><div class="value neutral">{metrics.get('trade_profit_factor', 0):.2f}</div></div>
+<div class="metric"><div class="label">日收益盈亏比</div><div class="value neutral">{metrics.get('daily_payoff_ratio', 0):.2f}</div></div>
 <div class="metric"><div class="label">超额收益</div><div class="value {'pos' if metrics['excess_return_pct']>=0 else 'neg'}">{metrics['excess_return_pct']:+.1f}%</div></div>
 <div class="metric"><div class="label">总交易</div><div class="value neutral">{metrics['total_trades']}</div></div>
 <div class="metric"><div class="label">最终净值</div><div class="value neutral">{metrics['final_nav']:.0f}元</div></div>

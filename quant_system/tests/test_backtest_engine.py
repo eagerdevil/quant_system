@@ -11,7 +11,7 @@ import pytest
 
 from backtest_engine import (
     trade_cost, COMMISSION_RATE, MIN_COMMISSION, SLIPPAGE_BPS,
-    _calc_metrics,
+    _calc_metrics, _weight_slice_for, _weights_for_backtest_date,
 )
 
 
@@ -27,6 +27,9 @@ class TestTradeCost:
         assert abs(fee - (expected_commission + expected_slippage)) < 0.01
         # 买入: amount = trade_amount + fee
         assert amount > 10000 * 5.0
+
+    def test_etf_commission_matches_account_config(self):
+        assert COMMISSION_RATE == pytest.approx(0.00025)
 
     def test_small_trade_min_commission(self):
         """小账户交易: 最低佣金5元"""
@@ -63,6 +66,20 @@ class TestTradeCost:
 # ================================================================
 # 绩效指标测试
 # ================================================================
+class TestHistoricalWeightPolicy:
+    def test_before_first_version_uses_equal_weights_not_current_weights(self):
+        history = [{"date": "20260623", "factor_weights": {"F1": 2.0}}]
+        assert _weight_slice_for("20250101", history) is None
+        assert _weights_for_backtest_date("20250101", history)["F1_趋势强度"] == 1.0
+
+    def test_unsorted_mixed_format_history_selects_latest_available(self):
+        history = [
+            {"date": "2026-08-01", "factor_weights": {"F1": 3.0}},
+            {"date": "20260623", "factor_weights": {"F1": 1.0}},
+        ]
+        assert _weight_slice_for("20260701", history) == {"F1": 1.0}
+
+
 class TestMetrics:
     def setup_method(self):
         """构造模拟权益曲线: 轻微上涨+波动"""
@@ -112,6 +129,39 @@ class TestMetrics:
         # 盈利交易: 买入4.5→卖出5.0
         assert m["winning_trades"] == 1
         assert m["trade_win_rate"] > 0
+
+    def test_trade_win_rate_accounts_for_round_trip_costs(self):
+        curve = [
+            {"date": "2024-01-01", "nav": 100000, "benchmark_nav": 100000},
+            {"date": "2024-01-02", "nav": 100000, "benchmark_nav": 100000},
+        ]
+        trades = [
+            {"date": "2024-01-01", "code": "510300", "action": "BUY", "price": 4.50, "shares": 100},
+            {"date": "2024-01-02", "code": "510300", "action": "SELL", "price": 4.51, "shares": 100},
+        ]
+        metrics = _calc_metrics(curve, 100000, trades)
+        assert metrics["gross_trade_win_rate"] == 100.0
+        assert metrics["trade_win_rate"] == 0.0
+        assert metrics["trade_profit_factor"] == 0.0
+        assert metrics["winning_trades"] == 0
+        assert metrics["closed_trades"] == 1
+
+    def test_partial_sells_match_fifo_buy_lots(self):
+        curve = [
+            {"date": "2024-01-01", "nav": 100000, "benchmark_nav": 100000},
+            {"date": "2024-01-02", "nav": 100000, "benchmark_nav": 100000},
+        ]
+        trades = [
+            {"date": "2024-01-01", "code": "510300", "action": "BUY", "price": 10.0, "shares": 100, "fee": 0},
+            {"date": "2024-01-02", "code": "510300", "action": "SELL", "price": 11.0, "shares": 50, "fee": 0},
+            {"date": "2024-01-03", "code": "510300", "action": "SELL", "price": 9.0, "shares": 50, "fee": 0},
+        ]
+        metrics = _calc_metrics(curve, 100000, trades)
+        assert metrics["closed_trades"] == 2
+        assert metrics["winning_trades"] == 1
+        assert metrics["trade_win_rate"] == 50.0
+        assert metrics["gross_trade_win_rate"] == 50.0
+        assert metrics["trade_profit_factor"] == 1.0
 
     def test_empty_curve(self):
         m = _calc_metrics([], 100000, [])

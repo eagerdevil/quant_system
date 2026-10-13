@@ -179,3 +179,27 @@ class TestTotalPnlRendering:
         md = generate_wechat_markdown(_sample_report())
         assert "总盈亏" in md
         assert "+5352.84元" in md
+
+
+class TestDcaReportRendering:
+    def test_watchlist_is_rendered_as_dca_reference_not_buy_grade(self):
+        report = _sample_report()
+        report["scores"] = [{
+            "code": "159659", "name": "纳指ETF", "score": 84, "price": 1.25,
+            "is_watchlist": True, "is_holding": False, "is_stock": False,
+            "grade": "A_强烈买入", "indicators": {"rsi": 73, "consecutive_up": 2},
+            "returns": {"r5d": 9.0, "r20d": 12.0, "r60d": 15.0},
+            "dca_guidance": {
+                "action": "基础定投可照常；暂不追涨或额外加码",
+                "data_confidence": "中（未校准）", "reasons": ["近5日上涨9.0%"],
+                "budget_context": "参考月投入约1000元；最低佣金成本需核对",
+            },
+        }]
+        html = generate_html_report(report)
+        md = generate_wechat_markdown(report)
+        assert "观察池定投参考" in html
+        assert "基础定投可照常" in html
+        assert "长期适配度尚未评级" in html
+        assert "观察池定投参考" in md
+        assert "基础定投可照常" in md
+        assert "🟢可买入" not in md

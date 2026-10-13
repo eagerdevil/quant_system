@@ -11,7 +11,8 @@ import pytest
 from paper_trading import (
     load_paper_portfolio, save_paper_portfolio,
     execute_pending, build_pending_from_plan,
-    MAX_PENDING_RETRY, INITIAL_CAPITAL, REPORT_PREFIX,
+    MAX_PENDING_RETRY, INITIAL_CAPITAL, REPORT_PREFIX, gate_paper_plan_freshness,
+    validate_paper_portfolio, expire_stale_pending,
 )
 from backtest_engine import trade_cost
 from daily_runner import compute_benchmark_comparison
@@ -195,6 +196,23 @@ class TestIsolation:
         assert p2["510300"]["shares"] == 1000
         assert p2["_pending"][0]["code"] == "510300"
 
+    def test_state_validation_rejects_negative_cash(self):
+        """坏账户状态必须在撮合前失败关闭，不能形成负现金模拟成交。"""
+        with pytest.raises(ValueError, match="现金不能为负"):
+            validate_paper_portfolio({"_initial_capital": INITIAL_CAPITAL,
+                                      "_available_cash": -1, "_pending": []})
+
+    def test_state_validation_rejects_non_finite_numbers(self):
+        with pytest.raises(ValueError, match="有限数字"):
+            validate_paper_portfolio({"_initial_capital": INITIAL_CAPITAL,
+                                      "_available_cash": float("nan"), "_pending": []})
+
+    def test_state_validation_rejects_invalid_holding(self):
+        with pytest.raises(ValueError, match="必须大于0"):
+            validate_paper_portfolio({"_initial_capital": INITIAL_CAPITAL,
+                                      "_available_cash": 1000, "_pending": [],
+                                      "510300": {"shares": 100, "cost": 0}})
+
 
 # ================================================================
 # 计划 → T+1 待执行订单
@@ -254,3 +272,57 @@ class TestBenchmarkPrefix:
         assert "!report_paper_*.json" in content
         # 否定规则必须位于 report_*.json 之后才生效
         assert content.index("!report_paper_*.json") > content.index("report_*.json")
+
+
+class TestPaperFreshnessGate:
+    def test_stale_bar_blocks_new_buy_and_keeps_risk_reducing_sell(self):
+        plan = {
+            "buy_list": [{"code": "510300"}, {"code": "159915"}],
+            "sell_list": [{"code": "510300"}],
+        }
+        scores = [{"code": "510300"}, {"code": "159915"}]
+        etf_data = {
+            "510300": {"kline": [{"date": "2026-10-12", "close": 4.0}]},
+            "159915": {"kline": [{"date": "2026-10-13", "close": 2.0}]},
+        }
+        filtered = gate_paper_plan_freshness(
+            plan, scores, {"510300": {"shares": 100}}, etf_data, "20261013"
+        )
+        assert filtered["buy_list"] == [{"code": "159915"}]
+        assert filtered["sell_list"] == [{"code": "510300"}]
+        assert "510300" in filtered["data_warnings"][0]
+
+    def test_missing_bar_blocks_buy(self):
+        plan = {"buy_list": [{"code": "510300"}], "sell_list": []}
+        filtered = gate_paper_plan_freshness(
+            plan, [{"code": "510300"}], {}, {}, "20261013"
+        )
+        assert filtered["buy_list"] == []
+        assert filtered["data_warnings"]
+
+
+class TestPendingSignalAge:
+    def test_keeps_only_previous_session_signal(self):
+        bars = [{"date": "2026-10-12", "open": 4.0},
+                {"date": "2026-10-13", "open": 4.1}]
+        valid = _mk_pending(signal_date="20261012")
+        stale = _mk_pending(code="159915", signal_date="20261009")
+        kept, expired = expire_stale_pending(
+            [valid, stale], {"510300": {"kline": bars},
+                             "159915": {"kline": bars}}, "20261013")
+        assert kept == [valid]
+        assert expired == [stale]
+
+    def test_missing_current_session_keeps_retry_behavior(self):
+        pending = _mk_pending(signal_date="20261012")
+        kept, expired = expire_stale_pending(
+            [pending], {"510300": {"kline": [{"date": "2026-10-12"}]}}, "20261013")
+        assert kept == [pending]
+        assert expired == []
+
+    def test_current_bar_without_previous_bar_fails_closed(self):
+        pending = _mk_pending(signal_date="20261012")
+        kept, expired = expire_stale_pending(
+            [pending], {"510300": {"kline": [{"date": "2026-10-13"}]}}, "20261013")
+        assert kept == []
+        assert expired == [pending]
