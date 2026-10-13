@@ -334,7 +334,38 @@ def format_paper_report(executed_trades, port_summary, timing_result, plan,
 # ============================================================
 # 主流程（每日状态机）
 # ============================================================
+def resend_existing_report_email():
+    """Send today's already-generated paper report without running the trading state machine."""
+    report_path = os.path.join(OUTPUT_DIR, f"{REPORT_PREFIX}{TODAY}.json")
+    if not os.path.isfile(report_path):
+        raise FileNotFoundError(f"当日模拟盘报告不存在: {report_path}")
+
+    email_pw = os.environ.get("QQMAIL_AUTH_CODE")
+    if not email_pw:
+        config_path = os.path.join(OUTPUT_DIR, "email_config.json")
+        if os.path.isfile(config_path):
+            try:
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    email_pw = json.load(f).get("QQMAIL_AUTH_CODE")
+            except (OSError, json.JSONDecodeError):
+                pass
+    if not email_pw:
+        raise RuntimeError("未配置QQMAIL_AUTH_CODE，无法发送模拟盘日报")
+
+    with open(report_path, 'r', encoding='utf-8') as f:
+        report = json.load(f)
+    html = generate_html_report(report)
+    subject = f"【模拟盘日报】 - {datetime.now().strftime('%Y.%m.%d')}（补发）"
+    if not send_email(html, email_pw, report_date=TODAY, subject=subject):
+        raise RuntimeError("模拟盘日报邮件发送失败")
+    logger.info("已有模拟盘日报邮件已发送；未重新运行模拟交易")
+
+
 def main():
+    if "--resend-email" in sys.argv:
+        resend_existing_report_email()
+        return
+
     is_rest, reason = is_rest_day()
     if is_rest:
         logger.info(f"{reason}，休市跳过（模拟盘状态零改动）")

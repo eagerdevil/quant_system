@@ -7,6 +7,8 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
+import json
+import paper_trading
 
 from paper_trading import (
     load_paper_portfolio, save_paper_portfolio,
@@ -16,6 +18,28 @@ from paper_trading import (
 )
 from backtest_engine import trade_cost
 from daily_runner import compute_benchmark_comparison
+
+
+def test_resend_email_only_sends_existing_report_without_running_trading(tmp_path, monkeypatch):
+    report_path = tmp_path / f"{REPORT_PREFIX}20261013.json"
+    original = {"date": "20261013", "report": "existing"}
+    report_path.write_text(json.dumps(original), encoding="utf-8")
+    sent = {}
+
+    monkeypatch.setattr(paper_trading, "TODAY", "20261013")
+    monkeypatch.setattr(paper_trading, "OUTPUT_DIR", str(tmp_path))
+    monkeypatch.setattr(paper_trading, "generate_html_report", lambda report: "<html>existing</html>")
+    monkeypatch.setattr(paper_trading, "send_email", lambda html, pw, **kwargs: sent.update(
+        html=html, password=pw, kwargs=kwargs) or True)
+    monkeypatch.setenv("QQMAIL_AUTH_CODE", "test-secret")
+    monkeypatch.setattr(sys, "argv", ["paper_trading.py", "--resend-email"])
+
+    paper_trading.main()
+
+    assert sent["html"] == "<html>existing</html>"
+    assert sent["password"] == "test-secret"
+    assert "补发" in sent["kwargs"]["subject"]
+    assert json.loads(report_path.read_text(encoding="utf-8")) == original
 
 
 def _mk_pending(code="510300", action="BUY", shares=1000, retries=0, signal_date="20260811"):

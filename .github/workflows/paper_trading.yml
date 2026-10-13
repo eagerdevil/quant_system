@@ -5,6 +5,12 @@ name: 模拟盘日报
 # GitHub Actions 无状态 → 模拟盘状态靠 git 提交回推持久化（.gitignore 已放行 !report_paper_*.json）
 on:
   workflow_dispatch:
+    inputs:
+      resend_email_only:
+        description: 仅补发当日已生成的模拟盘日报邮件，不重复运行模拟交易
+        required: false
+        default: false
+        type: boolean
 
 # 防止并发运行导致 git push 冲突
 concurrency:
@@ -56,7 +62,12 @@ jobs:
           QQMAIL_AUTH_CODE: ${{ secrets.QQMAIL_AUTH_CODE }}
         run: |
           echo "===== 模拟盘开始: $(date '+%Y-%m-%d %H:%M') ====="
-          cd quant_system && python paper_trading.py 2>&1
+          cd quant_system
+          if [ "${{ inputs.resend_email_only }}" = "true" ]; then
+            python paper_trading.py --resend-email 2>&1
+          else
+            python paper_trading.py 2>&1
+          fi
           echo "===== 模拟盘完成: $(date '+%Y-%m-%d %H:%M') ====="
 
       - name: 生成监控站 manifest + 提交模拟盘状态
