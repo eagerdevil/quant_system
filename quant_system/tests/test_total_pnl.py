@@ -162,9 +162,7 @@ class TestTotalPnlRendering:
     def test_html_report_contains_total_pnl(self):
         html = generate_html_report(_sample_report())
         assert "总盈亏" in html
-        assert "累计净投入" in html
         assert "+5352.84元" in html
-        assert "3,075.73元" in html  # 累计净投入千分位
 
     def test_html_report_no_flows_shows_dash(self):
         r = _sample_report()
@@ -197,9 +195,9 @@ class TestDcaReportRendering:
         }]
         html = generate_html_report(report)
         md = generate_wechat_markdown(report)
-        assert "观察池定投参考" in html
-        assert "基础定投可照常" in html
-        assert "长期适配度尚未评级" in html
-        assert "观察池定投参考" in md
-        assert "基础定投可照常" in md
+        assert "ETF 观察池" in html
+        assert "基础定投可照常" not in html
+        assert "数据不足" in html
+        assert "ETF观察池" in md
+        assert "基础定投可照常" not in md
         assert "🟢可买入" not in md

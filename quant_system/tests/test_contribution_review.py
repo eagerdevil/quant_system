@@ -81,4 +81,6 @@ def test_draft_priorities_explain_costs_without_becoming_orders():
     assert not data['plan']['review_candidates'] and not data['plan']['buy_list']
     assert data['priorities'][0]['purchase_example']['shares']==700
     html=render_long_term_html({'long_term':data})
-    assert '本月优先复核' in html and '合计需现金' in format_long_term_text(data,summary)
+    assert 'ETF 观察池' in html
+    assert '本月优先复核' not in html
+    assert '合计需现金' not in format_long_term_text(data,summary)

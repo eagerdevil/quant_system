@@ -863,7 +863,9 @@ def main():
         sum(t.get("commission", 0) + t.get("slippage", 0) for t in executed_trades), dividends)
     if stale_codes:
         output["research"]["warnings"].append("账户存在陈旧估值，收益和回撤暂定；不作策略优劣结论")
-    output["report"] = research_text(output) + "\n\n" + report
+    from daily_brief import market_snapshot, render_daily_text
+    output["market_snapshot"] = market_snapshot(all_data.get("indices", {}), TODAY)
+    output["report"] = render_daily_text(output)
     commit_paper_report(portfolio, output, final_pending, cash)
     logger.info(f"虚拟账户已保存: {PAPER_PORTFOLIO_FILE}")
 

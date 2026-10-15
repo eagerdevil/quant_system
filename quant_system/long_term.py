@@ -224,7 +224,7 @@ def build_long_term_report(scores, portfolio, summary, today, config, catalog, l
         overlap = disclosed_overlap(code, catalog, summary.get('holdings', []), total)
         observations.append({
             'code': code, 'name': s.get('name', code), 'bucket': BUCKET_NAMES.get(bucket, bucket),
-            'price': s.get('price'), 'technical_score': s.get('score'),
+            'price': s.get('price'), 'technical_score': s.get('blended_technical', s.get('technical_score')),
             'r5d': (s.get('returns') or {}).get('r5d'), 'r60d': r60, 'trend': own_trend,
             'premium_pct': premium_value, 'premium_source': premium.get('data_source', '未知'),
             'nav_date': premium.get('nav_date'), 'fit': fit,
@@ -289,124 +289,10 @@ def build_long_term_report(scores, portfolio, summary, today, config, catalog, l
 
 
 def format_long_term_text(data, summary):
-    b = data['budget']
-    money = lambda v: '待核对' if v is None else f'{v:,.2f}元'
-    lines = [f"长期ETF观察日报 | {data['as_of']}", data['action'], '',
-             f"账户总资产 {money(summary.get('total_assets'))} | 现金 {money(b['cash'])}",
-             f"月预算 {money(b['monthly_budget'])} | 本月已用 {money(b['spent'])} | 剩余 {money(b['remaining'])}",
-             b['note'], f"每月{data['review_day']}日复核，本月最迟复核日 {data['review_deadline']}", '',
-             '需要关注：']
-    changes = data.get('changes', {})
-    lines[2:2] = [f"相比上一报告（{changes.get('previous_date') or '首次记录'}）"] + changes.get('items', []) + ['']
-    lines.extend('- ' + a for a in data['alerts'])
-    if data.get('priorities'):
-        lines += ['', '本月优先复核（配置草案仅供讨论）' if data['allocation_status']=='draft' else '本月优先复核']
-        for o in data['priorities']:
-            x = o['purchase_example']
-            lines.append(f"{o['name']}：复核优先级{o['priority']['score']:.1f}；" + '；'.join(o['priority']['reasons']))
-            lines.append(f"  参考价{x['reference_price']:.3f}，示例{x['shares']}份，成交额{x['amount']:.2f}元，佣金{x['commission']:.2f}元，滑点{x['slippage']:.2f}元，合计需现金{x['cash_required']:.2f}元，剩余{x['cash_left']:.2f}元")
-    lines += ['', '实际持仓']
-    lines.extend(f"{h['name']}({h['code']})：市值{h['value']:.2f}元，仓位{h['weight']:.1f}%，持仓盈亏{h['pnl']:+.2f}元"
-                 for h in data.get('holdings', []))
-    lines += ['', '配置对照（待审阅草案）' if data['allocation_status'] == 'draft' else '配置对照']
-    lines.extend(f"{a['name']}：当前{a['actual_pct']:.1f}% / 目标{a['target_pct']:.1f}% / 缺口{a['gap_pct']:+.1f}个百分点"
-                 for a in data['allocations'])
-    lines += [data['allocation_note'], '', '各观察池行情与加仓复核', data['score_note']]
-    for o in data['observations']:
-        lines.append(f"{o['name']}({o['code']}) | {o['bucket']} | 技术分{o['technical_score']} | {o['trend']} | 近5日{o['r5d']}%")
-        lines.append('  ' + ('可进入人工复核' if o['review_candidate'] else '；'.join(o['blockers'])))
-        lines.append('  ' + o['timing_note'])
-        lines.append(f"  复核优先级{o['priority']['score']:.1f}："+'；'.join(o['priority']['reasons']))
-        f = o['fund_profile']
-        if f.get('source_url'):
-            annual = '未取得' if f.get('annual_fee_pct') is None else f"{f['annual_fee_pct']:.2f}%/年（列示费用）"
-            aum = '未取得' if f.get('aum_cny') is None else f"{f['aum_cny']/1e8:.2f}亿元（{f.get('aum_as_of')}）"
-            lines.append(f"  指数：{f.get('index_name')} | 费率：{annual} | 规模：{aum}")
-            lines.append('  来源：' + f['source_url'])
-    p = data['performance']
-    lines += ['', '账户绩效']
-    if p['available']:
-        lines += [f"区间盈亏{p['profit']:+.2f}元 | 近似时间加权收益{p['return_pct']:+.2f}% | 最大回撤{p['max_drawdown_pct']:.2f}%", p['method_note']]
-        if p['xirr_pct'] is not None:
-            lines.append(f"区间XIRR {p['xirr_pct']:+.2f}%（年化）")
-    else:
-        lines.append(p['reason'])
-    for review in data.get('period_reviews', []):
-        rp = review['performance']
-        lines.append(review['label'] + '复盘：' +
-                     (f"盈亏{rp['profit']:+.2f}元，资金流调整后收益{rp['return_pct']:+.2f}%" if rp['available'] else rp['reason']))
-    if data.get('risk'):
-        from risk_engine import format_risk_section
-        lines += ['', format_risk_section(data['risk'])]
-    return '\n'.join(lines)
+    from daily_brief import render_daily_text
+    return render_daily_text({'date': data['as_of'], 'long_term': data, 'portfolio': summary})
 
 
 def render_long_term_html(report):
-    data = report['long_term']
-    e = lambda value: html.escape(str(value))
-    b = data['budget']
-    money = lambda value: '待核对' if value is None else f'{value:,.2f}元'
-    parts = ['<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
-             '<style>body{font:15px/1.65 "Microsoft YaHei",sans-serif;color:#172b4d;background:#f3f6fa;margin:0;padding:24px}main{max-width:1100px;margin:auto}section{background:white;padding:22px;margin:18px 0;border-radius:12px}h1{font-size:26px}h2{font-size:19px}table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:10px;text-align:left;border-bottom:1px solid #e4e9ef;vertical-align:top}.scroll{overflow-x:auto}small{color:#53667b}.tag{color:#175b7d}li{margin:7px 0}</style></head><body><main>',
-             f"<h1>长期ETF观察日报</h1><p>{e(data['as_of'])} · 月度积累 / 每日观察</p>",
-             f"<section><h2>今天是否需要行动</h2><p>{e(data['action'])}</p>",
-             f"<p>月预算 <b>{money(b['monthly_budget'])}</b> · 已用 {money(b['spent'])} · 剩余 {money(b['remaining'])} · 账户现金 {money(b['cash'])}</p>",
-             f"<small>{e(b['note'])}。每月{data['review_day']}日复核，最迟 {data['review_deadline']}。</small></section>",
-             '<section><h2>持仓与资料提醒</h2><ul>' + ''.join('<li>'+e(a)+'</li>' for a in data['alerts']) + '</ul></section>',
-             '<section><h2>配置草案 · 待审阅</h2>' if data['allocation_status'] == 'draft' else '<section><h2>配置对照</h2>',
-             '<div class="scroll"><table><tr><th>类别</th><th>当前</th><th>目标</th><th>缺口</th></tr>']
-    changes = data.get('changes', {})
-    brief = '<section><h2>相比上一报告发生了什么</h2><small>比较日期：' + e(changes.get('previous_date') or '首次记录') + '</small><ul>'
-    brief += ''.join('<li>'+e(item)+'</li>' for item in changes.get('items', [])) + '</ul></section>'
-    parts.insert(6, brief)
-    if data.get('priorities'):
-        priority_html = '<section><h2>本月优先复核' + (' · 配置草案待审阅' if data['allocation_status']=='draft' else '') + '</h2>'
-        priority_html += '<p><small>排序用于比较复核顺序，不是收益预测；整数份额仅作费用示例，不提交委托。</small></p>'
-        for o in data['priorities']:
-            x = o['purchase_example']
-            priority_html += '<p><b>'+e(o['name'])+'</b> · 优先级 '+e(o['priority']['score'])+'<br>'+e('；'.join(o['priority']['reasons']))+'</p>'
-            priority_html += f"<p>参考价{x['reference_price']:.3f} · 示例{x['shares']}份 · 成交额{x['amount']:.2f}元<br>佣金{x['commission']:.2f}元 + 假设滑点{x['slippage']:.2f}元 · 共需现金{x['cash_required']:.2f}元 · 剩余{x['cash_left']:.2f}元</p>"
-            if o['needs_budget_confirmation']:
-                priority_html += '<small>预算沿用最近记录，交易前需确认期间无遗漏。</small>'
-            priority_html += '<small>'+e(o['overlap']['note'])+'</small>'
-        parts.insert(7, priority_html+'</section>')
-    for a in data['allocations']:
-        parts.append(f"<tr><td>{e(a['name'])}</td><td>{a['actual_pct']:.1f}%</td><td>{a['target_pct']:.1f}%</td><td>{a['gap_pct']:+.1f}个百分点</td></tr>")
-    parts += ['</table></div><p>'+e(data['allocation_note'])+'</p></section>',
-              '<section><h2>实际持仓</h2><div class="scroll"><table><tr><th>标的</th><th>市值</th><th>仓位</th><th>持仓盈亏</th></tr>']
-    for h in data.get('holdings', []):
-        parts.append(f"<tr><td>{e(h['name'])} ({e(h['code'])})</td><td>{h['value']:.2f}元</td><td>{h['weight']:.1f}%</td><td>{h['pnl']:+.2f}元</td></tr>")
-    parts += ['</table></div><small>持仓盈亏不是账户总收益；总收益需计入已实现损益、费用和资金流。</small></section>',
-              '<section><h2>观察池行情</h2><p>'+e(data['score_note'])+'</p><div class="scroll"><table><tr><th>标的 / 类别</th><th>走势</th><th>溢价 / 口径</th><th>长期资料 / 本期复核</th></tr>']
-    for o in data['observations']:
-        premium = '未知' if o['premium_pct'] is None else f"{o['premium_pct']:.2f}%"
-        parts.append(f"<tr><td><b>{e(o['name'])}</b><br>{e(o['code'])} · {e(o['bucket'])}<br><small>复核优先级 {e(o['priority']['score'])}</small></td><td>5日 {e(o['r5d'])}% / 60日 {e(o['r60d'])}%<br>技术分 {e(o['technical_score'])}<br><small>{e(o['timing_note'])}</small></td><td>{e(premium)}<br><small>{e(o['premium_source'])} / 净值日{e(o['nav_date'] or '未知')}</small></td><td>{e(o['fit']['label'])}<br>{e('可进入人工复核' if o['review_candidate'] else '；'.join(o['blockers']))}<br><small>{e('；'.join(o['priority']['reasons']))}<br>待补：{e('、'.join(o['fit']['missing']) or '无')}</small></td></tr>")
-    parts += ['</table></div></section><section><h2>基金基础资料</h2><p><small>获取日期和财报披露日期分别列示。费率为列示经常费率之和，不是完整总费用率；跟踪误差与实际收益差异分开记录。</small></p><div class="scroll"><table><tr><th>基金 / 指数</th><th>列示年费率 / 规模</th><th>持仓与跟踪</th><th>盘口 / 来源</th></tr>']
-    for o in data['observations']:
-        f = o.get('fund_profile') or {}
-        if not f.get('source_url'):
-            continue
-        annual = '未取得' if f.get('annual_fee_pct') is None else f"{f['annual_fee_pct']:.2f}%"
-        aum = '未取得' if f.get('aum_cny') is None else f"{f['aum_cny']/1e8:.2f}亿元"
-        top10 = '不适用/未披露直接股票' if f.get('top10_weight_pct') is None else f"直接股票前十合计{f['top10_weight_pct']:.2f}%（{f.get('holdings_as_of')}）"
-        error = '未披露实际年化跟踪误差' if f.get('tracking_error_annual_pct') is None else f"年化跟踪误差{f['tracking_error_annual_pct']:.2f}%（{f.get('tracking_error_as_of') or '统计日期未提供'}）"
-        spread = '待核对' if f.get('spread_pct') is None else f"{f['spread_pct']:.3f}%"
-        parts.append(f"<tr><td>{e(o['name'])} ({e(o['code'])})<br><small>{e(f.get('index_name'))}</small></td><td>{e(annual)}<br>{e(aum)}<br><small>规模日期 {e(f.get('aum_as_of'))}</small></td><td>{e(top10)}<br><small>{e(error)}<br>{e(f.get('holdings_note') or '')}</small></td><td>买卖价差 {e(spread)}<br><small>报价时间 {e(f.get('spread_as_of') or '未知')}<br>最低买入 {e(f.get('lot_size'))}份</small><br><a href=\"{e(f['source_url'])}\">查看基金档案</a><br><small>核验 {e(f.get('verified_on'))}</small></td></tr>")
-    parts += ['</table></div></section><section><h2>账户绩效</h2>']
-    p = data['performance']
-    if p['available']:
-        parts.append(f"<p>区间盈亏 {p['profit']:+.2f}元 · 近似时间加权收益 {p['return_pct']:+.2f}% · 最大回撤 {p['max_drawdown_pct']:.2f}%</p><small>{e(p['method_note'])}</small>")
-    else:
-        parts.append('<p>'+e(p['reason'])+'</p>')
-    for review in data.get('period_reviews', []):
-        rp = review['performance']
-        detail = f"盈亏{rp['profit']:+.2f}元，资金流调整后收益{rp['return_pct']:+.2f}%" if rp['available'] else rp['reason']
-        parts.append('<p>'+e(review['label']+'复盘：'+detail)+'</p>')
-    parts += ['</section>']
-    if data.get('risk'):
-        from risk_engine import format_risk_section
-        parts.append('<section><h2>实际持仓风险</h2><pre style="white-space:pre-wrap;overflow-wrap:anywhere;font:inherit">' + e(format_risk_section(data['risk'])) + '</pre></section>')
-    if report.get('preview_note'):
-        parts.insert(3, '<p style="padding:15px;background:#fff0ca">'+e(report['preview_note'])+'</p>')
-    parts += ['<p><small>观察池不等于持仓；候选仅供复核。长期模式不根据短期评分生成买卖订单。历史数据不保证未来表现。</small></p></main></body></html>']
-    return ''.join(parts)
+    from daily_brief import render_daily_html
+    return render_daily_html(report)

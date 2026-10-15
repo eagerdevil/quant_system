@@ -115,11 +115,15 @@ def assemble_long_term_output(scores, timing, portfolio, port_summary, all_data,
     timing['circuit_breaker'] = {'triggered': False, 'mode': 'review_only',
                                'drawdown_pct': performance.get('drawdown_pct'),
                                'note': '长期模式仅复核资金流调整后的回撤，不自动生成卖出订单'}
-    return {'date': today, 'timestamp': datetime.now().isoformat(), 'mode': 'long_term',
+    from daily_brief import market_snapshot, render_daily_text
+    output = {'date': today, 'timestamp': datetime.now().isoformat(), 'mode': 'long_term',
+            'market_snapshot': market_snapshot(all_data.get('indices', {}), today),
             'timing': timing, 'scores': scores, 'portfolio': port_summary,
             'stale_codes': sorted(stale), 'plan': long_term['plan'], 'long_term': long_term,
             'benchmark': {'available': False, 'message': '跨资产组合暂不与沪深300直接比较；使用同现金流定投对照研究'},
-            'report': format_long_term_text(long_term, port_summary)}
+            'report': ''}
+    output['report'] = render_daily_text(output)
+    return output
 
 # ============================================================
 def load_portfolio(filepath=None):
