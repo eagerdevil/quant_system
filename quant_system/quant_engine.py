@@ -2020,6 +2020,10 @@ class TradeDecider:
             cost = pos.get("cost", 0)
             current_price = pos.get("current_price", cost)
             pnl_pct = (current_price / cost - 1) * 100 if cost > 0 else 0
+            if self.autonomous and pos.get("stop_reference_cost", 0) > 0:
+                # Dividend-adjusted risk reference; purchase and accounting cost stay intact.
+                risk_cost = pos["stop_reference_cost"]
+                pnl_pct = (current_price / risk_cost - 1) * 100
 
             premium_pct = score_data.get("premium_info", {}).get("premium_pct") or 0
 
@@ -2250,7 +2254,7 @@ class TradeDecider:
                         pass
                 # 8/14修复: 同指数双ETF互斥(相关性控制) — 科创50/纳指/标普/中证1000/港股各最多持一只
                 s_group = DUPLICATE_GROUPS.get(s["code"])
-                if s_group and any(DUPLICATE_GROUPS.get(h) == s_group for h in self.portfolio):
+                if s_group and any(h != s["code"] and DUPLICATE_GROUPS.get(h) == s_group for h in self.portfolio):
                     continue
                 # v7.6: 行业集中度上限（15只池14只映射"综合", 综合达40%会锁死全部建仓 — 综合豁免, 由相关性分组替代控制）
                 ind = _industry_of(s["code"])
@@ -2259,7 +2263,18 @@ class TradeDecider:
                 if s["score"] < min_buy_score:
                     continue
                 sortino_val = s.get("indicators", {}).get("sortino", 0.5)
-                kelly_pct = self._kelly_fraction(s["score"], sortino_val, max_single)
+                if self.autonomous:
+                    # Paper experiment: score is eligibility/rank, never a calibrated probability.
+                    try:
+                        vol = float(s.get("indicators", {}).get("volatility_pct", 25.0)) / 100
+                    except (TypeError, ValueError):
+                        continue
+                    if not math.isfinite(vol) or vol <= 0:
+                        continue
+                    horizon_vol = max(.04, vol * (20 / 252) ** .5)
+                    kelly_pct = min(max_single, .01 / horizon_vol)
+                else:
+                    kelly_pct = self._kelly_fraction(s["score"], sortino_val, max_single)
                 if kelly_pct <= 0:
                     continue
                 buy_candidates.append({**s, "_kelly_pct": kelly_pct, "_sortino": sortino_val})
@@ -2272,15 +2287,16 @@ class TradeDecider:
         # v7.6: 启用 max_total_holdings（此前参数定义了从未执行）
         holdings_count = sum(1 for k, v in self.portfolio.items() if not k.startswith("_") and isinstance(v, dict))
         max_holdings = SYSTEM_CONFIG.get("max_total_holdings", 5)
+        planned_new = 0
         for s in buy_candidates:
-            if len(buy_list) + holdings_count >= max_holdings:
-                break
+            if s["code"] not in self.portfolio and planned_new + holdings_count >= max_holdings:
+                continue
             code = s["code"]
             kelly_pct = s["_kelly_pct"]
             sortino_val = s["_sortino"]
 
             # v8.0: 凯利 × 波动率调整 = 最终仓位（cap在单只上限，防止vol_adj突破max_single）
-            vol_adj = vol_adjs.get(code, 1.0)
+            vol_adj = 1.0 if self.autonomous else vol_adjs.get(code, 1.0)
             final_pct = min(kelly_pct * vol_adj, max_single)
             final_pct *= buy_size_scale  # 9/19: TREND_DOWN 全自动模式下规模减半
 
@@ -2309,7 +2325,10 @@ class TradeDecider:
             # 构建理由
             reasons = [s.get("grade", "")]
             vol_label = "低波动+" if vol_adj > 1.15 else ("高波动-" if vol_adj < 0.85 else "")
-            reasons.append(f"凯利{kelly_pct*100:.0f}%×{vol_label}波动率调整={final_pct*100:.1f}%仓位(Sortino={sortino_val:.2f})")
+            if self.autonomous:
+                reasons.append(f"波动率风险预算1%（20交易日尺度），本次配置上限{final_pct*100:.1f}%；评分只用于筛选")
+            else:
+                reasons.append(f"凯利{kelly_pct*100:.0f}%×{vol_label}波动率调整={final_pct*100:.1f}%仓位(Sortino={sortino_val:.2f})")
 
             buy_list.append({
                 "code": code, "name": s["name"],
@@ -2317,11 +2336,14 @@ class TradeDecider:
                 "price": round(price, 4),
                 "amount": round(shares * price, 2),
                 "score": s["score"],
-                "kelly_pct": round(kelly_pct * 100, 1),
+                "kelly_pct": None if self.autonomous else round(kelly_pct * 100, 1),
+                "sizing_model": "volatility_risk_budget" if self.autonomous else "legacy_kelly",
                 "vol_adjustment": round(vol_adj, 2),  # v8.0
                 "final_pct": round(final_pct * 100, 1),  # v8.0
                 "reasons": reasons
             })
+            if code not in self.portfolio:
+                planned_new += 1
 
         return {
             "buy_list": buy_list,

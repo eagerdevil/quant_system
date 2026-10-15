@@ -49,11 +49,15 @@ jobs:
           echo "如有失败，请检查代码变更是否影响核心逻辑。"
 
       - name: 日报离线验收（不联网、不发信）
-        run: python quant_system/preview_long_term.py
+        run: |
+          python quant_system/preview_long_term.py
+          python quant_system/preview_paper.py
 
       - name: 保存新版日报验收样例
         uses: actions/upload-artifact@v4
         with:
           name: long-term-report-preview
-          path: quant_system/review_outputs/long_term_preview_*.html
+          path: |
+            quant_system/review_outputs/long_term_preview_*.html
+            quant_system/review_outputs/paper_preview_*.html
           retention-days: 7

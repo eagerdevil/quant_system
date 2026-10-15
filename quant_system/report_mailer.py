@@ -144,8 +144,9 @@ def _generate_speedview(report_data):
     if lifetime_pnl_top is not None:
         lt_color_top = "#00ff88" if lifetime_pnl_top >= 0 else "#ff4757"
         html += f'<div class="summary-item"><div class="label">累计总盈亏<br><small>2024/9入市至今</small></div><div class="big" style="color:{lt_color_top}">{lifetime_pnl_top:+.0f}元</div></div>'
-    html += f'<div class="summary-item"><div class="label">今年盈亏<br><small>2026年</small></div><div class="big" style="color:{alloc_color}">{alloc_text}</div></div>'
-    html += f'<div class="summary-item"><div class="label">今日盈亏</div><div class="big" style="color:{daily_color}">{daily_icon} {daily_pnl:+.0f}元</div></div>'
+    pnl_label = "模拟账户累计盈亏" if report_data.get("type") == "paper" else "今年盈亏<br><small>2026年</small>"
+    html += f'<div class="summary-item"><div class="label">{pnl_label}</div><div class="big" style="color:{alloc_color}">{alloc_text}</div></div>'
+    html += f'<div class="summary-item"><div class="label">{port.get("pnl_period_label", "今日盈亏")}</div><div class="big" style="color:{daily_color}">{daily_icon} {daily_pnl:+.0f}元</div></div>'
     html += f'<div class="summary-item"><div class="label">市场状态</div><div class="big" style="color:{regime_color}">{regime_name}</div></div>'
     html += '</div>'
 
@@ -178,7 +179,12 @@ def _generate_speedview(report_data):
             else:
                 html += f'<div class="summary-good">{bs}</div>'
     elif not holding_alerts:
-        html += '<div class="summary-good">✅ 今日无异常，持仓状态健康</div>'
+        quality_warnings = (report_data.get("research", {}).get("warnings", []) +
+                            report_data.get("execution_warnings", []) + report_data.get("stale_codes", []))
+        if report_data.get("timing", {}).get("data_insufficient") or quality_warnings:
+            html += '<div class="summary-alert">⚠️ 数据或实验口径待核验，详见顶部运行状态；无交易不代表数据完整。</div>'
+        else:
+            html += '<div class="summary-good">✅ 今日无持仓价格或评分告警</div>'
 
     html += '</div>'
     return html
@@ -205,6 +211,11 @@ def generate_html_report(report_data):
     if report_data.get('long_term', {}).get('mode') == 'long_term':
         from long_term import render_long_term_html
         return render_long_term_html(report_data)
+    from paper_research import render_research_card
+    report_day = str(report_data.get("date") or "").replace("-", "")
+    display_day = (f"{report_day[:4]}年{report_day[4:6]}月{report_day[6:8]}日"
+                   if len(report_day) == 8 and report_day.isdigit() else datetime.now().strftime('%Y年%m月%d日'))
+    report_title = "模拟盘策略实验 - 每日报告" if report_data.get("type") == "paper" else "A股量化决策系统 - 每日报告"
 
     timing = report_data.get("timing", {})
     plan = report_data.get("plan", {})
@@ -224,11 +235,12 @@ def generate_html_report(report_data):
     pos_pct = int(timing.get('base_position', 0) * 100)
 
     html = f"""
-    <html><head><meta charset="utf-8"><style>
-    body {{ font-family: 'Microsoft YaHei', Arial; background: #1a1a2e; color: #eee; padding: 20px; }}
+    <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>
+    * {{ box-sizing: border-box; }}
+    body {{ font-family: 'Microsoft YaHei', Arial; background: #1a1a2e; color: #eee; padding: 16px; margin: 0; }}
     .header {{ background: linear-gradient(135deg, #16213e, #0f3460); padding: 25px; border-radius: 10px; margin-bottom: 20px; text-align: center; }}
     .header h1 {{ margin: 0; color: #e94560; }}
-    .card {{ background: #16213e; border-radius: 10px; padding: 20px; margin-bottom: 15px; }}
+    .card {{ background: #16213e; border-radius: 10px; padding: 20px; margin-bottom: 15px; min-width: 0; overflow-x: auto; overflow-wrap: anywhere; }}
     .card h2 {{ color: #e94560; border-bottom: 1px solid #0f3460; padding-bottom: 10px; margin-top: 0; }}
     table {{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }}
     th {{ background: #0f3460; padding: 8px 10px; text-align: left; }}
@@ -254,10 +266,12 @@ def generate_html_report(report_data):
     .summary-good {{ background: #1a2d1a; border-left: 3px solid #00ff88; padding: 8px 12px; margin-top: 10px; border-radius: 4px; font-size: 13px; }}
     </style></head><body>
 
-    <div class="header"><h1>A股量化决策系统 - 每日报告</h1><p>{datetime.now().strftime('%Y年%m月%d日')} | 收盘后自动生成</p></div>
+    <div class="header"><h1>{report_title}</h1><p>{display_day} | 收盘后自动生成</p></div>
 
     <!-- 8/19加固: 数据滞后显著告警横幅(邮件正文最顶部, 红色高亮) -->
     {_generate_stale_banner(report_data)}
+
+    {render_research_card(report_data) if report_data.get('type') == 'paper' else ''}
 
     <!-- v8.0: 30秒速览 -->
     {_generate_speedview(report_data)}
@@ -330,7 +344,7 @@ def generate_html_report(report_data):
         <table style="font-size:14px">
         <tr><td style="width:25%"><b>总资产</b></td><td style="width:25%">{total_assets:.2f}元</td><td style="width:25%"><b>总市值</b></td><td style="width:25%">{total_value:.2f}元</td></tr>
         <tr><td><b>可用资金</b></td><td>{available_cash:.2f}元</td><td><b>现金占比</b></td><td>{cash_ratio:.1f}%</td></tr>
-        <tr><td><b>持仓盈亏</b></td><td style="color:{pnl_color}">{total_pnl:+.2f}元 ({total_pnl_pct:+.2f}%)</td><td><b>今日盈亏</b></td><td style="color:{daily_color}">{total_daily_pnl:+.2f}元</td></tr>
+        <tr><td><b>持仓盈亏</b></td><td style="color:{pnl_color}">{total_pnl:+.2f}元 ({total_pnl_pct:+.2f}%)</td><td><b>{port.get('pnl_period_label', '今日盈亏')}</b></td><td style="color:{daily_color}">{total_daily_pnl:+.2f}元</td></tr>
         {alloc_row}
         {lifetime_row}
         </table></div>'''

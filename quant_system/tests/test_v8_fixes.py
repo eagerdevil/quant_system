@@ -149,5 +149,5 @@ class TestPaperWinRate:
             {}, {"message": "test"}, [], {"total_return_pct": 1.0},
             trades_history=trades_history,
         )
-        assert "历史平仓" in report
-        assert "胜率 67%" in report  # 2/3 盈利
+        assert "历史卖出成交（含分批，非完整交易轮次）" in report
+        assert "正收益笔数占比 67%" in report  # 2/3成交盈利，不冒充完整交易胜率

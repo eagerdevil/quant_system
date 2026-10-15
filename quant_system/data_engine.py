@@ -953,10 +953,11 @@ def _code_to_market_prefix(code):
 _code_to_sina_prefix = _code_to_market_prefix
 _code_to_tencent_prefix = _code_to_market_prefix
 
-def _fetch_tencent_kline(code, days=250):
+def _fetch_tencent_kline(code, days=250, adjusted=True):
     """从腾讯API获取日K线（备用）"""
     prefix = _code_to_tencent_prefix(code)
-    url = f"https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={prefix},day,,,{days},qfq"
+    adjustment = "qfq" if adjusted else ""
+    url = f"https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={prefix},day,,,{days},{adjustment}"
     resp = _simple_get(url, timeout=15)
     if not resp:
         return None
@@ -970,7 +971,7 @@ def _fetch_tencent_kline(code, days=250):
     if data.get("code") != 0:
         return None
     stock_data = data.get("data", {}).get(prefix, {})
-    klines = stock_data.get("qfqday") or stock_data.get("day", [])
+    klines = (stock_data.get("qfqday") or stock_data.get("day", [])) if adjusted else stock_data.get("day", [])
     if not klines:
         return None
     result = []
@@ -1085,6 +1086,20 @@ def fetch_etf_kline(code, days=250):
     #       收益率/趋势因子计算才正确; 缓存加_qf1版本隔离, 旧未复权缓存作废
     url = f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&klt=101&fqt=1&end={get_today()}&lmt={days}"
     return _fetch_kline_with_cache(code, url, days, _fetch_tencent_kline, ver="_qf1")
+
+
+def fetch_etf_execution_kline(code, days=15):
+    """Unadjusted exchange prices, isolated from adjusted factor caches; volume in shares."""
+    market = "1" if code.startswith(("5", "58")) else "0"
+    url = (f"https://push2his.eastmoney.com/api/qt/stock/kline/get?secid={market}.{code}"
+           f"&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
+           f"&klt=101&fqt=0&end={get_today()}&lmt={days}")
+    bars = _fetch_kline_with_cache(code, url, days,
+                                 lambda c, n: _fetch_tencent_kline(c, n, adjusted=False),
+                                 ver="_execution_raw_v2") or []
+    # Eastmoney and Tencent daily volume is in lots (100 fund units).
+    return [{**bar, "volume": float(bar.get("volume", 0)) * 100,
+             "basis": "unadjusted"} for bar in bars]
 
 def fetch_stock_kline(code, days=250):
     """获取个股日K线（支持股票和ETF，东方财富主 + 腾讯备用）"""

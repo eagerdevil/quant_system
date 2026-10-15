@@ -272,7 +272,7 @@ class TestTrendDownBuyGate:
         td = _decide(s, self._td(), {}, autonomous=True, total=self.TOTAL)
         normal = _decide(s, _timing(base_position=0.5, regime="CHOPPY",
                                     regime_buy_grade_min="B_买入"),
-                         {}, autonomous=False, total=self.TOTAL)
+                         {}, autonomous=True, total=self.TOTAL)
 
         assert td["buy_list"] and normal["buy_list"]
         td_pct = td["buy_list"][0]["final_pct"]
@@ -295,7 +295,7 @@ class TestTrendDownBuyGate:
                          {}, autonomous=True, total=self.TOTAL)
         chop_b = _decide(s, _timing(base_position=0.5, regime="CHOPPY",
                                     regime_buy_grade_min="B_买入"),
-                         {}, autonomous=False, total=self.TOTAL)
+                         {}, autonomous=True, total=self.TOTAL)
         assert chop_a["buy_list"] and chop_b["buy_list"]
         assert chop_a["buy_list"][0]["final_pct"] == chop_b["buy_list"][0]["final_pct"]
 

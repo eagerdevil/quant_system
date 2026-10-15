@@ -57,6 +57,7 @@ jobs:
           }
 
       - name: 运行模拟盘
+        id: paper
         env:
           TZ: Asia/Shanghai
           QQMAIL_AUTH_CODE: ${{ secrets.QQMAIL_AUTH_CODE }}
@@ -71,6 +72,7 @@ jobs:
           echo "===== 模拟盘完成: $(date '+%Y-%m-%d %H:%M') ====="
 
       - name: 生成监控站 manifest + 提交模拟盘状态
+        if: ${{ always() && steps.paper.outcome != 'skipped' && steps.paper.outcome != '' }}
         env:
           TZ: Asia/Shanghai
         run: |
@@ -135,8 +137,11 @@ jobs:
           echo "模拟盘状态已推送 ✓"
 
       - name: 上传模拟盘报告（可选，留作存档）
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: paper-report-${{ github.run_id }}
-          path: quant_system/report_paper_*.json
+          path: |
+            quant_system/report_paper_*.json
+            quant_system/portfolio_paper.json
           retention-days: 7
