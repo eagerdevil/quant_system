@@ -175,21 +175,41 @@
       "reason": "目标仓位收敛(24%→5%, 超额92312元, 本日减30771元)"
     }
   ],
+  "_corporate_action_start": "20261014",
+  "_applied_actions": [],
+  "_receivables": [],
+  "_order_events": [],
+  "_execution_receipt": {
+    "date": "20261015",
+    "trades": [],
+    "expired": [],
+    "dividends": [],
+    "warnings": []
+  },
+  "_session": {
+    "date": "20261015",
+    "stage": "complete"
+  },
   "513800": {
     "shares": 19400,
     "cost": 1.921,
     "name": "日本东证指数ETF南方",
     "buy_date": "20260817",
     "score_history": [
-      73,
       71,
       75,
       71,
       73,
       78,
-      77
+      77,
+      74
     ],
-    "stale_date": ""
+    "stale_date": "",
+    "_last_mark": {
+      "price": 1.852,
+      "date": "20261015"
+    },
+    "_score_date": "20261015"
   },
   "512890": {
     "shares": 1500,
@@ -199,12 +219,66 @@
     "stale_date": "",
     "score_history": [
       70,
-      70,
       71,
       76,
       71,
       69,
-      68
-    ]
-  }
+      68,
+      71
+    ],
+    "_last_mark": {
+      "price": 1.212,
+      "date": "20261015"
+    },
+    "_score_date": "20261015"
+  },
+  "_research": {
+    "fingerprint": "ab564088713d5e10",
+    "start_date": "20261015",
+    "start_assets": 490482.13,
+    "weights": {
+      "510300": 0.3,
+      "513500": 0.25,
+      "513800": 0.15,
+      "518880": 0.15
+    },
+    "reference": {
+      "_available_cash": 74599.92215500001,
+      "_trades": [],
+      "_pending": [],
+      "510300": {
+        "shares": 34600,
+        "cost": 4.242,
+        "buy_date": "20261015"
+      },
+      "513500": {
+        "shares": 46100,
+        "cost": 2.659,
+        "buy_date": "20261015"
+      },
+      "513800": {
+        "shares": 39700,
+        "cost": 1.852,
+        "buy_date": "20261015"
+      },
+      "518880": {
+        "shares": 8600,
+        "cost": 8.472,
+        "buy_date": "20261015"
+      },
+      "_applied_actions": [],
+      "_receivables": []
+    },
+    "reference_start_date": "20261015",
+    "reference_initial_capital": 490482.13,
+    "reference_strategy_start_assets": 490482.13,
+    "reference_as_of": "20261015"
+  },
+  "_research_segments": [
+    {
+      "fingerprint": "ab564088713d5e10",
+      "start_date": "20261015",
+      "start_assets": 490482.13
+    }
+  ]
 }
