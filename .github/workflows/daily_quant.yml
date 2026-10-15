@@ -2,6 +2,12 @@ name: 每日A股量化分析
 
 on:
   workflow_dispatch:
+    inputs:
+      send_email:
+        description: 是否沿用已有邮件发送流程（验收运行可关闭）
+        required: false
+        default: true
+        type: boolean
 
 concurrency:
   group: daily-quant
@@ -49,34 +55,49 @@ jobs:
         env:
           TZ: Asia/Shanghai
           QQMAIL_AUTH_CODE: ${{ secrets.QQMAIL_AUTH_CODE }}
+          SEND_EMAIL: ${{ github.event.inputs.send_email || 'true' }}
         run: |
           echo "===== 开始运行: $(date '+%Y-%m-%d %H:%M') ====="
-          cd quant_system && python daily_runner.py 2>&1
+          cd quant_system
+          python update_fund_catalog.py --if-due --max-age-days 7
+          if [ "$SEND_EMAIL" = "false" ]; then
+            python daily_runner.py --no-email > "$RUNNER_TEMP/private-daily.log" 2>&1 || {
+              echo "日报失败；含账户信息的详细日志未公开，请查看已有私密通知渠道。"
+              exit 1
+            }
+          else
+            python daily_runner.py > "$RUNNER_TEMP/private-daily.log" 2>&1 || {
+              echo "日报失败；含账户信息的详细日志未公开，请查看已有私密通知渠道。"
+              exit 1
+            }
+          fi
           echo "===== 运行完成: $(date '+%Y-%m-%d %H:%M') ====="
 
       # 8/14: 实盘历史云端留存 — 报告+账户状态自动commit+push
       # 8/15修复: .gitignore有report_*.json规则, git ls-files --others 会把新报告当ignored过滤掉,
       #          导致该步骤永远走"跳过"分支(云上留存从未生效) → 改用 git add -f 强制+staged diff判断
-      - name: 提交实盘状态到云端
+      - name: 留存公开基金资料
         run: |
           git config user.name "Quant Bot"
           git config user.email "quant-bot@github.com"
-          git add -f quant_system/report_*.json quant_system/portfolio.json
+          git add quant_system/fund_catalog.json quant_system/FUND_CATALOG_REVIEW.md
           if git diff --cached --quiet; then
             echo "状态未变更，跳过提交"
             exit 0
           fi
           DATE=$(date '+%Y%m%d')
-          git commit -m "quant(report): 实盘日报 ${DATE}"
+          git commit -m "quant(data): 公开基金资料 ${DATE}"
           git push origin HEAD || {
             git pull --rebase || exit 1
             git push origin HEAD || exit 1
           }
           echo "实盘状态已推送 ✓"
 
-      - name: 上传报告（可选，留作存档）
+      - name: 上传公开基金资料
         uses: actions/upload-artifact@v4
         with:
-          name: quant-report-${{ github.run_id }}
-          path: quant_system/report_*.json
+          name: public-fund-data-${{ github.run_id }}
+          path: |
+            quant_system/fund_catalog.json
+            quant_system/FUND_CATALOG_REVIEW.md
           retention-days: 7

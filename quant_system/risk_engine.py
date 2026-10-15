@@ -53,6 +53,32 @@ def pearson_correlation(x, y):
     return float(corr) if not np.isnan(corr) else 0.0
 
 
+def _aligned_return_frame(etf_data, window=60):
+    """Align matching return intervals, not merely equally long arrays.
+
+    Undated data is retained only for legacy synthetic callers. Never combine
+    dated and undated inputs. No forward filling across missing sessions.
+    """
+    dated = any(any(k.get('date') for k in d.get('kline', [])) for d in etf_data.values())
+    series = {}
+    for code, data in etf_data.items():
+        bars = data.get('kline', [])
+        if len(bars) < window + 1:
+            continue
+        if dated:
+            by_date = {str(k['date']).replace('-', ''): float(k['close'])
+                       for k in bars if k.get('date') and k.get('close', 0) > 0}
+            points = sorted(by_date.items())[-window - 1:]
+            values = {a[0] + '/' + b[0]: b[1] / a[1] - 1
+                      for a, b in zip(points, points[1:])}
+            if len(values) < window - 5:
+                continue
+            series[code] = pd.Series(values, dtype=float)
+        else:
+            series[code] = pd.Series(daily_returns([k['close'] for k in bars[-window-1:]]), dtype=float)
+    return pd.DataFrame(series).replace([np.inf, -np.inf], np.nan)
+
+
 def compute_correlation_matrix(etf_data, window=60):
     """
     计算ETF间的滚动相关性矩阵 — numpy/pandas 向量化
@@ -60,17 +86,8 @@ def compute_correlation_matrix(etf_data, window=60):
     输出: {matrix, avg_correlation, max_pair, warning_pairs, n_assets}
     """
     # 提取所有ETF的收益率，构建DataFrame
-    returns_map = {}
-    for code, edata in etf_data.items():
-        kline = edata.get("kline", [])
-        if len(kline) < window + 1:
-            continue
-        closes = [k["close"] for k in kline[-window - 1:]]
-        rets = daily_returns(closes)
-        if len(rets) >= window - 5:
-            returns_map[code] = rets
-
-    codes = list(returns_map.keys())
+    frame = _aligned_return_frame(etf_data, window)
+    codes = list(frame.columns)
     if len(codes) < 2:
         return {
             "matrix": {},
@@ -81,12 +98,7 @@ def compute_correlation_matrix(etf_data, window=60):
         }
 
     # 对齐到最短长度
-    min_len = min(len(v) for v in returns_map.values())
-    # 构建 numpy 矩阵: rows=时间, cols=ETF
-    ret_matrix = np.column_stack([
-        np.array(returns_map[code][-min_len:], dtype=np.float64)
-        for code in codes
-    ])
+    ret_matrix = frame.to_numpy(dtype=float)
     # Pairwise finite correlations; constant/invalid return columns map to 0 off-diagonal
     # instead of propagating NaN through portfolio risk output.
     corr_matrix = np.eye(len(codes), dtype=np.float64)
@@ -172,14 +184,18 @@ def compute_var_cvar(portfolio_value, etf_data, holdings,
             "method": "historical", "error": "insufficient_data"
         }
 
-    # 对齐并构建加权组合收益率
-    codes = list(asset_returns.keys())
-    min_len = min(len(asset_returns[code]) for code in codes)
+    # Missing a held asset must not silently turn its risk exposure into zero.
+    missing = [code for code, pos in holdings.items()
+               if not code.startswith('_') and pos.get('shares', 0) > 0 and code not in asset_returns]
+    if missing:
+        return {'error': 'incomplete_holdings', 'missing_codes': missing, 'method': 'historical'}
+    frame = _aligned_return_frame({c: etf_data[c] for c in asset_returns}, window).dropna()
+    codes = list(frame.columns)
+    min_len = len(frame)
+    if min_len < window - 5 or not codes:
+        return {'error': 'insufficient_aligned_dates', 'method': 'historical'}
     weights_arr = np.array([asset_weights.get(code, 0) for code in codes], dtype=np.float64)
-    ret_matrix = np.column_stack([
-        np.array(asset_returns[code][-min_len:], dtype=np.float64)
-        for code in codes
-    ])
+    ret_matrix = frame.to_numpy(dtype=float)
     portfolio_rets = np.dot(ret_matrix, weights_arr)
 
     if len(portfolio_rets) == 0:
@@ -250,15 +266,17 @@ def compute_var_weight_uncertainty(etf_data, holdings, total_value,
         return None
     w_arr = np.array(weights, dtype=np.float64)
     w_arr = w_arr / w_arr.sum()
-    min_len = min(len(rets_map[c]) for c in codes)
-    matrix = np.column_stack([rets_map[c][-min_len:] for c in codes])
+    frame = _aligned_return_frame({c: etf_data[c] for c in codes}, window=min(60, min(len(rets_map[c]) for c in codes))).dropna()
+    if len(frame) < 30 or list(frame.columns) != codes:
+        return None
+    matrix = frame.to_numpy(dtype=float)
     var_list = []
     for _ in range(n_sims):
         perturb = rng.dirichlet(w_arr * 50 + 1e-6)
         pr = matrix @ perturb
         sorted_pr = np.sort(pr)
         idx = min(int(len(sorted_pr) * (1 - confidence)), len(sorted_pr) - 1)
-        var_list.append(abs(float(sorted_pr[idx])) * 100)
+        var_list.append(max(0.0, -float(sorted_pr[idx])) * 100)
     var_arr = np.array(var_list)
     return {
         "var_pct_p5": round(float(np.percentile(var_arr, 5)), 2),
@@ -293,9 +311,10 @@ def detect_concentration_risk(corr_result, holdings, etf_data):
         score = min(100, score + 10)
 
     # 检查3: 持仓数量
-    n_assets = corr_result.get("n_assets", 0)
+    n_assets = sum(1 for c, h in holdings.items()
+                   if not c.startswith('_') and isinstance(h, dict) and h.get('shares', 0) > 0)
     if n_assets <= 2:
-        issues.append("仅2只持仓，系统性风险集中")
+        issues.append(f"持有{n_assets}个标的，需结合底层成分判断分散程度")
         score -= 20
     elif n_assets <= 3:
         score -= 5
@@ -311,10 +330,12 @@ def detect_concentration_risk(corr_result, holdings, etf_data):
             continue
         value = h.get("shares", 0) * h.get("current_price", h.get("cost", 0))
         weight = value / total_value * 100 if total_value > 0 else 0
-        if weight > 40:
+        is_stock = len(str(code)) == 6 and str(code).startswith(('6', '0', '3'))
+        limit = 10 if is_stock else 40
+        if weight > limit:
             name = etf_data.get(code, {}).get("name", code)
-            issues.append(f"{name}占比{weight:.0f}%，过度集中")
-            score -= 15
+            issues.append(f"{name}占持仓市值{weight:.0f}%，超过{'个股' if is_stock else '单基金'}集中度复核线{limit}%")
+            score -= min(40, 15 + weight - limit) if is_stock else 15
 
     score = max(0, min(100, round(score)))
 
@@ -335,11 +356,11 @@ def detect_concentration_risk(corr_result, holdings, etf_data):
 
 def _diversification_advice(level, score, issues):
     if level == "safe":
-        return "组合分散化良好，各持仓间风险抵消效果较好"
+        return "近60日价格相关性未触发严重警报；仍需核对底层成分和单一公司风险"
     elif level == "warning":
         return f"分散化评分{score}分，建议关注高相关持仓，避免同方向加仓"
     else:
-        return f"分散化严重不足({score}分)，多只持仓面临同跌风险，建议减仓高相关品种"
+        return f"历史相关性/集中度评分{score}分，需复核重复风险暴露；不据此单独作出卖出决定"
 
 
 # ============================================================
@@ -358,11 +379,23 @@ def portfolio_risk_report(portfolio, etf_data, scores=None):
         total_value += value
         holdings_for_var[code] = {"shares": shares, "current_price": price}
 
-    corr_result = compute_correlation_matrix(etf_data)
+    # The watch pool describes possible investments, never account exposure.
+    held_data = {code: etf_data[code] for code in holdings_for_var
+                 if code in etf_data and holdings_for_var[code]['shares'] > 0}
+    corr_result = compute_correlation_matrix(held_data)
     var_result = compute_var_cvar(total_value, etf_data, holdings_for_var)
     conc_result = detect_concentration_risk(corr_result, holdings_for_var, etf_data)
     # 8/14: 权重不确定性VaR带(评估权重估计误差对风险的影响)
-    var_uncertainty = compute_var_weight_uncertainty(etf_data, holdings_for_var, total_value)
+    var_uncertainty = (None if var_result.get('error') else
+                       compute_var_weight_uncertainty(held_data, holdings_for_var, total_value))
+    missing_history = [c for c in holdings_for_var
+                       if holdings_for_var[c]['shares'] > 0 and
+                       len(held_data.get(c, {}).get('kline', [])) < 61]
+    if missing_history or (holdings_for_var and var_result.get('error')):
+        conc_result = {'level': 'unknown', 'score': None,
+                       'issues': conc_result.get('issues', []) +
+                                 (['历史不足：' + ', '.join(missing_history)] if missing_history else ['共同收益区间不足']),
+                       'advice': '持仓历史数据不完整，暂不作组合分散化总评级'}
 
     # 单只风险拆解 — numpy向量化
     single_risks = []
@@ -431,11 +464,14 @@ def format_risk_section(report):
     lines.append(f"  {'─'*60}")
     lines.append(f"  [投资组合风险管理]")
     lines.append(f"  {'─'*60}")
+    lines.append('  基于历史价格样本；以下权重与风险比例以持仓市值为分母，不含现金')
 
     var = report.get("var", {})
+    if var.get('error'):
+        lines.append('  风险数据不完整，暂不估计组合VaR：' + str(var['error']))
     if var and not var.get("error"):
         lines.append(f"  📉 风险价值 (历史模拟法, {var.get('lookback_days', '?')}日窗口):")
-        lines.append(f"     VaR(95%):  {var['var_95']:.2f}元 ({var['var_95_pct']:.1f}%) — 95%概率日亏损不超过此值")
+        lines.append(f"     VaR(95%):  {var['var_95']:.2f}元 ({var['var_95_pct']:.1f}%) — 历史样本损失分位，不是未来亏损上限")
         lines.append(f"     CVaR(95%): {var['cvar_95']:.2f}元 ({var['cvar_95_pct']:.1f}%) — 超过VaR时的平均亏损")
         lines.append(f"     历史最差日: {var['worst_day']:.2f}元 ({var['worst_day_pct']:.1f}%)")
         vu = report.get("var_uncertainty")
@@ -460,7 +496,8 @@ def format_risk_section(report):
     conc = report.get("concentration", {})
     level_emoji = {"safe": "✅", "warning": "⚠️", "danger": "🚨"}
     emoji = level_emoji.get(conc.get("level", ""), "⚪")
-    lines.append(f"  {emoji} 分散化评分: {conc.get('score', '?')}分 ({conc.get('level', '?')})")
+    score_text = '暂不评级' if conc.get('score') is None else str(conc['score']) + '分'
+    lines.append(f"  {emoji} 分散化评分: {score_text}")
     lines.append(f"     {conc.get('advice', '')}")
     if conc.get("issues"):
         for issue in conc["issues"]:
@@ -469,7 +506,7 @@ def format_risk_section(report):
     risks = report.get("single_risks", [])
     if risks:
         lines.append(f"  📊 单只风险拆解:")
-        lines.append(f"     {'名称':<14} {'权重':>5} {'年化波动':>8} {'年化收益':>8} {'60日最大回撤':>10} {'浮亏':>8} {'评分'}")
+        lines.append(f"     {'名称':<14} {'权重':>5} {'年化波动':>8} {'样本收益年化':>8} {'60日最大回撤':>10} {'盈亏':>8} {'技术状态'}")
         for r in risks:
             lines.append(
                 f"     {r['name']:<14} {r['weight_pct']:>4.1f}% "

@@ -202,6 +202,9 @@ def generate_html_report(report_data):
     """生成HTML格式的邮件报告 — 增强版"""
     if not report_data:
         return "<p>报告生成失败</p>"
+    if report_data.get('long_term', {}).get('mode') == 'long_term':
+        from long_term import render_long_term_html
+        return render_long_term_html(report_data)
 
     timing = report_data.get("timing", {})
     plan = report_data.get("plan", {})
@@ -556,6 +559,9 @@ def generate_wechat_markdown(report_data):
     """将JSON报告转为微信推送用的Markdown文本 — 章节与HTML报告一致"""
     if not report_data:
         return "报告生成失败"
+    if report_data.get('long_term', {}).get('mode') == 'long_term':
+        from long_term import format_long_term_text
+        return format_long_term_text(report_data['long_term'], report_data.get('portfolio', {}))
 
     timing = report_data.get("timing", {})
     plan = report_data.get("plan", {})

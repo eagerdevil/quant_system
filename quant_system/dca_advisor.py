@@ -71,8 +71,12 @@ def evaluate_dca_guidance(score, data_is_current=True, history_len=0, regime=Non
         return result
 
     result["data_confidence"] = "中（行情完整；技术时机规则未做收益概率校准）" if history_len >= 120 else "低（历史不足120根）"
-    high_premium = (premium is not None and premium >= 5) or (premium_pctile is not None and premium_pctile >= 95)
-    elevated_premium = (premium is not None and premium >= 3) or (premium_pctile is not None and premium_pctile >= 90)
+    # Percentiles measure relative position, not economic cost. A 0.05% premium
+    # must not become a severe warning solely because its history was near zero.
+    high_premium = premium is not None and (premium >= 5 or
+        (premium >= 2.5 and premium_pctile is not None and premium_pctile >= 95))
+    elevated_premium = premium is not None and (premium >= 3 or
+        (premium >= 1 and premium_pctile is not None and premium_pctile >= 90))
     if high_premium and (not is_qdii or premium_is_live):
         result["action"] = "本期先跳过该ETF，等溢价回落后再看"
         if premium is not None and premium >= 5:

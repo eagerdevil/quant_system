@@ -1,0 +1,25 @@
+{
+  "mode": "long_term",
+  "legacy_placeholder_policy": "reference_only",
+  "monthly_budget": 1000,
+  "review_day": 15,
+  "max_wait_days": 30,
+  "max_orders_per_month": 1,
+  "single_stock_review_weight": 0.1,
+  "single_fund_review_weight": 0.3,
+  "max_premium_pct": 2.0,
+  "max_spread_pct": 0.3,
+  "max_fee_fraction": 0.006,
+  "allocation_status": "draft",
+  "allocation_note": "仅供审阅：以账户内长期投资资产（含现金）为分母；新增资金逐步调整，不要求立即卖出旧持仓。个股及行业主题合计建议最终不超过10%，占用权益额度，不额外叠加。防御部分优先考察现金和低波动短债，十年国债不自动视为现金替代。",
+  "target_weights": {
+    "a_broad": 0.3,
+    "us_broad": 0.2,
+    "japan_broad": 0.1,
+    "europe_broad": 0.05,
+    "dividend": 0.1,
+    "gold": 0.1,
+    "defensive": 0.15
+  },
+  "configuration_note": "Example defaults for software review; no personal account balances or financial background are included."
+}

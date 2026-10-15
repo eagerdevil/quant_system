@@ -7,7 +7,8 @@ on:
     paths:
       - '**.py'
       - '**.json'
-      - '.github/workflows/test.yml'
+      - '.github/workflows/**.yml'
+      - 'quant_system/requirements.txt'
   pull_request:
     branches: [main]
   workflow_dispatch:  # 也支持手动触发
@@ -46,3 +47,13 @@ jobs:
         run: |
           echo "测试结果见上方 pytest 输出。"
           echo "如有失败，请检查代码变更是否影响核心逻辑。"
+
+      - name: 日报离线验收（不联网、不发信）
+        run: python quant_system/preview_long_term.py
+
+      - name: 保存新版日报验收样例
+        uses: actions/upload-artifact@v4
+        with:
+          name: long-term-report-preview
+          path: quant_system/review_outputs/long_term_preview_*.html
+          retention-days: 7

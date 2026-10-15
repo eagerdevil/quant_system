@@ -290,86 +290,30 @@ def compute_score_accuracy(reports):
 
 
 def generate_performance_summary(report_dir=None):
-    """生成绩效汇总报告"""
-    if report_dir is None:
-        report_dir = os.path.dirname(os.path.abspath(__file__))
-
-    reports = load_history(report_dir)
-    if not reports:
-        return "暂无历史报告数据"
-
-    equity = compute_equity_curve(reports)
-    # v7.6: 期间净出金(提现不算亏损) — 从portfolio.json读取
-    net_outflow = 0.0
-    per_point_adjust = None
+    """Use the same flow-aware measure as the long-term daily report."""
+    from cashflow_performance import account_performance
+    report_dir = report_dir or os.path.dirname(os.path.abspath(__file__))
+    reports = load_history(report_dir, days=10000)
     try:
-        pf_path = os.path.join(report_dir, "portfolio.json")
-        if os.path.exists(pf_path):
-            with open(pf_path, 'r', encoding='utf-8') as f:
-                pf = json.load(f)
-            flows = pf.get("_cash_flows", []) or []
-            # 逐点调整: 每个报告日+截至该日已发生的净出金(提现不算亏损)
-            # 语义: 若期间无提现, 账户此刻价值=总资产+已提现金额
-            # 注意: 起点当日及之前的deposit是本金(已含在起始值), 不重复扣减
-            start_d = equity[0]["date"] if equity else ""
-            def adj_at(date):
-                wa = sum(cf.get("amount", 0) for cf in flows
-                         if cf.get("type") == "withdraw" and str(cf.get("date", "")) <= str(date))
-                da = sum(cf.get("amount", 0) for cf in flows
-                         if cf.get("type") == "deposit" and str(cf.get("date", "")) > start_d
-                         and str(cf.get("date", "")) < str(date))
-                return wa - da
-            per_point_adjust = [adj_at(e["date"]) for e in equity]
-            net_outflow = per_point_adjust[-1] if per_point_adjust else 0.0
-    except (OSError, json.JSONDecodeError):
-        per_point_adjust = None
-    metrics = compute_performance_metrics(equity, net_outflow, per_point_adjust)
-    accuracy = compute_score_accuracy(reports)
-
-    lines = []
-    lines.append(f"  {'─'*60}")
-    lines.append(f"  [绩效追踪] 系统历史表现")
-    lines.append(f"  {'─'*60}")
-
-    if "error" in metrics:
-        lines.append(f"  ⚠️ {metrics['error']}")
-        return "\n".join(lines)
-
-    # 核心指标
-    lines.append(f"  📈 跟踪期间: {metrics['start_date']} → {metrics['end_date']} ({metrics['trading_days']}个交易日)")
-    lines.append(f"  累计收益: {metrics['total_pnl']:+.2f}元 ({metrics['total_return_pct']:+.2f}%)")
-    lines.append(f"  最大回撤: {metrics['max_drawdown_pct']:.1f}% (发生在{metrics['max_drawdown_date']})")
-    lines.append(f"  日胜率: {metrics['win_rate']:.0f}% | 盈亏比: {metrics['profit_factor']:.1f}")
-    lines.append(f"  期初资产: {metrics['start_assets']:.2f}元 → 期末: {metrics['end_assets']:.2f}元")
-    lines.append(f"  🚨 现金纪律违反: {metrics['cash_violation_days']}天 ({metrics['cash_violation_pct']:.0f}%)")
-    if metrics['cash_violation_pct'] > 50:
-        lines.append(f"     ⚠️ 超过半数交易日现金不足(总资产0.1%)！无缓冲满仓是账户最大风险来源")
-
-    # 信号准确性 (v7.2: 预测性评估)
-    if accuracy and "error" not in accuracy:
-        lines.append(f"\n  🎯 信号预测力 (T日评分变化→T+1日涨跌):")
-        for code, acc in accuracy.items():
-            eff = acc.get("effectiveness", "?")
-            strong_str = f" | 强信号:{acc['strong_accuracy']:.0f}%" if acc.get("strong_signals", 0) >= 3 else ""
-            old_str = f" | 同日相关:{acc['same_day_accuracy']:.0f}%"
-            lines.append(
-                f"     {eff} {acc['name']}({code}): "
-                f"预测{acc['pred_accuracy']:.0f}% ({acc['pred_signals']}次)"
-                f"{strong_str}{old_str}"
-                f" | 最新{acc['latest_score']}分 | 趋势:{acc['score_trend']}"
-            )
-
-    # 权益曲线（简化的ASCII）
-    if len(equity) >= 3:
-        lines.append(f"\n  📉 权益走势 (最近{min(len(equity), 20)}天):")
-        assets = [e["total_assets"] for e in equity[-20:]]
-        min_a, max_a = min(assets), max(assets)
-        if max_a > min_a:
-            for i, e in enumerate(equity[-20:]):
-                bar_len = int((e["total_assets"] - min_a) / (max_a - min_a) * 40) if max_a > min_a else 20
-                bar = "█" * bar_len
-                lines.append(f"     {e['date']} {e['total_assets']:>7.0f}元 {bar}")
-
+        with open(os.path.join(report_dir, "portfolio.json"), encoding="utf-8") as f:
+            portfolio = json.load(f)
+    except (OSError, ValueError):
+        return "账户流水不可用，暂停收益率与回撤结论"
+    policy = 'block'
+    try:
+        with open(os.path.join(report_dir, 'long_term_config.json'), encoding='utf-8') as f:
+            policy = json.load(f).get('legacy_placeholder_policy', 'block')
+    except (OSError,ValueError):
+        pass
+    result = account_performance(reports, portfolio, policy)
+    if not result["available"]:
+        return result["reason"]
+    lines = ["账户绩效（剔除外部资金流）",
+             f"跟踪区间 {result['start_date']} 至 {result['end_date']}",
+             f"区间盈亏 {result['profit']:+.2f}元 | 近似时间加权收益 {result['return_pct']:+.2f}%",
+             f"最大回撤 {result['max_drawdown_pct']:.2f}%", result["method_note"]]
+    if result["xirr_pct"] is not None:
+        lines.append(f"区间XIRR {result['xirr_pct']:+.2f}%（年化）")
     return "\n".join(lines)
 
 

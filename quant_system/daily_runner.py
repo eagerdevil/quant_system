@@ -16,30 +16,19 @@ if __name__ == "__main__":
 # === 日志系统 ===
 # 同时输出到控制台（INFO级别）和文件（DEBUG级别，保留7天）
 LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
-os.makedirs(LOG_DIR, exist_ok=True)
 log_file = os.path.join(LOG_DIR, f"daily_{datetime.now().strftime('%Y%m%d')}.log")
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    datefmt='%H:%M:%S',
-    handlers=[
-        logging.FileHandler(log_file, encoding='utf-8'),
-        logging.StreamHandler(sys.stderr)
-    ]
-)
 logger = logging.getLogger("quant")
-
-# 清理7天前的旧日志
 import glob as _glob
-for old_log in _glob.glob(os.path.join(LOG_DIR, "daily_*.log")):
-    try:
-        log_date = os.path.basename(old_log).replace("daily_", "").replace(".log", "")
-        from datetime import datetime as _dt
-        if (_dt.now() - _dt.strptime(log_date, "%Y%m%d")).days > 7:
-            os.remove(old_log)
-    except (ValueError, KeyError, OSError):
-        pass  # 日志文件名格式异常或删除失败，跳过
+
+
+def configure_logging():
+    """Importing analysis helpers must not create or delete operational logs."""
+    os.makedirs(LOG_DIR, exist_ok=True)
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s [%(levelname)s] %(message)s',
+                        datefmt='%H:%M:%S',
+                        handlers=[logging.FileHandler(log_file, encoding='utf-8'),
+                                  logging.StreamHandler(sys.stderr)])
 
 # 确保能找到模块
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -68,9 +57,69 @@ from risk_engine import (portfolio_risk_report, format_risk_section,
                          monte_carlo_simulation, format_monte_carlo_section)
 from performance_tracker import generate_performance_summary
 from dca_advisor import evaluate_dca_guidance
+from long_term import load_inputs, build_long_term_report, format_long_term_text, fund_readiness
+from performance_tracker import load_history
 
 TODAY = datetime.now().strftime("%Y%m%d")
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def refresh_fund_quotes(catalog):
+    """Refresh the dated spread once per live run; never called by offline renderers."""
+    from update_fund_catalog import fetch_spreads
+    updated = {code: dict(meta) for code, meta in catalog.items()}
+    codes = [c for c, meta in updated.items() if meta.get('instrument_type') != 'stock']
+    try:
+        for code, quote in fetch_spreads(codes).items():
+            updated[code].update(quote)
+    except Exception as exc:
+        logger.warning('盘口价差刷新失败，沿用带日期的记录；过期记录不能通过候选检查：%s', exc)
+    return updated
+
+
+def assemble_long_term_output(scores, timing, portfolio, port_summary, all_data, today,
+                              history=(), inputs=None):
+    """Shared live/offline renderer. Never submits orders, writes accounts or sends mail."""
+    config, catalog, ledger = inputs or load_inputs()
+    etfs, stocks = all_data.get('etfs', {}), all_data.get('stocks', {})
+    data = dict(etfs)
+    data.update(stocks)
+    stale = _stale_signal_codes(scores, portfolio, etfs, stocks, today)
+    port_summary = dict(port_summary)
+    port_summary['stale_codes'] = sorted(set(port_summary.get('stale_codes', [])) | (stale & set(portfolio)))
+    for s in scores:
+        bars = (data.get(s['code']) or {}).get('kline', [])
+        s['dca_guidance'] = evaluate_dca_guidance(s, s['code'] not in stale, len(bars), regime=None)
+        s['dca_guidance']['long_term_fit'] = fund_readiness(catalog.get(s['code'], {}), today)['label']
+        # Preserve the numeric research score, use descriptive labels in real-account output.
+        s['research_grade'] = s.get('grade')
+        s['grade'] = '技术相对强势' if s.get('score', 0) >= 65 else '技术中性' if s.get('score', 0) >= 55 else '技术相对弱势'
+    for h in port_summary.get('holdings', []):
+        match = next((s for s in scores if s['code'] == h['code']), {})
+        h['grade'] = match.get('grade', '数据不足')
+    risk = portfolio_risk_report(portfolio, data, scores)
+    if stale & set(portfolio):
+        risk['var'] = {'error': 'stale_holdings', 'missing_codes': sorted(stale & set(portfolio))}
+        risk['var_uncertainty'] = None
+        risk['concentration'].update(level='unknown', score=None,
+                                     advice='存在滞后持仓行情，暂不作当前组合风险总评级')
+    long_term = build_long_term_report(scores, portfolio, port_summary, today, config, catalog,
+                                       ledger, stale, history, risk)
+    performance = long_term['performance']
+    timing = dict(timing)
+    # A-share conditions remain context, not a global exposure target.
+    for key in ('regime_confidence', 'base_position', 'regime_stop_loss', 'regime_buy_grade_min',
+                'advice', 'force_capped', 'circuit_breaker'):
+        timing.pop(key, None)
+    timing['scope'] = 'A股市场技术背景；不决定全球资产仓位'
+    timing['circuit_breaker'] = {'triggered': False, 'mode': 'review_only',
+                               'drawdown_pct': performance.get('drawdown_pct'),
+                               'note': '长期模式仅复核资金流调整后的回撤，不自动生成卖出订单'}
+    return {'date': today, 'timestamp': datetime.now().isoformat(), 'mode': 'long_term',
+            'timing': timing, 'scores': scores, 'portfolio': port_summary,
+            'stale_codes': sorted(stale), 'plan': long_term['plan'], 'long_term': long_term,
+            'benchmark': {'available': False, 'message': '跨资产组合暂不与沪深300直接比较；使用同现金流定投对照研究'},
+            'report': format_long_term_text(long_term, port_summary)}
 
 # ============================================================
 def load_portfolio(filepath=None):
@@ -901,6 +950,7 @@ def send_failure_alert(error_msg, traceback_str):
 
 
 def main():
+    configure_logging()
     # 休息日跳过
     is_rest, reason = is_rest_day()
     if is_rest:
@@ -949,19 +999,7 @@ def main():
         logger.error(f"数据采集失败: {e}\n{traceback.format_exc()}")
         raise RuntimeError(f"数据采集失败，量化分析无法继续: {e}") from e
 
-    # 1b. 预判市场状态（v7.2: 用于自适应因子权重）
-    pre_regime = "CHOPPY"
-    indices_data = all_data.get("indices", {})
-    if "000300" in indices_data:
-        hs300_data = indices_data["000300"].get("data", [])
-        if len(hs300_data) >= 60:
-            hs_closes = [d["close"] for d in hs300_data]
-            hs_highs = [d.get("high", d["close"] * 1.005) for d in hs300_data]
-            hs_lows = [d.get("low", d["close"] * 0.995) for d in hs300_data]
-            pre_regime = classify_market_regime(hs_closes, hs_highs, hs_lows)["regime"]
-            logger.info(f"市场状态预判: {pre_regime} → 自适应权重生效")
-
-    # 2. 计算因子得分 - ETFs (v5.0: 横截面比较 + v7.2: regime自适应)
+    # ETF技术观察不受A股市场状态统一调整。
     logger.info("Step 2/4: 计算因子(含截面比较)...")
     try:
         etf_data = all_data.get("etfs", {})
@@ -979,7 +1017,7 @@ def main():
             flow_map[s["code"]] = 1
         for s in (etf_flow.get("outflow") or []):
             flow_map[s["code"]] = -1
-        batch_scores = score_all_etfs_cross_sectional(etf_data, regime=pre_regime, etf_flow_map=flow_map)
+        batch_scores = score_all_etfs_cross_sectional(etf_data, regime=None, etf_flow_map=flow_map)
 
         scores = []
         for result in batch_scores:
@@ -1086,130 +1124,31 @@ def main():
     )
     timing_result["sentiment"] = sentiment
 
-    # v7.6: 组合级回撤熔断 — 从历史报告权益曲线计算近期峰值回撤, 超限强制降仓
-    try:
-        from performance_tracker import load_history, compute_equity_curve
-        hist_reports = load_history(OUTPUT_DIR, days=90)
-        hist_curve = compute_equity_curve(hist_reports)
-        hist_assets = [e["total_assets"] for e in hist_curve if e.get("total_assets", 0) > 0]
-        if len(hist_assets) >= 5:
-            dd_peak = max(hist_assets)
-            dd_now = hist_assets[-1]
-            dd_pct = (dd_now / dd_peak - 1) * 100
-            if dd_pct <= -15:
-                timing_result["base_position"] = min(timing_result["base_position"], 0.10)
-                timing_result["circuit_breaker"] = {"triggered": True, "level": "L2_重仓回撤",
-                                                    "drawdown_pct": round(dd_pct, 2), "cap_position": 0.10}
-                logger.warning(f"  [熔断L2] 组合回撤{dd_pct:.1f}%≤-15%，仓位强制降至10%")
-            elif dd_pct <= -10:
-                timing_result["base_position"] = min(timing_result["base_position"], 0.30)
-                timing_result["circuit_breaker"] = {"triggered": True, "level": "L1_中度回撤",
-                                                    "drawdown_pct": round(dd_pct, 2), "cap_position": 0.30}
-                logger.warning(f"  [熔断L1] 组合回撤{dd_pct:.1f}%≤-10%，仓位强制降至30%")
-            else:
-                timing_result["circuit_breaker"] = {"triggered": False,
-                                                    "drawdown_pct": round(dd_pct, 2)}
-    except Exception as e:
-        logger.info(f"  [熔断] 回撤计算失败(忽略): {e}")
-
-    # 4. 生成决策
-    logger.info("Step 4/4: 生成决策...")
-    portfolio = load_portfolio(portfolio_file)
-    # 9/21: 个股行情来自 all_data["stocks"], 一并传入否则个股回落成cost
-    portfolio = update_portfolio_prices(portfolio, etf_data, all_data.get("stocks", {}))
-
-    # 计算持仓概览（市值、盈亏、仓位等）
-    # 9/21: 合并个股评分 — 否则持仓里的个股在概览里拿不到 score/grade
+    # Long-term account mode: one shared advisory result for text, JSON and HTML.
+    portfolio = update_portfolio_prices(load_portfolio(portfolio_file), etf_data, all_data.get("stocks", {}))
     port_summary = compute_portfolio_summary(portfolio, scores + stock_scores)
-
-    decider = TradeDecider(scores, timing_result, portfolio)
-    plan = decider.generate_plan()
-    # Use only current-session bars to create new exposure. A stale quote may
-    # still inform a risk-reducing sell, but it cannot authorize a new buy.
-    freshness_scores = scores + stock_scores
-    stale_signal_codes = _stale_signal_codes(
-        freshness_scores, portfolio, etf_data, all_data.get("stocks", {}), TODAY
+    runtime_config, runtime_catalog, runtime_ledger = load_inputs()
+    runtime_catalog = refresh_fund_quotes(runtime_catalog)
+    output = assemble_long_term_output(
+        scores + stock_scores, timing_result, portfolio, port_summary, all_data, TODAY,
+        history=load_history(OUTPUT_DIR, days=10000),
+        inputs=(runtime_config, runtime_catalog, runtime_ledger)
     )
-    for score in scores:
-        bars = (etf_data.get(score.get("code")) or {}).get("kline") or []
-        score["dca_guidance"] = evaluate_dca_guidance(
-            score, data_is_current=score.get("code") not in stale_signal_codes,
-            history_len=len(bars), regime=timing_result.get("regime")
-        )
-    plan = gate_stale_buy_orders(plan, stale_signal_codes)
-    if plan.get("data_warnings"):
-        logger.warning("  [新鲜度门禁] %s", " | ".join(plan["data_warnings"]))
-
-    # v8.0: 基准对比
-    benchmark = compute_benchmark_comparison(portfolio, all_data.get("indices", {}))
-    if port_summary.get("total_assets", 0) > 0 and benchmark.get("portfolio_start_value", 0) > 0:
-        # v7.6: 修正 — 期间提现/入金不算盈亏, 加回净出金后再算收益率
-        # (原口径把提现2000算成亏损, 曾误报组合-56.2%)
-        cash_flows = portfolio.get("_cash_flows", []) or []
-        # v7.6: 有历史报告→只调整起点后的出入金; 无历史(GitHub环境)→全部提现加回
-        # (无历史时起点=累计投入本金, 所有提现都发生在起点之后)
-        if benchmark.get("has_history"):
-            bm_start = benchmark.get("start_date", "")
-            withdraw_after = sum(cf.get("amount", 0) for cf in cash_flows
-                                 if cf.get("type") == "withdraw" and str(cf.get("date", "")) >= bm_start)
-            deposit_after = sum(cf.get("amount", 0) for cf in cash_flows
-                                if cf.get("type") == "deposit" and str(cf.get("date", "")) > bm_start)
-            net_outflow = withdraw_after - deposit_after
-        else:
-            net_outflow = sum(cf.get("amount", 0) for cf in cash_flows
-                              if cf.get("type") == "withdraw")
-        adjusted_assets = port_summary["total_assets"] + net_outflow
-        portfolio_return = adjusted_assets / benchmark["portfolio_start_value"] - 1.0
-        benchmark["portfolio_return"] = round(portfolio_return, 4)
-        benchmark["net_cash_outflow"] = round(net_outflow, 2)
-        benchmark["excess_return"] = round(portfolio_return - benchmark.get("benchmark_return", 0), 4)
-        benchmark["beat_benchmark"] = benchmark["excess_return"] > 0
-        # 生成对比消息
-        adj_note = f" (净出金{net_outflow:+.0f}元已剔除)" if abs(net_outflow) > 1 else ""
-        if benchmark["beat_benchmark"]:
-            benchmark["message"] = (
-                f"组合 {portfolio_return:+.2%}{adj_note} vs 沪深300 {benchmark['benchmark_return']:+.2%}，"
-                f"超额 {benchmark['excess_return']:+.2%} ✅ 跑赢基准"
-            )
-        else:
-            benchmark["message"] = (
-                f"组合 {portfolio_return:+.2%}{adj_note} vs 沪深300 {benchmark['benchmark_return']:+.2%}，"
-                f"落后 {benchmark['excess_return']:+.2%} ❌ 跑输基准"
-            )
-    logger.info(f"  [基准对比] {benchmark.get('message', '数据不足')}")
-
-    # 输出报告
-    # 机构资金流向
-    inst_flow_section = format_institutional_flow(all_data)
-
-    report = format_report(plan, scores, timing_result, portfolio, all_data, stock_scores, port_summary)
-    report += inst_flow_section
-    # v7.6: Windows GBK终端打印emoji会UnicodeEncodeError导致报告不保存 — 加固
+    report = output["report"]
     try:
         print(report)
     except UnicodeEncodeError:
-        logger.info("[输出] 终端编码不支持全文打印(报告仍会保存)")
+        logger.info("终端编码不支持全文打印，仍保存完整报告")
 
-    # 保存结果
-    output = {
-        "date": TODAY,
-        "timestamp": datetime.now().isoformat(),
-        "timing": timing_result,
-        # 9/21: 合并个股评分 — report_mailer 靠 is_stock 分流ETF/个股板块,
-        # performance_tracker 按 code 聚合因子表现, 不合并则个股不进邮件个股区
-        "scores": scores + stock_scores,
-        "plan": plan,
-        "portfolio": port_summary,
-        "report": report,
-        "benchmark": benchmark  # v8.0: 基准对比
-    }
     output_path = os.path.join(OUTPUT_DIR, f"report_{TODAY}.json")
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(output, f, ensure_ascii=False, indent=2, default=str)
+    with open(os.path.join(OUTPUT_DIR, f'report_{TODAY}.html'), 'w', encoding='utf-8') as f:
+        f.write(generate_html_report(output))
 
     logger.info(f"报告已保存: {output_path}")
 
-    # ---- 回测 + 仪表盘（可选）----
+    # ---- Research-only legacy backtest; never interpreted as DCA validation ----
     if "--backtest" in sys.argv:
         logger.info("=== 回测模式 ===")
         try:
@@ -1246,7 +1185,7 @@ def main():
             except:
                 pass
 
-    if email_pw:
+    if email_pw and "--no-email" not in sys.argv:
         logger.info("生成HTML报告并发送邮件...")
         ok = False
         try:
@@ -1265,15 +1204,7 @@ def main():
     else:
         logger.info("未配置QQ邮箱授权码，跳过发送")
 
-    # 每月第一个周六自动复盘（与optimizer月度优化对齐）
-    if datetime.now().weekday() == 5 and datetime.now().day <= 7:  # 每月第一个周六
-        logger.info("月度自动复盘...")
-        reviewer = MonthlyReview()
-        review_report = reviewer.monthly_summary()
-        review_path = os.path.join(OUTPUT_DIR, f"review_{TODAY}.txt")
-        with open(review_path, 'w', encoding='utf-8') as f:
-            f.write(review_report)
-        logger.info(f"月度复盘报告已保存: {review_path}")
+    # 周/月复盘已在每次日报的long_term.period_reviews中更新。
 
 if __name__ == "__main__":
     try:
@@ -1288,7 +1219,7 @@ if __name__ == "__main__":
                 if os.path.exists(config_path):
                     with open(config_path, 'r') as f:
                         email_pw = json.load(f).get("QQMAIL_AUTH_CODE")
-            if email_pw:
+            if email_pw and "--no-email" not in sys.argv:
                 from report_mailer import send_crash_report
                 send_crash_report(str(e), traceback.format_exc(), email_pw)
         except:

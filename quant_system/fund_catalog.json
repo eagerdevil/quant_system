@@ -1,0 +1,2401 @@
+{
+  "schema_version": 2,
+  "note": "基础资料来源东方财富公开档案；费用为列示经常费率之和，非完整总费用率。披露日期与获取日期分别保存。实际跟踪差异不是本次日常决策硬门槛；实时价差和溢价仍需当日核对。",
+  "funds": {
+    "510500": {
+      "bucket": "a_broad",
+      "name": "中证500ETF南方",
+      "full_name": "中证500交易型开放式指数证券投资基金",
+      "manager": "南方基金",
+      "custodian": "农业银行",
+      "index_name": "中证500指数",
+      "benchmark_description": "中证500指数",
+      "management_fee_pct": 0.15,
+      "custody_fee_pct": 0.05,
+      "annual_fee_pct": 0.2,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 38087000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": false,
+      "instrument_type": "ETF",
+      "inception_date": "2013-02-06",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_510500.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 0.44,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": 11.24,
+      "holdings_as_of": "2026-06-30",
+      "disclosed_stock_holdings": [
+        {
+          "code": "688498",
+          "name": "源杰科技",
+          "weight_pct": 1.59
+        },
+        {
+          "code": "300604",
+          "name": "长川科技",
+          "weight_pct": 1.27
+        },
+        {
+          "code": "001309",
+          "name": "德明利",
+          "weight_pct": 1.25
+        },
+        {
+          "code": "688347",
+          "name": "华虹宏力",
+          "weight_pct": 1.14
+        },
+        {
+          "code": "688120",
+          "name": "华海清科",
+          "weight_pct": 1.05
+        },
+        {
+          "code": "002281",
+          "name": "光迅科技",
+          "weight_pct": 1.04
+        },
+        {
+          "code": "002008",
+          "name": "大族激光",
+          "weight_pct": 1.04
+        },
+        {
+          "code": "300857",
+          "name": "协创数据",
+          "weight_pct": 0.98
+        },
+        {
+          "code": "300136",
+          "name": "信维通信",
+          "weight_pct": 0.97
+        },
+        {
+          "code": "688361",
+          "name": "中科飞测",
+          "weight_pct": 0.91
+        }
+      ],
+      "holdings_count_disclosed": 10,
+      "holdings_note": "公开披露前十只直接股票占基金净值比例；不等于穿透后的指数成分权重",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": true,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_510500.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "中证500交易型开放式指数证券投资基金",
+            "基金简称": "中证500ETF南方",
+            "基金代码": "510500（主代码） 基金类型 指数型-股票",
+            "发行日期": "2013年01月10日",
+            "成立日期/规模": "2013年02月06日 / 11.476亿份",
+            "净资产规模": "380.87亿元（截止至：2026年06月30日） 份额规模 41.4857亿份 （截止至：2026年06月30日）",
+            "基金管理人": "南方基金",
+            "基金托管人": "农业银行",
+            "基金经理人": "罗文杰 、 龚涛",
+            "成立来分红": "每份累计0.39元（4次）",
+            "管理费率": "0.15%（每年）",
+            "托管费率": "0.05%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "1.00%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "中证500指数",
+            "跟踪标的": "中证500指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_510500.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=510500&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_510500.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 6.802,
+      "ask": 6.803,
+      "spread_pct": 0.014700477765532287,
+      "spread_as_of": "20261015161454",
+      "spread_source_url": "https://qt.gtimg.cn/q=sh510500",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "512100": {
+      "bucket": "a_broad",
+      "name": "中证1000ETF南方",
+      "full_name": "南方中证1000交易型开放式指数证券投资基金",
+      "manager": "南方基金",
+      "custodian": "招商银行",
+      "index_name": "中证1000指数",
+      "benchmark_description": "中证1000指数",
+      "management_fee_pct": 0.15,
+      "custody_fee_pct": 0.05,
+      "annual_fee_pct": 0.2,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 10961000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": false,
+      "instrument_type": "ETF",
+      "inception_date": "2016-09-29",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_512100.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 0.44,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": 6.21,
+      "holdings_as_of": "2026-06-30",
+      "disclosed_stock_holdings": [
+        {
+          "code": "688766",
+          "name": "普冉股份",
+          "weight_pct": 0.81
+        },
+        {
+          "code": "000636",
+          "name": "风华高科",
+          "weight_pct": 0.72
+        },
+        {
+          "code": "603083",
+          "name": "剑桥科技",
+          "weight_pct": 0.68
+        },
+        {
+          "code": "688110",
+          "name": "东芯股份",
+          "weight_pct": 0.62
+        },
+        {
+          "code": "002484",
+          "name": "江海股份",
+          "weight_pct": 0.62
+        },
+        {
+          "code": "002428",
+          "name": "云南锗业",
+          "weight_pct": 0.61
+        },
+        {
+          "code": "688627",
+          "name": "精智达",
+          "weight_pct": 0.55
+        },
+        {
+          "code": "601208",
+          "name": "东材科技",
+          "weight_pct": 0.55
+        },
+        {
+          "code": "688409",
+          "name": "富创精密",
+          "weight_pct": 0.53
+        },
+        {
+          "code": "688630",
+          "name": "芯碁微装",
+          "weight_pct": 0.52
+        }
+      ],
+      "holdings_count_disclosed": 10,
+      "holdings_note": "公开披露前十只直接股票占基金净值比例；不等于穿透后的指数成分权重",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": true,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_512100.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "南方中证1000交易型开放式指数证券投资基金",
+            "基金简称": "中证1000ETF南方",
+            "基金代码": "512100（主代码） 基金类型 指数型-股票",
+            "发行日期": "2016年08月24日",
+            "成立日期/规模": "2016年09月29日 / 5.879亿份",
+            "净资产规模": "109.61亿元（截止至：2026年06月30日） 份额规模 30.7722亿份 （截止至：2026年06月30日）",
+            "基金管理人": "南方基金",
+            "基金托管人": "招商银行",
+            "基金经理人": "崔蕾",
+            "成立来分红": "每份累计0.08元（2次）",
+            "管理费率": "0.15%（每年）",
+            "托管费率": "0.05%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "1.00%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "中证1000指数",
+            "跟踪标的": "中证1000指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_512100.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=512100&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_512100.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 2.705,
+      "ask": 2.706,
+      "spread_pct": 0.03696174459434078,
+      "spread_as_of": "20261015161453",
+      "spread_source_url": "https://qt.gtimg.cn/q=sh512100",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "563360": {
+      "bucket": "a_broad",
+      "name": "A500ETF华泰柏瑞",
+      "full_name": "华泰柏瑞中证A500交易型开放式指数证券投资基金",
+      "manager": "华泰柏瑞基金",
+      "custodian": "国泰海通",
+      "index_name": "中证A500指数",
+      "benchmark_description": "中证A500指数收益率",
+      "management_fee_pct": 0.15,
+      "custody_fee_pct": 0.05,
+      "annual_fee_pct": 0.2,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 31537000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": false,
+      "instrument_type": "ETF",
+      "inception_date": "2024-09-25",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_563360.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 0.29,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": 20.55,
+      "holdings_as_of": "2026-06-30",
+      "disclosed_stock_holdings": [
+        {
+          "code": "300308",
+          "name": "中际旭创",
+          "weight_pct": 4.27
+        },
+        {
+          "code": "300750",
+          "name": "宁德时代",
+          "weight_pct": 3.13
+        },
+        {
+          "code": "300502",
+          "name": "新易盛",
+          "weight_pct": 2.54
+        },
+        {
+          "code": "600519",
+          "name": "贵州茅台",
+          "weight_pct": 2.22
+        },
+        {
+          "code": "603986",
+          "name": "兆易创新",
+          "weight_pct": 1.63
+        },
+        {
+          "code": "601318",
+          "name": "中国平安",
+          "weight_pct": 1.53
+        },
+        {
+          "code": "688256",
+          "name": "寒武纪",
+          "weight_pct": 1.52
+        },
+        {
+          "code": "600036",
+          "name": "招商银行",
+          "weight_pct": 1.32
+        },
+        {
+          "code": "601899",
+          "name": "紫金矿业",
+          "weight_pct": 1.25
+        },
+        {
+          "code": "002371",
+          "name": "北方华创",
+          "weight_pct": 1.14
+        }
+      ],
+      "holdings_count_disclosed": 10,
+      "holdings_note": "公开披露前十只直接股票占基金净值比例；不等于穿透后的指数成分权重",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": true,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_563360.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "华泰柏瑞中证A500交易型开放式指数证券投资基金",
+            "基金简称": "A500ETF华泰柏瑞",
+            "基金代码": "563360（主代码） 基金类型 指数型-股票",
+            "发行日期": "2024年09月10日",
+            "成立日期/规模": "2024年09月25日 / 20.000亿份",
+            "净资产规模": "315.37亿元（截止至：2026年06月30日） 份额规模 222.2599亿份 （截止至：2026年06月30日）",
+            "基金管理人": "华泰柏瑞基金",
+            "基金托管人": "国泰海通",
+            "基金经理人": "谭弘翔",
+            "成立来分红": "每份累计0.00元（0次）",
+            "管理费率": "0.15%（每年）",
+            "托管费率": "0.05%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.80%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "中证A500指数收益率",
+            "跟踪标的": "中证A500指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_563360.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=563360&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_563360.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 1.145,
+      "ask": 1.146,
+      "spread_pct": 0.08729812309034395,
+      "spread_as_of": "20261015161459",
+      "spread_source_url": "https://qt.gtimg.cn/q=sh563360",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "510300": {
+      "bucket": "a_broad",
+      "name": "沪深300ETF华泰柏瑞",
+      "full_name": "华泰柏瑞沪深300交易型开放式指数证券投资基金",
+      "manager": "华泰柏瑞基金",
+      "custodian": "工商银行",
+      "index_name": "沪深300指数",
+      "benchmark_description": "沪深300指数",
+      "management_fee_pct": 0.15,
+      "custody_fee_pct": 0.05,
+      "annual_fee_pct": 0.2,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 94872000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": false,
+      "instrument_type": "ETF",
+      "inception_date": "2012-05-04",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_510300.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 0.36,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": 23.25,
+      "holdings_as_of": "2026-06-30",
+      "disclosed_stock_holdings": [
+        {
+          "code": "300308",
+          "name": "中际旭创",
+          "weight_pct": 4.75
+        },
+        {
+          "code": "300750",
+          "name": "宁德时代",
+          "weight_pct": 3.55
+        },
+        {
+          "code": "300502",
+          "name": "新易盛",
+          "weight_pct": 2.89
+        },
+        {
+          "code": "600519",
+          "name": "贵州茅台",
+          "weight_pct": 2.52
+        },
+        {
+          "code": "603986",
+          "name": "兆易创新",
+          "weight_pct": 1.86
+        },
+        {
+          "code": "688256",
+          "name": "寒武纪",
+          "weight_pct": 1.8
+        },
+        {
+          "code": "601318",
+          "name": "中国平安",
+          "weight_pct": 1.73
+        },
+        {
+          "code": "600036",
+          "name": "招商银行",
+          "weight_pct": 1.49
+        },
+        {
+          "code": "601899",
+          "name": "紫金矿业",
+          "weight_pct": 1.41
+        },
+        {
+          "code": "000333",
+          "name": "美的集团",
+          "weight_pct": 1.25
+        }
+      ],
+      "holdings_count_disclosed": 10,
+      "holdings_note": "公开披露前十只直接股票占基金净值比例；不等于穿透后的指数成分权重",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": true,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_510300.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "华泰柏瑞沪深300交易型开放式指数证券投资基金",
+            "基金简称": "沪深300ETF华泰柏瑞",
+            "基金代码": "510300（主代码） 基金类型 指数型-股票",
+            "发行日期": "2012年04月05日",
+            "成立日期/规模": "2012年05月04日 / 329.686亿份",
+            "净资产规模": "948.72亿元（截止至：2026年06月30日） 份额规模 189.1489亿份 （截止至：2026年06月30日）",
+            "基金管理人": "华泰柏瑞基金",
+            "基金托管人": "工商银行",
+            "基金经理人": "柳军",
+            "成立来分红": "每份累计0.88元（14次）",
+            "管理费率": "0.15%（每年）",
+            "托管费率": "0.05%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "1.00%",
+            "最高申购费率": "---",
+            "最高赎回费率": "0.50%",
+            "业绩比较基准": "沪深300指数",
+            "跟踪标的": "沪深300指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_510300.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=510300&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_510300.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 4.241,
+      "ask": 4.242,
+      "spread_pct": 0.023576564894502744,
+      "spread_as_of": "20261015161442",
+      "spread_source_url": "https://qt.gtimg.cn/q=sh510300",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "159915": {
+      "bucket": "satellite",
+      "name": "创业板ETF易方达",
+      "full_name": "易方达创业板交易型开放式指数证券投资基金",
+      "manager": "易方达基金",
+      "custodian": "工商银行",
+      "index_name": "创业板指数(价格)",
+      "benchmark_description": "创业板指数",
+      "management_fee_pct": 0.15,
+      "custody_fee_pct": 0.05,
+      "annual_fee_pct": 0.2,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 46868000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": false,
+      "instrument_type": "ETF",
+      "inception_date": "2011-09-20",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_159915.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 0.36,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": 57.01,
+      "holdings_as_of": "2026-06-30",
+      "disclosed_stock_holdings": [
+        {
+          "code": "300308",
+          "name": "中际旭创",
+          "weight_pct": 14.54
+        },
+        {
+          "code": "300750",
+          "name": "宁德时代",
+          "weight_pct": 13.56
+        },
+        {
+          "code": "300502",
+          "name": "新易盛",
+          "weight_pct": 10.01
+        },
+        {
+          "code": "300059",
+          "name": "东方财富",
+          "weight_pct": 3.45
+        },
+        {
+          "code": "300274",
+          "name": "阳光电源",
+          "weight_pct": 3.1
+        },
+        {
+          "code": "300476",
+          "name": "胜宏科技",
+          "weight_pct": 2.78
+        },
+        {
+          "code": "300408",
+          "name": "三环集团",
+          "weight_pct": 2.76
+        },
+        {
+          "code": "300394",
+          "name": "天孚通信",
+          "weight_pct": 2.49
+        },
+        {
+          "code": "301308",
+          "name": "江波龙",
+          "weight_pct": 2.19
+        },
+        {
+          "code": "300604",
+          "name": "长川科技",
+          "weight_pct": 2.13
+        }
+      ],
+      "holdings_count_disclosed": 10,
+      "holdings_note": "公开披露前十只直接股票占基金净值比例；不等于穿透后的指数成分权重",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": true,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_159915.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "易方达创业板交易型开放式指数证券投资基金",
+            "基金简称": "创业板ETF易方达",
+            "基金代码": "159915（主代码） 基金类型 指数型-股票",
+            "发行日期": "2011年08月15日",
+            "成立日期/规模": "2011年09月20日 / 5.617亿份",
+            "净资产规模": "468.68亿元（截止至：2026年06月30日） 份额规模 107.5002亿份 （截止至：2026年06月30日）",
+            "基金管理人": "易方达基金",
+            "基金托管人": "工商银行",
+            "基金经理人": "成曦 、 刘树荣",
+            "成立来分红": "每份累计0.00元（0次）",
+            "管理费率": "0.15%（每年）",
+            "托管费率": "0.05%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "1.00%（前端）",
+            "最高申购费率": "0.05%（前端）",
+            "最高赎回费率": "0.15%（前端）",
+            "业绩比较基准": "创业板指数",
+            "跟踪标的": "创业板指数(价格)"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_159915.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=159915&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_159915.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 2.806,
+      "ask": 2.807,
+      "spread_pct": 0.035631569570635666,
+      "spread_as_of": "20261015161436",
+      "spread_source_url": "https://qt.gtimg.cn/q=sz159915",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "588000": {
+      "bucket": "satellite",
+      "name": "科创50ETF华夏",
+      "full_name": "华夏上证科创板50成份交易型开放式指数证券投资基金",
+      "manager": "华夏基金",
+      "custodian": "招商银行",
+      "index_name": "上证科创板50成份指数",
+      "benchmark_description": "上证科创板50成份指数收益率",
+      "management_fee_pct": 0.15,
+      "custody_fee_pct": 0.05,
+      "annual_fee_pct": 0.2,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 69423000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": false,
+      "instrument_type": "ETF",
+      "inception_date": "2020-09-28",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_588000.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 0.36,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": 62.21,
+      "holdings_as_of": "2026-06-30",
+      "disclosed_stock_holdings": [
+        {
+          "code": "688256",
+          "name": "寒武纪",
+          "weight_pct": 9.3
+        },
+        {
+          "code": "688008",
+          "name": "澜起科技",
+          "weight_pct": 8.13
+        },
+        {
+          "code": "688012",
+          "name": "中微公司",
+          "weight_pct": 8.0
+        },
+        {
+          "code": "688041",
+          "name": "海光信息",
+          "weight_pct": 7.89
+        },
+        {
+          "code": "688981",
+          "name": "中芯国际",
+          "weight_pct": 7.41
+        },
+        {
+          "code": "688498",
+          "name": "源杰科技",
+          "weight_pct": 4.94
+        },
+        {
+          "code": "688525",
+          "name": "佰维存储",
+          "weight_pct": 4.83
+        },
+        {
+          "code": "688521",
+          "name": "芯原股份",
+          "weight_pct": 4.06
+        },
+        {
+          "code": "688072",
+          "name": "拓荆科技",
+          "weight_pct": 4.03
+        },
+        {
+          "code": "688347",
+          "name": "华虹宏力",
+          "weight_pct": 3.62
+        }
+      ],
+      "holdings_count_disclosed": 10,
+      "holdings_note": "公开披露前十只直接股票占基金净值比例；不等于穿透后的指数成分权重",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": true,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_588000.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "华夏上证科创板50成份交易型开放式指数证券投资基金",
+            "基金简称": "科创50ETF华夏",
+            "基金代码": "588000（主代码） 基金类型 指数型-股票",
+            "发行日期": "2020年09月22日",
+            "成立日期/规模": "2020年09月28日 / 51.234亿份",
+            "净资产规模": "694.23亿元（截止至：2026年06月30日） 份额规模 298.3167亿份 （截止至：2026年06月30日）",
+            "基金管理人": "华夏基金",
+            "基金托管人": "招商银行",
+            "基金经理人": "荣膺",
+            "成立来分红": "每份累计0.00元（0次）",
+            "管理费率": "0.15%（每年）",
+            "托管费率": "0.05%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.50%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "上证科创板50成份指数收益率",
+            "跟踪标的": "上证科创板50成份指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_588000.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=588000&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_588000.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 1.438,
+      "ask": 1.439,
+      "spread_pct": 0.0695168578380335,
+      "spread_as_of": "20261015161452",
+      "spread_source_url": "https://qt.gtimg.cn/q=sh588000",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "159659": {
+      "bucket": "satellite",
+      "name": "纳斯达克100ETF招商",
+      "full_name": "招商纳斯达克100交易型开放式指数证券投资基金(QDII)",
+      "manager": "招商基金",
+      "custodian": "中国银行",
+      "index_name": "纳斯达克100指数",
+      "benchmark_description": "纳斯达克100指数收益率(经汇率调整后)",
+      "management_fee_pct": 0.5,
+      "custody_fee_pct": 0.15,
+      "annual_fee_pct": 0.65,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 9936000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": true,
+      "instrument_type": "ETF",
+      "inception_date": "2023-04-12",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_159659.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 1.08,
+      "tracking_error_as_of": "2026-10-13",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": 44.53,
+      "holdings_as_of": "2026-06-30",
+      "disclosed_stock_holdings": [
+        {
+          "code": "NVDA",
+          "name": "英伟达",
+          "weight_pct": 7.52
+        },
+        {
+          "code": "AAPL",
+          "name": "苹果",
+          "weight_pct": 6.6
+        },
+        {
+          "code": "MU",
+          "name": "美光科技",
+          "weight_pct": 5.58
+        },
+        {
+          "code": "MSFT",
+          "name": "微软",
+          "weight_pct": 4.3
+        },
+        {
+          "code": "AMD",
+          "name": "超威半导体",
+          "weight_pct": 4.06
+        },
+        {
+          "code": "AMZN",
+          "name": "亚马逊",
+          "weight_pct": 3.98
+        },
+        {
+          "code": "TSLA",
+          "name": "特斯拉",
+          "weight_pct": 3.26
+        },
+        {
+          "code": "GOOGL",
+          "name": "谷歌-A",
+          "weight_pct": 3.23
+        },
+        {
+          "code": "INTC",
+          "name": "英特尔",
+          "weight_pct": 3.01
+        },
+        {
+          "code": "GOOG",
+          "name": "谷歌-C",
+          "weight_pct": 2.99
+        }
+      ],
+      "holdings_count_disclosed": 10,
+      "holdings_note": "公开披露前十只直接股票占基金净值比例；不等于穿透后的指数成分权重",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": true,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_159659.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "招商纳斯达克100交易型开放式指数证券投资基金(QDII)",
+            "基金简称": "纳斯达克100ETF招商",
+            "基金代码": "159659（主代码） 基金类型 指数型-海外股票",
+            "发行日期": "2023年02月09日",
+            "成立日期/规模": "2023年04月12日 / 2.397亿份",
+            "净资产规模": "99.36亿元（截止至：2026年06月30日） 份额规模 44.7574亿份 （截止至：2026年06月30日）",
+            "基金管理人": "招商基金",
+            "基金托管人": "中国银行",
+            "基金经理人": "刘重杰",
+            "成立来分红": "每份累计0.00元（0次）",
+            "管理费率": "0.50%（每年）",
+            "托管费率": "0.15%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.80%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "纳斯达克100指数收益率(经汇率调整后)",
+            "跟踪标的": "纳斯达克100指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_159659.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=159659&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_159659.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 2.43,
+      "ask": 2.431,
+      "spread_pct": 0.0411437975725114,
+      "spread_as_of": "20261015161445",
+      "spread_source_url": "https://qt.gtimg.cn/q=sz159659",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "513500": {
+      "bucket": "us_broad",
+      "name": "标普500ETF博时",
+      "full_name": "博时标普500交易型开放式指数证券投资基金",
+      "manager": "博时基金",
+      "custodian": "工商银行",
+      "index_name": "标准普尔500指数",
+      "benchmark_description": "标普500指数(S&P 500 Index(NTR,Net total Return))(经估值汇率调整,以人民币计价)",
+      "management_fee_pct": 0.6,
+      "custody_fee_pct": 0.2,
+      "annual_fee_pct": 0.8,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 23999000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": false,
+      "instrument_type": "ETF",
+      "inception_date": "2013-12-05",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_513500.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 1.08,
+      "tracking_error_as_of": "2026-10-13",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": 35.14,
+      "holdings_as_of": "2026-06-30",
+      "disclosed_stock_holdings": [
+        {
+          "code": "NVDA",
+          "name": "英伟达",
+          "weight_pct": 7.25
+        },
+        {
+          "code": "AAPL",
+          "name": "苹果",
+          "weight_pct": 6.36
+        },
+        {
+          "code": "MSFT",
+          "name": "微软",
+          "weight_pct": 4.15
+        },
+        {
+          "code": "AMZN",
+          "name": "亚马逊",
+          "weight_pct": 3.49
+        },
+        {
+          "code": "GOOGL",
+          "name": "谷歌-A",
+          "weight_pct": 3.14
+        },
+        {
+          "code": "AVGO",
+          "name": "博通",
+          "weight_pct": 2.68
+        },
+        {
+          "code": "GOOG",
+          "name": "谷歌-C",
+          "weight_pct": 2.5
+        },
+        {
+          "code": "MU",
+          "name": "美光科技",
+          "weight_pct": 1.95
+        },
+        {
+          "code": "META",
+          "name": "Meta Platforms Inc-A",
+          "weight_pct": 1.85
+        },
+        {
+          "code": "TSLA",
+          "name": "特斯拉",
+          "weight_pct": 1.77
+        }
+      ],
+      "holdings_count_disclosed": 10,
+      "holdings_note": "公开披露前十只直接股票占基金净值比例；不等于穿透后的指数成分权重",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": true,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_513500.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "博时标普500交易型开放式指数证券投资基金",
+            "基金简称": "标普500ETF博时",
+            "基金代码": "513500（主代码） 基金类型 指数型-海外股票",
+            "发行日期": "2013年11月04日",
+            "成立日期/规模": "2013年12月05日 / 5.650亿份",
+            "净资产规模": "239.99亿元（截止至：2026年06月30日） 份额规模 99.3164亿份 （截止至：2026年06月30日）",
+            "基金管理人": "博时基金",
+            "基金托管人": "工商银行",
+            "基金经理人": "万琼",
+            "成立来分红": "每份累计0.00元（0次）",
+            "管理费率": "0.60%（每年）",
+            "托管费率": "0.20%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.80%",
+            "最高申购费率": "---",
+            "最高赎回费率": "0.50%",
+            "业绩比较基准": "标普500指数(S&P 500 Index(NTR,Net total Return))(经估值汇率调整,以人民币计价)",
+            "跟踪标的": "标准普尔500指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_513500.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=513500&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_513500.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 2.658,
+      "ask": 2.659,
+      "spread_pct": 0.03761519653939777,
+      "spread_as_of": "20261015161433",
+      "spread_source_url": "https://qt.gtimg.cn/q=sh513500",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "513520": {
+      "bucket": "japan_broad",
+      "name": "日经ETF华夏",
+      "full_name": "华夏野村日经225交易型开放式指数证券投资基金(QDII)",
+      "manager": "华夏基金",
+      "custodian": "建设银行",
+      "index_name": "东京日经225指数",
+      "benchmark_description": "日经225指数收益率",
+      "management_fee_pct": 0.2,
+      "custody_fee_pct": 0.05,
+      "annual_fee_pct": 0.25,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率；未将境外目标ETF费用穿透加总",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 2429000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": true,
+      "instrument_type": "ETF",
+      "inception_date": "2019-06-12",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_513520.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 7.76,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": null,
+      "holdings_as_of": null,
+      "disclosed_stock_holdings": [],
+      "holdings_count_disclosed": 0,
+      "holdings_note": "主要通过境外目标ETF投资；直接股票前十不适用，尚未取得底层指数穿透集中度，不表示没有股票风险",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": false,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_513520.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "华夏野村日经225交易型开放式指数证券投资基金(QDII)",
+            "基金简称": "日经ETF华夏",
+            "基金代码": "513520（主代码） 基金类型 指数型-海外股票",
+            "发行日期": "2019年05月28日",
+            "成立日期/规模": "2019年06月12日 / 4.305亿份",
+            "净资产规模": "24.29亿元（截止至：2026年06月30日） 份额规模 10.5589亿份 （截止至：2026年06月30日）",
+            "基金管理人": "华夏基金",
+            "基金托管人": "建设银行",
+            "基金经理人": "赵宗庭",
+            "成立来分红": "每份累计0.00元（0次）",
+            "管理费率": "0.20%（每年）",
+            "托管费率": "0.05%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.80%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "日经225指数收益率",
+            "跟踪标的": "东京日经225指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_513520.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=513520&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_513520.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 2.238,
+      "ask": 2.239,
+      "spread_pct": 0.044672771945494294,
+      "spread_as_of": "20261015161435",
+      "spread_source_url": "https://qt.gtimg.cn/q=sh513520",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "513800": {
+      "bucket": "japan_broad",
+      "name": "日本东证指数ETF南方",
+      "full_name": "南方顶峰TOPIX交易型开放式指数证券投资基金(QDII)",
+      "manager": "南方基金",
+      "custodian": "工商银行",
+      "index_name": "东证指数",
+      "benchmark_description": "东证指数",
+      "management_fee_pct": 0.2,
+      "custody_fee_pct": 0.05,
+      "annual_fee_pct": 0.25,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率；未将境外目标ETF费用穿透加总",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 1929000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": true,
+      "instrument_type": "ETF",
+      "inception_date": "2019-06-12",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_513800.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": null,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台年化跟踪误差显示--，不填0",
+      "top10_weight_pct": null,
+      "holdings_as_of": null,
+      "disclosed_stock_holdings": [],
+      "holdings_count_disclosed": 0,
+      "holdings_note": "主要通过境外目标ETF投资；直接股票前十不适用，尚未取得底层指数穿透集中度，不表示没有股票风险",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": false,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_513800.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "南方顶峰TOPIX交易型开放式指数证券投资基金(QDII)",
+            "基金简称": "日本东证指数ETF南方",
+            "基金代码": "513800（主代码） 基金类型 指数型-海外股票",
+            "发行日期": "2019年05月28日",
+            "成立日期/规模": "2019年06月12日 / 3.084亿份",
+            "净资产规模": "19.29亿元（截止至：2026年06月30日） 份额规模 10.5664亿份 （截止至：2026年06月30日）",
+            "基金管理人": "南方基金",
+            "基金托管人": "工商银行",
+            "基金经理人": "王鑫",
+            "成立来分红": "每份累计0.03元（1次）",
+            "管理费率": "0.20%（每年）",
+            "托管费率": "0.05%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.50%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "东证指数",
+            "跟踪标的": "东证指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_513800.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=513800&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_513800.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 1.852,
+      "ask": 1.853,
+      "spread_pct": 0.053981106612679616,
+      "spread_as_of": "20261015161500",
+      "spread_source_url": "https://qt.gtimg.cn/q=sh513800",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "513180": {
+      "bucket": "satellite",
+      "name": "恒生科技ETF华夏",
+      "full_name": "华夏恒生科技交易型开放式指数证券投资基金(QDII)",
+      "manager": "华夏基金",
+      "custodian": "建设银行",
+      "index_name": "恒生科技指数",
+      "benchmark_description": "恒生科技指数收益率(经汇率调整后)",
+      "management_fee_pct": 0.5,
+      "custody_fee_pct": 0.15,
+      "annual_fee_pct": 0.65,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 41596000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": true,
+      "instrument_type": "ETF",
+      "inception_date": "2021-05-18",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_513180.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 1.34,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": 70.09,
+      "holdings_as_of": "2026-06-30",
+      "disclosed_stock_holdings": [
+        {
+          "code": "00981",
+          "name": "中芯国际",
+          "weight_pct": 10.45
+        },
+        {
+          "code": "00700",
+          "name": "腾讯控股",
+          "weight_pct": 9.06
+        },
+        {
+          "code": "09999",
+          "name": "网易",
+          "weight_pct": 8.56
+        },
+        {
+          "code": "03690",
+          "name": "美团-W",
+          "weight_pct": 7.58
+        },
+        {
+          "code": "09988",
+          "name": "阿里巴巴-W",
+          "weight_pct": 7.22
+        },
+        {
+          "code": "01211",
+          "name": "比亚迪股份",
+          "weight_pct": 6.8
+        },
+        {
+          "code": "01810",
+          "name": "小米集团-W",
+          "weight_pct": 6.63
+        },
+        {
+          "code": "01347",
+          "name": "华虹宏力",
+          "weight_pct": 5.19
+        },
+        {
+          "code": "00992",
+          "name": "联想集团",
+          "weight_pct": 4.73
+        },
+        {
+          "code": "09618",
+          "name": "京东集团-SW",
+          "weight_pct": 3.87
+        }
+      ],
+      "holdings_count_disclosed": 10,
+      "holdings_note": "公开披露前十只直接股票占基金净值比例；不等于穿透后的指数成分权重",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": true,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_513180.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "华夏恒生科技交易型开放式指数证券投资基金(QDII)",
+            "基金简称": "恒生科技ETF华夏",
+            "基金代码": "513180（主代码） 基金类型 指数型-海外股票",
+            "发行日期": "2021年05月12日",
+            "成立日期/规模": "2021年05月18日 / 14.558亿份",
+            "净资产规模": "415.96亿元（截止至：2026年06月30日） 份额规模 728.4876亿份 （截止至：2026年06月30日）",
+            "基金管理人": "华夏基金",
+            "基金托管人": "建设银行",
+            "基金经理人": "徐猛",
+            "成立来分红": "每份累计0.00元（0次）",
+            "管理费率": "0.50%（每年）",
+            "托管费率": "0.15%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.80%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "恒生科技指数收益率(经汇率调整后)",
+            "跟踪标的": "恒生科技指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_513180.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=513180&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_513180.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 0.509,
+      "ask": 0.51,
+      "spread_pct": 0.1962708537782141,
+      "spread_as_of": "20261015161434",
+      "spread_source_url": "https://qt.gtimg.cn/q=sh513180",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "159920": {
+      "bucket": "hongkong_broad",
+      "name": "恒生ETF华夏",
+      "full_name": "恒生交易型开放式指数证券投资基金",
+      "manager": "华夏基金",
+      "custodian": "中国银行",
+      "index_name": "恒生指数",
+      "benchmark_description": "人民币/港币汇率×恒生指数的指数收益率",
+      "management_fee_pct": 0.6,
+      "custody_fee_pct": 0.15,
+      "annual_fee_pct": 0.75,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 8712000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": false,
+      "instrument_type": "ETF",
+      "inception_date": "2012-08-09",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_159920.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 1.26,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": 45.37,
+      "holdings_as_of": "2026-06-30",
+      "disclosed_stock_holdings": [
+        {
+          "code": "00005",
+          "name": "汇丰控股",
+          "weight_pct": 8.51
+        },
+        {
+          "code": "00700",
+          "name": "腾讯控股",
+          "weight_pct": 7.56
+        },
+        {
+          "code": "09988",
+          "name": "阿里巴巴-W",
+          "weight_pct": 6.01
+        },
+        {
+          "code": "00939",
+          "name": "建设银行",
+          "weight_pct": 4.83
+        },
+        {
+          "code": "01299",
+          "name": "友邦保险",
+          "weight_pct": 4.68
+        },
+        {
+          "code": "01398",
+          "name": "工商银行",
+          "weight_pct": 3.3
+        },
+        {
+          "code": "00941",
+          "name": "中国移动",
+          "weight_pct": 2.95
+        },
+        {
+          "code": "00388",
+          "name": "香港交易所",
+          "weight_pct": 2.72
+        },
+        {
+          "code": "01810",
+          "name": "小米集团-W",
+          "weight_pct": 2.44
+        },
+        {
+          "code": "03690",
+          "name": "美团-W",
+          "weight_pct": 2.37
+        }
+      ],
+      "holdings_count_disclosed": 10,
+      "holdings_note": "公开披露前十只直接股票占基金净值比例；不等于穿透后的指数成分权重",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": true,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_159920.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "恒生交易型开放式指数证券投资基金",
+            "基金简称": "恒生ETF华夏",
+            "基金代码": "159920（主代码） 基金类型 指数型-海外股票",
+            "发行日期": "2012年07月09日",
+            "成立日期/规模": "2012年08月09日 / 35.856亿份",
+            "净资产规模": "87.12亿元（截止至：2026年06月30日） 份额规模 64.0756亿份 （截止至：2026年06月30日）",
+            "基金管理人": "华夏基金",
+            "基金托管人": "中国银行",
+            "基金经理人": "徐猛",
+            "成立来分红": "每份累计0.08元（1次）",
+            "管理费率": "0.60%（每年）",
+            "托管费率": "0.15%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.80%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "人民币/港币汇率×恒生指数的指数收益率",
+            "跟踪标的": "恒生指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_159920.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=159920&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_159920.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 1.41,
+      "ask": 1.411,
+      "spread_pct": 0.07089684509040141,
+      "spread_as_of": "20261015161442",
+      "spread_source_url": "https://qt.gtimg.cn/q=sz159920",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "513030": {
+      "bucket": "europe_broad",
+      "name": "德国ETF华安",
+      "full_name": "华安国际龙头(DAX)交易型开放式指数证券投资基金",
+      "manager": "华安基金",
+      "custodian": "招商银行",
+      "index_name": "法兰克福DAX指数",
+      "benchmark_description": "德国DAX指数(DAX Index)收益率(经汇率调整后的总收益指数收益率)",
+      "management_fee_pct": 0.8,
+      "custody_fee_pct": 0.2,
+      "annual_fee_pct": 1.0,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 1800000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": false,
+      "instrument_type": "ETF",
+      "inception_date": "2014-08-08",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_513030.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 4.14,
+      "tracking_error_as_of": "2026-10-13",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": 59.25,
+      "holdings_as_of": "2026-06-30",
+      "disclosed_stock_holdings": [
+        {
+          "code": "SIEGY",
+          "name": "西门子",
+          "weight_pct": 10.95
+        },
+        {
+          "code": "ALV",
+          "name": "安联保险",
+          "weight_pct": 8.51
+        },
+        {
+          "code": "SAPGY",
+          "name": "SAP公司",
+          "weight_pct": 7.33
+        },
+        {
+          "code": "ENRGY",
+          "name": "西门子能源公司",
+          "weight_pct": 6.99
+        },
+        {
+          "code": "AIRGY",
+          "name": "空中客车有限公司",
+          "weight_pct": 6.18
+        },
+        {
+          "code": "IFXGY",
+          "name": "英飞凌科技有限公司",
+          "weight_pct": 5.67
+        },
+        {
+          "code": "DTEGY",
+          "name": "德国电信",
+          "weight_pct": 4.47
+        },
+        {
+          "code": "MUV2GY",
+          "name": "慕尼黑再保险公司",
+          "weight_pct": 3.37
+        },
+        {
+          "code": "DBKGY",
+          "name": "德意志银行",
+          "weight_pct": 3.06
+        },
+        {
+          "code": "DHLGY",
+          "name": "DHL集团",
+          "weight_pct": 2.72
+        }
+      ],
+      "holdings_count_disclosed": 10,
+      "holdings_note": "公开披露前十只直接股票占基金净值比例；不等于穿透后的指数成分权重",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": true,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_513030.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "华安国际龙头(DAX)交易型开放式指数证券投资基金",
+            "基金简称": "德国ETF华安",
+            "基金代码": "513030（主代码） 基金类型 指数型-海外股票",
+            "发行日期": "2014年07月14日",
+            "成立日期/规模": "2014年08月08日 / 3.378亿份",
+            "净资产规模": "18.00亿元（截止至：2026年06月30日） 份额规模 10.1478亿份 （截止至：2026年06月30日）",
+            "基金管理人": "华安基金",
+            "基金托管人": "招商银行",
+            "基金经理人": "倪斌",
+            "成立来分红": "每份累计0.00元（0次）",
+            "管理费率": "0.80%（每年）",
+            "托管费率": "0.20%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.08%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "德国DAX指数(DAX Index)收益率(经汇率调整后的总收益指数收益率)",
+            "跟踪标的": "法兰克福DAX指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_513030.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=513030&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_513030.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 1.743,
+      "ask": 1.744,
+      "spread_pct": 0.057355893318032106,
+      "spread_as_of": "20261015161453",
+      "spread_source_url": "https://qt.gtimg.cn/q=sh513030",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "518880": {
+      "bucket": "gold",
+      "name": "黄金ETF华安",
+      "full_name": "华安易富黄金交易型开放式证券投资基金",
+      "manager": "华安基金",
+      "custodian": "建设银行",
+      "index_name": "黄金9999",
+      "benchmark_description": "国内黄金现货价格收益率",
+      "management_fee_pct": 0.5,
+      "custody_fee_pct": 0.1,
+      "annual_fee_pct": 0.6,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 86208000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": false,
+      "instrument_type": "ETF",
+      "inception_date": "2013-07-18",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_518880.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 0.08,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": null,
+      "holdings_as_of": null,
+      "disclosed_stock_holdings": [],
+      "holdings_count_disclosed": 0,
+      "holdings_note": "非股票类基金，前十大股票指标不适用；应按黄金、债券久期或商品期货风险评估",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": false,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_518880.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "华安易富黄金交易型开放式证券投资基金",
+            "基金简称": "黄金ETF华安",
+            "基金代码": "518880（主代码） 基金类型 指数型-其他",
+            "发行日期": "2013年06月24日",
+            "成立日期/规模": "2013年07月18日 / 12.085亿份",
+            "净资产规模": "862.08亿元（截止至：2026年06月30日） 份额规模 102.9664亿份 （截止至：2026年06月30日）",
+            "基金管理人": "华安基金",
+            "基金托管人": "建设银行",
+            "基金经理人": "许之彦",
+            "成立来分红": "每份累计0.00元（0次）",
+            "管理费率": "0.50%（每年）",
+            "托管费率": "0.10%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.50%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "国内黄金现货价格收益率",
+            "跟踪标的": "黄金9999"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_518880.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=518880&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_518880.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 8.472,
+      "ask": 8.473,
+      "spread_pct": 0.011802891708482999,
+      "spread_as_of": "20261015161433",
+      "spread_source_url": "https://qt.gtimg.cn/q=sh518880",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "161226": {
+      "bucket": "satellite",
+      "name": "国投瑞银白银期货(LOF)A",
+      "instrument_type": "LOF",
+      "full_name": "国投瑞银白银期货证券投资基金(LOF)",
+      "manager": "国投瑞银基金",
+      "custodian": "中国银行",
+      "index_name": "该基金无跟踪标的",
+      "benchmark_description": "上海期货交易所白银期货主力合约收益率(扣除相关费用)",
+      "management_fee_pct": 1.0,
+      "custody_fee_pct": 0.2,
+      "sales_service_fee_pct": 0.0,
+      "annual_fee_pct": 1.2,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示年度费率",
+      "aum_cny": 7944000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": false,
+      "inception_date": "2015-08-06",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_161226.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_note": "来源未列出实际年化跟踪误差",
+      "top10_weight_pct": null,
+      "holdings_as_of": null,
+      "disclosed_stock_holdings": [],
+      "holdings_count_disclosed": 0,
+      "holdings_note": "非股票类基金，前十大股票指标不适用；应按黄金、债券久期或商品期货风险评估",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://docs.static.szse.cn/www/fund/guide/W020220128519514648198.pdf",
+      "stock_concentration_applicable": false,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_161226.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "国投瑞银白银期货证券投资基金(LOF)",
+            "基金简称": "国投瑞银白银期货(LOF)A",
+            "基金代码": "161226（主代码） 基金类型 商品",
+            "发行日期": "2015年07月20日",
+            "成立日期/规模": "2015年08月06日 / 3.466亿份",
+            "净资产规模": "79.44亿元（截止至：2026年06月30日） 份额规模 49.7253亿份 （截止至：2026年06月30日）",
+            "基金管理人": "国投瑞银基金",
+            "基金托管人": "中国银行",
+            "基金经理人": "赵建",
+            "成立来分红": "每份累计0.00元（0次）",
+            "管理费率": "1.00%（每年）",
+            "托管费率": "0.20%（每年）",
+            "销售服务费率": "0.00%（每年）",
+            "最高认购费率": "0.80%（前端）",
+            "业绩比较基准": "上海期货交易所白银期货主力合约收益率(扣除相关费用)",
+            "跟踪标的": "该基金无跟踪标的"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_161226.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=161226&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_161226.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 1.734,
+      "ask": 1.735,
+      "spread_pct": 0.057653502450280295,
+      "spread_as_of": "20261015161406",
+      "spread_source_url": "https://qt.gtimg.cn/q=sz161226",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "511010": {
+      "bucket": "duration_bond",
+      "name": "国债ETF国泰",
+      "full_name": "上证5年期国债交易型开放式指数证券投资基金",
+      "manager": "国泰基金",
+      "custodian": "建设银行",
+      "index_name": "上证5年期国债指数",
+      "benchmark_description": "上证5年期国债指数收益率",
+      "management_fee_pct": 0.15,
+      "custody_fee_pct": 0.05,
+      "annual_fee_pct": 0.2,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 5117000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": false,
+      "instrument_type": "ETF",
+      "inception_date": "2013-03-05",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_511010.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 0.24,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": null,
+      "holdings_as_of": null,
+      "disclosed_stock_holdings": [],
+      "holdings_count_disclosed": 0,
+      "holdings_note": "非股票类基金，前十大股票指标不适用；应按黄金、债券久期或商品期货风险评估",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": false,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_511010.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "上证5年期国债交易型开放式指数证券投资基金",
+            "基金简称": "国债ETF国泰",
+            "基金代码": "511010（主代码） 基金类型 指数型-固收",
+            "发行日期": "2013年02月21日",
+            "成立日期/规模": "2013年03月05日 / 54.236亿份",
+            "净资产规模": "51.17亿元（截止至：2026年06月30日） 份额规模 0.3636亿份 （截止至：2026年06月30日）",
+            "基金管理人": "国泰基金",
+            "基金托管人": "建设银行",
+            "基金经理人": "王玉 、 王振扬",
+            "成立来分红": "每份累计5.39元（7次）",
+            "管理费率": "0.15%（每年）",
+            "托管费率": "0.05%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.40%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "上证5年期国债指数收益率",
+            "跟踪标的": "上证5年期国债指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_511010.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=511010&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_511010.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 140.905,
+      "ask": 140.906,
+      "spread_pct": 0.0007096955051469068,
+      "spread_as_of": "20261015161500",
+      "spread_source_url": "https://qt.gtimg.cn/q=sh511010",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "511260": {
+      "bucket": "duration_bond",
+      "name": "十年国债ETF国泰",
+      "full_name": "国泰上证10年期国债交易型开放式指数证券投资基金",
+      "manager": "国泰基金",
+      "custodian": "建设银行",
+      "index_name": "上证10年期国债指数",
+      "benchmark_description": "上证10年期国债指数收益率",
+      "management_fee_pct": 0.15,
+      "custody_fee_pct": 0.05,
+      "annual_fee_pct": 0.2,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 19880000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": false,
+      "instrument_type": "ETF",
+      "inception_date": "2017-08-04",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_511260.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 0.29,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": null,
+      "holdings_as_of": null,
+      "disclosed_stock_holdings": [],
+      "holdings_count_disclosed": 0,
+      "holdings_note": "非股票类基金，前十大股票指标不适用；应按黄金、债券久期或商品期货风险评估",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": false,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_511260.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "国泰上证10年期国债交易型开放式指数证券投资基金",
+            "基金简称": "十年国债ETF国泰",
+            "基金代码": "511260（主代码） 基金类型 指数型-固收",
+            "发行日期": "2017年07月17日",
+            "成立日期/规模": "2017年08月04日 / 2.186亿份",
+            "净资产规模": "198.80亿元（截止至：2026年06月30日） 份额规模 1.4741亿份 （截止至：2026年06月30日）",
+            "基金管理人": "国泰基金",
+            "基金托管人": "建设银行",
+            "基金经理人": "王玉 、 王振扬",
+            "成立来分红": "每份累计5.41元（5次）",
+            "管理费率": "0.15%（每年）",
+            "托管费率": "0.05%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.00%",
+            "最高申购费率": "---",
+            "最高赎回费率": "0.00%",
+            "业绩比较基准": "上证10年期国债指数收益率",
+            "跟踪标的": "上证10年期国债指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_511260.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=511260&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_511260.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 135.19,
+      "ask": 135.193,
+      "spread_pct": 0.002219074424068321,
+      "spread_as_of": "20261015161446",
+      "spread_source_url": "https://qt.gtimg.cn/q=sh511260",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "512890": {
+      "bucket": "dividend",
+      "name": "红利低波ETF华泰柏瑞",
+      "full_name": "华泰柏瑞中证红利低波动交易型开放式指数证券投资基金",
+      "manager": "华泰柏瑞基金",
+      "custodian": "建设银行",
+      "index_name": "中证红利低波动指数",
+      "benchmark_description": "中证红利低波动指数收益率",
+      "management_fee_pct": 0.5,
+      "custody_fee_pct": 0.1,
+      "annual_fee_pct": 0.6,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 31289999999.999996,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": false,
+      "instrument_type": "ETF",
+      "inception_date": "2018-12-19",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_512890.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 1.15,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": 25.01,
+      "holdings_as_of": "2026-06-30",
+      "disclosed_stock_holdings": [
+        {
+          "code": "601229",
+          "name": "上海银行",
+          "weight_pct": 2.83
+        },
+        {
+          "code": "601009",
+          "name": "南京银行",
+          "weight_pct": 2.69
+        },
+        {
+          "code": "000001",
+          "name": "平安银行",
+          "weight_pct": 2.66
+        },
+        {
+          "code": "601838",
+          "name": "成都银行",
+          "weight_pct": 2.62
+        },
+        {
+          "code": "000651",
+          "name": "格力电器",
+          "weight_pct": 2.48
+        },
+        {
+          "code": "600919",
+          "name": "江苏银行",
+          "weight_pct": 2.44
+        },
+        {
+          "code": "600350",
+          "name": "山东高速",
+          "weight_pct": 2.39
+        },
+        {
+          "code": "601825",
+          "name": "沪农商行",
+          "weight_pct": 2.37
+        },
+        {
+          "code": "601369",
+          "name": "陕鼓动力",
+          "weight_pct": 2.28
+        },
+        {
+          "code": "600016",
+          "name": "民生银行",
+          "weight_pct": 2.25
+        }
+      ],
+      "holdings_count_disclosed": 10,
+      "holdings_note": "公开披露前十只直接股票占基金净值比例；不等于穿透后的指数成分权重",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": true,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_512890.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "华泰柏瑞中证红利低波动交易型开放式指数证券投资基金",
+            "基金简称": "红利低波ETF华泰柏瑞",
+            "基金代码": "512890（主代码） 基金类型 指数型-股票",
+            "发行日期": "2018年11月21日",
+            "成立日期/规模": "2018年12月19日 / 6.836亿份",
+            "净资产规模": "312.90亿元（截止至：2026年06月30日） 份额规模 293.3111亿份 （截止至：2026年06月30日）",
+            "基金管理人": "华泰柏瑞基金",
+            "基金托管人": "建设银行",
+            "基金经理人": "柳军",
+            "成立来分红": "每份累计0.00元（0次）",
+            "管理费率": "0.50%（每年）",
+            "托管费率": "0.10%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.50%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "中证红利低波动指数收益率",
+            "跟踪标的": "中证红利低波动指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_512890.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=512890&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_512890.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 1.211,
+      "ask": 1.212,
+      "spread_pct": 0.08254230293024266,
+      "spread_as_of": "20261015161444",
+      "spread_source_url": "https://qt.gtimg.cn/q=sh512890",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "513530": {
+      "bucket": "dividend",
+      "name": "港股通红利ETF华泰柏瑞",
+      "full_name": "华泰柏瑞中证港股通高股息投资交易型开放式指数证券投资基金(QDII)",
+      "manager": "华泰柏瑞基金",
+      "custodian": "交通银行",
+      "index_name": "中证港股通高股息投资港元指数",
+      "benchmark_description": "中证港股通高股息投资指数收益率",
+      "management_fee_pct": 0.5,
+      "custody_fee_pct": 0.1,
+      "annual_fee_pct": 0.6,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 3740000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": true,
+      "instrument_type": "ETF",
+      "inception_date": "2022-04-08",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_513530.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 1.81,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": 42.1,
+      "holdings_as_of": "2026-06-30",
+      "disclosed_stock_holdings": [
+        {
+          "code": "01919",
+          "name": "中远海控",
+          "weight_pct": 5.91
+        },
+        {
+          "code": "03808",
+          "name": "中国重汽",
+          "weight_pct": 5.41
+        },
+        {
+          "code": "01308",
+          "name": "海丰国际",
+          "weight_pct": 4.4
+        },
+        {
+          "code": "01088",
+          "name": "中国神华",
+          "weight_pct": 4.2
+        },
+        {
+          "code": "00005",
+          "name": "汇丰控股",
+          "weight_pct": 4.12
+        },
+        {
+          "code": "00883",
+          "name": "中国海洋石油",
+          "weight_pct": 3.71
+        },
+        {
+          "code": "00857",
+          "name": "中国石油股份",
+          "weight_pct": 3.64
+        },
+        {
+          "code": "00939",
+          "name": "建设银行",
+          "weight_pct": 3.63
+        },
+        {
+          "code": "01898",
+          "name": "中煤能源",
+          "weight_pct": 3.56
+        },
+        {
+          "code": "01988",
+          "name": "民生银行",
+          "weight_pct": 3.52
+        }
+      ],
+      "holdings_count_disclosed": 10,
+      "holdings_note": "公开披露前十只直接股票占基金净值比例；不等于穿透后的指数成分权重",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": true,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_513530.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "华泰柏瑞中证港股通高股息投资交易型开放式指数证券投资基金(QDII)",
+            "基金简称": "港股通红利ETF华泰柏瑞",
+            "基金代码": "513530（主代码） 基金类型 指数型-海外股票",
+            "发行日期": "2022年02月24日",
+            "成立日期/规模": "2022年04月08日 / 3.039亿份",
+            "净资产规模": "37.40亿元（截止至：2026年06月30日） 份额规模 26.0394亿份 （截止至：2026年06月30日）",
+            "基金管理人": "华泰柏瑞基金",
+            "基金托管人": "交通银行",
+            "基金经理人": "李茜",
+            "成立来分红": "每份累计0.19元（17次）",
+            "管理费率": "0.50%（每年）",
+            "托管费率": "0.10%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.50%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "中证港股通高股息投资指数收益率",
+            "跟踪标的": "中证港股通高股息投资港元指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_513530.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=513530&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_513530.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 1.559,
+      "ask": 1.56,
+      "spread_pct": 0.06412311638346341,
+      "spread_as_of": "20261015161438",
+      "spread_source_url": "https://qt.gtimg.cn/q=sh513530",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "159750": {
+      "bucket": "satellite",
+      "name": "港股科技50ETF招商",
+      "full_name": "招商中证香港科技交易型开放式指数证券投资基金(QDII)",
+      "manager": "招商基金",
+      "custodian": "中国银行",
+      "index_name": "中证香港科技指数指数",
+      "benchmark_description": "中证香港科技指数收益率(经汇率调整后)",
+      "management_fee_pct": 0.5,
+      "custody_fee_pct": 0.15,
+      "annual_fee_pct": 0.65,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 1152000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": true,
+      "instrument_type": "ETF",
+      "inception_date": "2022-01-26",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_159750.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": 1.36,
+      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
+      "top10_weight_pct": 66.71,
+      "holdings_as_of": "2026-06-30",
+      "disclosed_stock_holdings": [
+        {
+          "code": "00700",
+          "name": "腾讯控股",
+          "weight_pct": 10.08
+        },
+        {
+          "code": "09988",
+          "name": "阿里巴巴-W",
+          "weight_pct": 8.27
+        },
+        {
+          "code": "00981",
+          "name": "中芯国际",
+          "weight_pct": 8.14
+        },
+        {
+          "code": "03690",
+          "name": "美团-W",
+          "weight_pct": 8.01
+        },
+        {
+          "code": "01810",
+          "name": "小米集团-W",
+          "weight_pct": 7.41
+        },
+        {
+          "code": "09999",
+          "name": "网易",
+          "weight_pct": 7.34
+        },
+        {
+          "code": "01211",
+          "name": "比亚迪股份",
+          "weight_pct": 5.05
+        },
+        {
+          "code": "09618",
+          "name": "京东集团-SW",
+          "weight_pct": 4.69
+        },
+        {
+          "code": "09888",
+          "name": "百度集团-SW",
+          "weight_pct": 4.52
+        },
+        {
+          "code": "01347",
+          "name": "华虹宏力",
+          "weight_pct": 3.2
+        }
+      ],
+      "holdings_count_disclosed": 10,
+      "holdings_note": "公开披露前十只直接股票占基金净值比例；不等于穿透后的指数成分权重",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": true,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_159750.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "招商中证香港科技交易型开放式指数证券投资基金(QDII)",
+            "基金简称": "港股科技50ETF招商",
+            "基金代码": "159750（主代码） 基金类型 指数型-海外股票",
+            "发行日期": "2021年11月05日",
+            "成立日期/规模": "2022年01月26日 / 2.236亿份",
+            "净资产规模": "11.52亿元（截止至：2026年06月30日） 份额规模 14.0162亿份 （截止至：2026年06月30日）",
+            "基金管理人": "招商基金",
+            "基金托管人": "中国银行",
+            "基金经理人": "刘重杰",
+            "成立来分红": "每份累计0.00元（0次）",
+            "管理费率": "0.50%（每年）",
+            "托管费率": "0.15%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.80%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "中证香港科技指数收益率(经汇率调整后)",
+            "跟踪标的": "中证香港科技指数指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_159750.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=159750&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_159750.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 0.767,
+      "ask": 0.768,
+      "spread_pct": 0.13029315960912063,
+      "spread_as_of": "20261015161457",
+      "spread_source_url": "https://qt.gtimg.cn/q=sz159750",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "159529": {
+      "bucket": "satellite",
+      "name": "标普消费ETF景顺",
+      "full_name": "景顺长城标普消费精选交易型开放式指数证券投资基金(QDII)",
+      "manager": "景顺长城基金",
+      "custodian": "工商银行",
+      "index_name": "标普500消费精选指数",
+      "benchmark_description": "标普500消费精选指数收益率(使用估值汇率调整)",
+      "management_fee_pct": 0.5,
+      "custody_fee_pct": 0.2,
+      "annual_fee_pct": 0.7,
+      "fee_basis": "列示管理费+托管费+销售服务费（如有），不含交易费用及其他运营支出；非完整总费用率",
+      "sales_service_fee_note": "平台列示为---，不另加计，保留原始标记",
+      "aum_cny": 1044000000.0,
+      "aum_as_of": "2026-06-30",
+      "is_cross_border": true,
+      "instrument_type": "ETF",
+      "inception_date": "2024-01-24",
+      "source_url": "https://fundf10.eastmoney.com/jbgk_159529.html",
+      "verified_on": "2026-10-15",
+      "basic_verified_on": "2026-10-15",
+      "tracking_error_annual_pct": null,
+      "tracking_error_as_of": "2026-10-13",
+      "tracking_error_note": "平台年化跟踪误差显示--，不填0",
+      "top10_weight_pct": 65.27,
+      "holdings_as_of": "2026-06-30",
+      "disclosed_stock_holdings": [
+        {
+          "code": "TSLA",
+          "name": "特斯拉",
+          "weight_pct": 15.12
+        },
+        {
+          "code": "AMZN",
+          "name": "亚马逊",
+          "weight_pct": 13.74
+        },
+        {
+          "code": "WMT",
+          "name": "沃尔玛",
+          "weight_pct": 7.01
+        },
+        {
+          "code": "COST",
+          "name": "开市客",
+          "weight_pct": 5.86
+        },
+        {
+          "code": "HD",
+          "name": "家得宝",
+          "weight_pct": 4.96
+        },
+        {
+          "code": "PG",
+          "name": "宝洁",
+          "weight_pct": 4.83
+        },
+        {
+          "code": "KO",
+          "name": "可口可乐",
+          "weight_pct": 4.45
+        },
+        {
+          "code": "PM",
+          "name": "菲利普莫里斯国际",
+          "weight_pct": 3.98
+        },
+        {
+          "code": "MCD",
+          "name": "麦当劳",
+          "weight_pct": 2.71
+        },
+        {
+          "code": "PEP",
+          "name": "百事",
+          "weight_pct": 2.61
+        }
+      ],
+      "holdings_count_disclosed": 10,
+      "holdings_note": "公开披露前十只直接股票占基金净值比例；不等于穿透后的指数成分权重",
+      "tracking_difference_pct": null,
+      "tracking_difference_note": "未取得同币种、同分红与区间口径的实际收益差异；不使用跟踪误差替代。非本次日常决策硬门槛。",
+      "lot_size": 100,
+      "lot_size_source": "https://www.sse.com.cn/assortment/fund/etf/question/c/c_20240118_5734754.shtml",
+      "stock_concentration_applicable": true,
+      "sources": {
+        "basic": {
+          "url": "https://fundf10.eastmoney.com/jbgk_159529.html",
+          "retrieved_on": "2026-10-15",
+          "fields": {
+            "基金全称": "景顺长城标普消费精选交易型开放式指数证券投资基金(QDII)",
+            "基金简称": "标普消费ETF景顺",
+            "基金代码": "159529（主代码） 基金类型 指数型-海外股票",
+            "发行日期": "2024年01月08日",
+            "成立日期/规模": "2024年01月24日 / 3.035亿份",
+            "净资产规模": "10.44亿元（截止至：2026年06月30日） 份额规模 8.1154亿份 （截止至：2026年06月30日）",
+            "基金管理人": "景顺长城基金",
+            "基金托管人": "工商银行",
+            "基金经理人": "汪洋 、 金璜",
+            "成立来分红": "每份累计0.00元（0次）",
+            "管理费率": "0.50%（每年）",
+            "托管费率": "0.20%（每年）",
+            "销售服务费率": "---（每年）",
+            "最高认购费率": "0.80%",
+            "最高申购费率": "---",
+            "最高赎回费率": "---",
+            "业绩比较基准": "标普500消费精选指数收益率(使用估值汇率调整)",
+            "跟踪标的": "标普500消费精选指数"
+          }
+        },
+        "tracking": {
+          "url": "https://fundf10.eastmoney.com/tsdata_159529.html",
+          "retrieved_on": "2026-10-15"
+        },
+        "holdings": {
+          "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=159529&topline=10&year=2026&month=",
+          "page_url": "https://fundf10.eastmoney.com/ccmx_159529.html",
+          "retrieved_on": "2026-10-15"
+        }
+      },
+      "refresh_errors": [],
+      "bid": 1.319,
+      "ask": 1.32,
+      "spread_pct": 0.07578628268284289,
+      "spread_as_of": "20261015161415",
+      "spread_source_url": "https://qt.gtimg.cn/q=sz159529",
+      "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
+    },
+    "600900": {
+      "bucket": "satellite",
+      "name": "长江电力",
+      "instrument_type": "stock"
+    },
+    "002594": {
+      "bucket": "satellite",
+      "name": "比亚迪",
+      "instrument_type": "stock"
+    },
+    "000333": {
+      "bucket": "satellite",
+      "name": "美的集团",
+      "instrument_type": "stock"
+    }
+  },
+  "refreshed_on": "2026-10-15"
+}
