@@ -182,14 +182,14 @@
   "_receivables": [],
   "_order_events": [],
   "_execution_receipt": {
-    "date": "20261021",
+    "date": "20261022",
     "trades": [],
     "expired": [],
     "dividends": [],
     "warnings": []
   },
   "_session": {
-    "date": "20261021",
+    "date": "20261022",
     "stage": "complete"
   },
   "_research": {
@@ -234,7 +234,7 @@
     "reference_start_date": "20261016",
     "reference_initial_capital": 491055.23,
     "reference_strategy_start_assets": 491055.23,
-    "reference_as_of": "20261021"
+    "reference_as_of": "20261022"
   },
   "_research_segments": [
     {
@@ -254,20 +254,20 @@
     "name": "日本东证指数ETF南方",
     "buy_date": "20260817",
     "score_history": [
-      78,
       77,
       74,
       72,
       73,
       70,
-      77
+      77,
+      74
     ],
     "stale_date": "",
     "_last_mark": {
-      "price": 1.863,
-      "date": "20261021"
+      "price": 1.855,
+      "date": "20261022"
     },
-    "_score_date": "20261021"
+    "_score_date": "20261022"
   },
   "512890": {
     "shares": 1500,
@@ -276,18 +276,18 @@
     "buy_date": "20260831",
     "stale_date": "",
     "score_history": [
-      69,
       68,
       71,
       70,
       70,
       74,
-      75
+      75,
+      73
     ],
     "_last_mark": {
-      "price": 1.213,
-      "date": "20261021"
+      "price": 1.202,
+      "date": "20261022"
     },
-    "_score_date": "20261021"
+    "_score_date": "20261022"
   }
 }
