@@ -21,10 +21,10 @@
       "instrument_type": "ETF",
       "inception_date": "2013-02-06",
       "source_url": "https://fundf10.eastmoney.com/jbgk_510500.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
-      "tracking_error_annual_pct": 0.44,
-      "tracking_error_as_of": "2026-10-14",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
+      "tracking_error_annual_pct": 0.45,
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": 11.24,
       "holdings_as_of": "2026-06-30",
@@ -90,7 +90,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_510500.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "中证500交易型开放式指数证券投资基金",
             "基金简称": "中证500ETF南方",
@@ -114,19 +114,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_510500.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=510500&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_510500.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 6.802,
-      "ask": 6.803,
-      "spread_pct": 0.014700477765532287,
-      "spread_as_of": "20261015161454",
+      "bid": 6.684,
+      "ask": 6.685,
+      "spread_pct": 0.014959982048013253,
+      "spread_as_of": "20261022161451",
       "spread_source_url": "https://qt.gtimg.cn/q=sh510500",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -149,10 +149,10 @@
       "instrument_type": "ETF",
       "inception_date": "2016-09-29",
       "source_url": "https://fundf10.eastmoney.com/jbgk_512100.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
-      "tracking_error_annual_pct": 0.44,
-      "tracking_error_as_of": "2026-10-14",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
+      "tracking_error_annual_pct": 0.45,
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": 6.21,
       "holdings_as_of": "2026-06-30",
@@ -218,7 +218,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_512100.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "南方中证1000交易型开放式指数证券投资基金",
             "基金简称": "中证1000ETF南方",
@@ -242,19 +242,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_512100.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=512100&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_512100.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 2.705,
-      "ask": 2.706,
-      "spread_pct": 0.03696174459434078,
-      "spread_as_of": "20261015161453",
+      "bid": 2.671,
+      "ask": 2.672,
+      "spread_pct": 0.037432154220487894,
+      "spread_as_of": "20261022161457",
       "spread_source_url": "https://qt.gtimg.cn/q=sh512100",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -277,10 +277,10 @@
       "instrument_type": "ETF",
       "inception_date": "2024-09-25",
       "source_url": "https://fundf10.eastmoney.com/jbgk_563360.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
       "tracking_error_annual_pct": 0.29,
-      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": 20.55,
       "holdings_as_of": "2026-06-30",
@@ -346,7 +346,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_563360.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "华泰柏瑞中证A500交易型开放式指数证券投资基金",
             "基金简称": "A500ETF华泰柏瑞",
@@ -370,19 +370,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_563360.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=563360&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_563360.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 1.145,
-      "ask": 1.146,
-      "spread_pct": 0.08729812309034395,
-      "spread_as_of": "20261015161459",
+      "bid": 1.111,
+      "ask": 1.112,
+      "spread_pct": 0.08996851102115268,
+      "spread_as_of": "20261022161436",
       "spread_source_url": "https://qt.gtimg.cn/q=sh563360",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -405,10 +405,10 @@
       "instrument_type": "ETF",
       "inception_date": "2012-05-04",
       "source_url": "https://fundf10.eastmoney.com/jbgk_510300.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
       "tracking_error_annual_pct": 0.36,
-      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": 23.25,
       "holdings_as_of": "2026-06-30",
@@ -474,7 +474,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_510300.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "华泰柏瑞沪深300交易型开放式指数证券投资基金",
             "基金简称": "沪深300ETF华泰柏瑞",
@@ -498,19 +498,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_510300.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=510300&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_510300.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 4.241,
-      "ask": 4.242,
-      "spread_pct": 0.023576564894502744,
-      "spread_as_of": "20261015161442",
+      "bid": 4.106,
+      "ask": 4.107,
+      "spread_pct": 0.024351637647639934,
+      "spread_as_of": "20261022161443",
       "spread_source_url": "https://qt.gtimg.cn/q=sh510300",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -533,10 +533,10 @@
       "instrument_type": "ETF",
       "inception_date": "2011-09-20",
       "source_url": "https://fundf10.eastmoney.com/jbgk_159915.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
       "tracking_error_annual_pct": 0.36,
-      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": 57.01,
       "holdings_as_of": "2026-06-30",
@@ -602,7 +602,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_159915.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "易方达创业板交易型开放式指数证券投资基金",
             "基金简称": "创业板ETF易方达",
@@ -626,19 +626,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_159915.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=159915&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_159915.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 2.806,
-      "ask": 2.807,
-      "spread_pct": 0.035631569570635666,
-      "spread_as_of": "20261015161436",
+      "bid": 2.591,
+      "ask": 2.592,
+      "spread_pct": 0.038587690526717726,
+      "spread_as_of": "20261022161415",
       "spread_source_url": "https://qt.gtimg.cn/q=sz159915",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -661,10 +661,10 @@
       "instrument_type": "ETF",
       "inception_date": "2020-09-28",
       "source_url": "https://fundf10.eastmoney.com/jbgk_588000.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
       "tracking_error_annual_pct": 0.36,
-      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": 62.21,
       "holdings_as_of": "2026-06-30",
@@ -730,7 +730,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_588000.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "华夏上证科创板50成份交易型开放式指数证券投资基金",
             "基金简称": "科创50ETF华夏",
@@ -754,19 +754,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_588000.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=588000&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_588000.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 1.438,
-      "ask": 1.439,
-      "spread_pct": 0.0695168578380335,
-      "spread_as_of": "20261015161452",
+      "bid": 1.377,
+      "ask": 1.378,
+      "spread_pct": 0.07259528130670707,
+      "spread_as_of": "20261022161459",
       "spread_source_url": "https://qt.gtimg.cn/q=sh588000",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -789,10 +789,10 @@
       "instrument_type": "ETF",
       "inception_date": "2023-04-12",
       "source_url": "https://fundf10.eastmoney.com/jbgk_159659.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
       "tracking_error_annual_pct": 1.08,
-      "tracking_error_as_of": "2026-10-13",
+      "tracking_error_as_of": "2026-10-20",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": 44.53,
       "holdings_as_of": "2026-06-30",
@@ -858,7 +858,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_159659.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "招商纳斯达克100交易型开放式指数证券投资基金(QDII)",
             "基金简称": "纳斯达克100ETF招商",
@@ -882,19 +882,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_159659.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=159659&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_159659.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 2.43,
-      "ask": 2.431,
-      "spread_pct": 0.0411437975725114,
-      "spread_as_of": "20261015161445",
+      "bid": 2.39,
+      "ask": 2.391,
+      "spread_pct": 0.041832252666801496,
+      "spread_as_of": "20261022161445",
       "spread_source_url": "https://qt.gtimg.cn/q=sz159659",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -917,10 +917,10 @@
       "instrument_type": "ETF",
       "inception_date": "2013-12-05",
       "source_url": "https://fundf10.eastmoney.com/jbgk_513500.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
-      "tracking_error_annual_pct": 1.08,
-      "tracking_error_as_of": "2026-10-13",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
+      "tracking_error_annual_pct": 1.09,
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": 35.14,
       "holdings_as_of": "2026-06-30",
@@ -986,7 +986,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_513500.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "博时标普500交易型开放式指数证券投资基金",
             "基金简称": "标普500ETF博时",
@@ -1010,19 +1010,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_513500.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=513500&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_513500.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 2.658,
-      "ask": 2.659,
-      "spread_pct": 0.03761519653939777,
-      "spread_as_of": "20261015161433",
+      "bid": 2.633,
+      "ask": 2.634,
+      "spread_pct": 0.03797228023542396,
+      "spread_as_of": "20261022161436",
       "spread_source_url": "https://qt.gtimg.cn/q=sh513500",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -1045,10 +1045,10 @@
       "instrument_type": "ETF",
       "inception_date": "2019-06-12",
       "source_url": "https://fundf10.eastmoney.com/jbgk_513520.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
-      "tracking_error_annual_pct": 7.76,
-      "tracking_error_as_of": "2026-10-14",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
+      "tracking_error_annual_pct": 7.67,
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": null,
       "holdings_as_of": null,
@@ -1063,7 +1063,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_513520.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "华夏野村日经225交易型开放式指数证券投资基金(QDII)",
             "基金简称": "日经ETF华夏",
@@ -1087,19 +1087,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_513520.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=513520&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_513520.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 2.238,
-      "ask": 2.239,
-      "spread_pct": 0.044672771945494294,
-      "spread_as_of": "20261015161435",
+      "bid": 2.182,
+      "ask": 2.183,
+      "spread_pct": 0.04581901489117479,
+      "spread_as_of": "20261022161436",
       "spread_source_url": "https://qt.gtimg.cn/q=sh513520",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -1122,10 +1122,10 @@
       "instrument_type": "ETF",
       "inception_date": "2019-06-12",
       "source_url": "https://fundf10.eastmoney.com/jbgk_513800.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
       "tracking_error_annual_pct": null,
-      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台年化跟踪误差显示--，不填0",
       "top10_weight_pct": null,
       "holdings_as_of": null,
@@ -1140,7 +1140,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_513800.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "南方顶峰TOPIX交易型开放式指数证券投资基金(QDII)",
             "基金简称": "日本东证指数ETF南方",
@@ -1164,19 +1164,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_513800.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=513800&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_513800.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 1.852,
-      "ask": 1.853,
-      "spread_pct": 0.053981106612679616,
-      "spread_as_of": "20261015161500",
+      "bid": 1.854,
+      "ask": 1.855,
+      "spread_pct": 0.05392289026691237,
+      "spread_as_of": "20261022161443",
       "spread_source_url": "https://qt.gtimg.cn/q=sh513800",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -1199,10 +1199,10 @@
       "instrument_type": "ETF",
       "inception_date": "2021-05-18",
       "source_url": "https://fundf10.eastmoney.com/jbgk_513180.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
-      "tracking_error_annual_pct": 1.34,
-      "tracking_error_as_of": "2026-10-14",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
+      "tracking_error_annual_pct": 1.33,
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": 70.09,
       "holdings_as_of": "2026-06-30",
@@ -1268,7 +1268,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_513180.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "华夏恒生科技交易型开放式指数证券投资基金(QDII)",
             "基金简称": "恒生科技ETF华夏",
@@ -1292,19 +1292,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_513180.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=513180&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_513180.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 0.509,
-      "ask": 0.51,
-      "spread_pct": 0.1962708537782141,
-      "spread_as_of": "20261015161434",
+      "bid": 0.475,
+      "ask": 0.476,
+      "spread_pct": 0.21030494216614112,
+      "spread_as_of": "20261022161435",
       "spread_source_url": "https://qt.gtimg.cn/q=sh513180",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -1327,10 +1327,10 @@
       "instrument_type": "ETF",
       "inception_date": "2012-08-09",
       "source_url": "https://fundf10.eastmoney.com/jbgk_159920.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
       "tracking_error_annual_pct": 1.26,
-      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": 45.37,
       "holdings_as_of": "2026-06-30",
@@ -1396,7 +1396,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_159920.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "恒生交易型开放式指数证券投资基金",
             "基金简称": "恒生ETF华夏",
@@ -1420,19 +1420,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_159920.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=159920&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_159920.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 1.41,
-      "ask": 1.411,
-      "spread_pct": 0.07089684509040141,
-      "spread_as_of": "20261015161442",
+      "bid": 1.344,
+      "ask": 1.345,
+      "spread_pct": 0.07437709185570025,
+      "spread_as_of": "20261022161415",
       "spread_source_url": "https://qt.gtimg.cn/q=sz159920",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -1455,10 +1455,10 @@
       "instrument_type": "ETF",
       "inception_date": "2014-08-08",
       "source_url": "https://fundf10.eastmoney.com/jbgk_513030.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
-      "tracking_error_annual_pct": 4.14,
-      "tracking_error_as_of": "2026-10-13",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
+      "tracking_error_annual_pct": 4.1,
+      "tracking_error_as_of": "2026-10-20",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": 59.25,
       "holdings_as_of": "2026-06-30",
@@ -1524,7 +1524,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_513030.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "华安国际龙头(DAX)交易型开放式指数证券投资基金",
             "基金简称": "德国ETF华安",
@@ -1548,19 +1548,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_513030.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=513030&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_513030.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 1.743,
-      "ask": 1.744,
-      "spread_pct": 0.057355893318032106,
-      "spread_as_of": "20261015161453",
+      "bid": 1.754,
+      "ask": 1.755,
+      "spread_pct": 0.056996295240803074,
+      "spread_as_of": "20261022161455",
       "spread_source_url": "https://qt.gtimg.cn/q=sh513030",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -1583,10 +1583,10 @@
       "instrument_type": "ETF",
       "inception_date": "2013-07-18",
       "source_url": "https://fundf10.eastmoney.com/jbgk_518880.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
-      "tracking_error_annual_pct": 0.08,
-      "tracking_error_as_of": "2026-10-14",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
+      "tracking_error_annual_pct": 0.07,
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": null,
       "holdings_as_of": null,
@@ -1601,7 +1601,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_518880.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "华安易富黄金交易型开放式证券投资基金",
             "基金简称": "黄金ETF华安",
@@ -1625,19 +1625,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_518880.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=518880&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_518880.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 8.472,
-      "ask": 8.473,
-      "spread_pct": 0.011802891708482999,
-      "spread_as_of": "20261015161433",
+      "bid": 8.359,
+      "ask": 8.36,
+      "spread_pct": 0.01196243794484653,
+      "spread_as_of": "20261022161436",
       "spread_source_url": "https://qt.gtimg.cn/q=sh518880",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -1661,8 +1661,8 @@
       "is_cross_border": false,
       "inception_date": "2015-08-06",
       "source_url": "https://fundf10.eastmoney.com/jbgk_161226.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
       "tracking_error_note": "来源未列出实际年化跟踪误差",
       "top10_weight_pct": null,
       "holdings_as_of": null,
@@ -1677,7 +1677,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_161226.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "国投瑞银白银期货证券投资基金(LOF)",
             "基金简称": "国投瑞银白银期货(LOF)A",
@@ -1699,19 +1699,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_161226.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=161226&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_161226.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 1.734,
-      "ask": 1.735,
-      "spread_pct": 0.057653502450280295,
-      "spread_as_of": "20261015161406",
+      "bid": 1.656,
+      "ask": 1.657,
+      "spread_pct": 0.060368246302451675,
+      "spread_as_of": "20261022161448",
       "spread_source_url": "https://qt.gtimg.cn/q=sz161226",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -1734,10 +1734,10 @@
       "instrument_type": "ETF",
       "inception_date": "2013-03-05",
       "source_url": "https://fundf10.eastmoney.com/jbgk_511010.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
       "tracking_error_annual_pct": 0.24,
-      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": null,
       "holdings_as_of": null,
@@ -1752,7 +1752,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_511010.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "上证5年期国债交易型开放式指数证券投资基金",
             "基金简称": "国债ETF国泰",
@@ -1776,19 +1776,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_511010.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=511010&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_511010.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 140.905,
-      "ask": 140.906,
-      "spread_pct": 0.0007096955051469068,
-      "spread_as_of": "20261015161500",
+      "bid": 141.15,
+      "ask": 141.152,
+      "spread_pct": 0.0014169223030521413,
+      "spread_as_of": "20261022161432",
       "spread_source_url": "https://qt.gtimg.cn/q=sh511010",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -1811,10 +1811,10 @@
       "instrument_type": "ETF",
       "inception_date": "2017-08-04",
       "source_url": "https://fundf10.eastmoney.com/jbgk_511260.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
       "tracking_error_annual_pct": 0.29,
-      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": null,
       "holdings_as_of": null,
@@ -1829,7 +1829,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_511260.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "国泰上证10年期国债交易型开放式指数证券投资基金",
             "基金简称": "十年国债ETF国泰",
@@ -1853,19 +1853,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_511260.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=511260&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_511260.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 135.19,
-      "ask": 135.193,
-      "spread_pct": 0.002219074424068321,
-      "spread_as_of": "20261015161446",
+      "bid": 135.414,
+      "ask": 135.415,
+      "spread_pct": 0.0007384733540387292,
+      "spread_as_of": "20261022161447",
       "spread_source_url": "https://qt.gtimg.cn/q=sh511260",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -1888,10 +1888,10 @@
       "instrument_type": "ETF",
       "inception_date": "2018-12-19",
       "source_url": "https://fundf10.eastmoney.com/jbgk_512890.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
       "tracking_error_annual_pct": 1.15,
-      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": 25.01,
       "holdings_as_of": "2026-06-30",
@@ -1957,7 +1957,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_512890.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "华泰柏瑞中证红利低波动交易型开放式指数证券投资基金",
             "基金简称": "红利低波ETF华泰柏瑞",
@@ -1981,19 +1981,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_512890.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=512890&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_512890.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 1.211,
-      "ask": 1.212,
-      "spread_pct": 0.08254230293024266,
-      "spread_as_of": "20261015161444",
+      "bid": 1.202,
+      "ask": 1.203,
+      "spread_pct": 0.08316008316009246,
+      "spread_as_of": "20261022161448",
       "spread_source_url": "https://qt.gtimg.cn/q=sh512890",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -2016,10 +2016,10 @@
       "instrument_type": "ETF",
       "inception_date": "2022-04-08",
       "source_url": "https://fundf10.eastmoney.com/jbgk_513530.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
       "tracking_error_annual_pct": 1.81,
-      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": 42.1,
       "holdings_as_of": "2026-06-30",
@@ -2085,7 +2085,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_513530.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "华泰柏瑞中证港股通高股息投资交易型开放式指数证券投资基金(QDII)",
             "基金简称": "港股通红利ETF华泰柏瑞",
@@ -2109,19 +2109,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_513530.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=513530&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_513530.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 1.559,
-      "ask": 1.56,
-      "spread_pct": 0.06412311638346341,
-      "spread_as_of": "20261015161438",
+      "bid": 1.488,
+      "ask": 1.489,
+      "spread_pct": 0.06718172657038037,
+      "spread_as_of": "20261022161439",
       "spread_source_url": "https://qt.gtimg.cn/q=sh513530",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -2144,10 +2144,10 @@
       "instrument_type": "ETF",
       "inception_date": "2022-01-26",
       "source_url": "https://fundf10.eastmoney.com/jbgk_159750.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
       "tracking_error_annual_pct": 1.36,
-      "tracking_error_as_of": "2026-10-14",
+      "tracking_error_as_of": "2026-10-21",
       "tracking_error_note": "平台实际统计年化跟踪误差；不是收益差异，也不是合同目标",
       "top10_weight_pct": 66.71,
       "holdings_as_of": "2026-06-30",
@@ -2213,7 +2213,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_159750.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "招商中证香港科技交易型开放式指数证券投资基金(QDII)",
             "基金简称": "港股科技50ETF招商",
@@ -2237,19 +2237,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_159750.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=159750&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_159750.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 0.767,
-      "ask": 0.768,
-      "spread_pct": 0.13029315960912063,
-      "spread_as_of": "20261015161457",
+      "bid": 0.718,
+      "ask": 0.719,
+      "spread_pct": 0.13917884481558818,
+      "spread_as_of": "20261022161439",
       "spread_source_url": "https://qt.gtimg.cn/q=sz159750",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -2272,10 +2272,10 @@
       "instrument_type": "ETF",
       "inception_date": "2024-01-24",
       "source_url": "https://fundf10.eastmoney.com/jbgk_159529.html",
-      "verified_on": "2026-10-15",
-      "basic_verified_on": "2026-10-15",
+      "verified_on": "2026-10-22",
+      "basic_verified_on": "2026-10-22",
       "tracking_error_annual_pct": null,
-      "tracking_error_as_of": "2026-10-13",
+      "tracking_error_as_of": "2026-10-20",
       "tracking_error_note": "平台年化跟踪误差显示--，不填0",
       "top10_weight_pct": 65.27,
       "holdings_as_of": "2026-06-30",
@@ -2341,7 +2341,7 @@
       "sources": {
         "basic": {
           "url": "https://fundf10.eastmoney.com/jbgk_159529.html",
-          "retrieved_on": "2026-10-15",
+          "retrieved_on": "2026-10-22",
           "fields": {
             "基金全称": "景顺长城标普消费精选交易型开放式指数证券投资基金(QDII)",
             "基金简称": "标普消费ETF景顺",
@@ -2365,19 +2365,19 @@
         },
         "tracking": {
           "url": "https://fundf10.eastmoney.com/tsdata_159529.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         },
         "holdings": {
           "url": "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=159529&topline=10&year=2026&month=",
           "page_url": "https://fundf10.eastmoney.com/ccmx_159529.html",
-          "retrieved_on": "2026-10-15"
+          "retrieved_on": "2026-10-22"
         }
       },
       "refresh_errors": [],
-      "bid": 1.319,
-      "ask": 1.32,
-      "spread_pct": 0.07578628268284289,
-      "spread_as_of": "20261015161415",
+      "bid": 1.35,
+      "ask": 1.351,
+      "spread_pct": 0.07404664938910697,
+      "spread_as_of": "20261022161445",
       "spread_source_url": "https://qt.gtimg.cn/q=sz159529",
       "spread_note": "盘口买一/卖一中间价相对价差；仅对该报价时刻有效，委托前需重新核对"
     },
@@ -2397,5 +2397,5 @@
       "instrument_type": "stock"
     }
   },
-  "refreshed_on": "2026-10-15"
+  "refreshed_on": "2026-10-22"
 }
