@@ -1,5 +1,16 @@
 {
   "reconciled_through": null,
-  "transactions": [],
+  "transactions": [
+    {
+      "date": "20261022",
+      "side": "buy",
+      "amount": 1984,
+      "fee": 5,
+      "code": "513650",
+      "shares": 1000,
+      "price": 1.984,
+      "note": "用户确认成交价不含手续费；本次仅新增已确认交易，不推定其余日期无交易。"
+    }
+  ],
   "note": "Empty template. Populate private transaction records locally; no confirmed monthly spending is assumed."
 }
