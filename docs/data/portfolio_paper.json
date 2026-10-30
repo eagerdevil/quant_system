@@ -16,7 +16,18 @@
       "note": "8/13策略转向全球宽基ETF，清空待执行行业ETF订单（512800/515650/510880/513800/515220）"
     }
   ],
-  "_pending": [],
+  "_pending": [
+    {
+      "code": "513800",
+      "name": "日本东证指数ETF南方",
+      "action": "SELL",
+      "shares": 19400,
+      "signal_date": "20261030",
+      "retries": 0,
+      "reason": "止损触发(-5%)",
+      "order_id": "560d2bf4658e9e93b06be56d"
+    }
+  ],
   "_cooldowns": {
     "510300": "20261013"
   },
@@ -182,14 +193,14 @@
   "_receivables": [],
   "_order_events": [],
   "_execution_receipt": {
-    "date": "20261029",
+    "date": "20261030",
     "trades": [],
     "expired": [],
     "dividends": [],
     "warnings": []
   },
   "_session": {
-    "date": "20261029",
+    "date": "20261030",
     "stage": "complete"
   },
   "_research": {
@@ -234,7 +245,7 @@
     "reference_start_date": "20261016",
     "reference_initial_capital": 491055.23,
     "reference_strategy_start_assets": 491055.23,
-    "reference_as_of": "20261029"
+    "reference_as_of": "20261030"
   },
   "_research_segments": [
     {
@@ -254,20 +265,20 @@
     "name": "日本东证指数ETF南方",
     "buy_date": "20260817",
     "score_history": [
-      77,
       74,
       77,
       79,
       78,
       78,
-      75
+      75,
+      77
     ],
     "stale_date": "",
     "_last_mark": {
-      "price": 1.843,
-      "date": "20261029"
+      "price": 1.821,
+      "date": "20261030"
     },
-    "_score_date": "20261029"
+    "_score_date": "20261030"
   },
   "512890": {
     "shares": 1500,
@@ -276,18 +287,18 @@
     "buy_date": "20260831",
     "stale_date": "",
     "score_history": [
-      75,
       73,
       75,
       73,
       72,
       76,
-      71
+      71,
+      74
     ],
     "_last_mark": {
-      "price": 1.236,
-      "date": "20261029"
+      "price": 1.243,
+      "date": "20261030"
     },
-    "_score_date": "20261029"
+    "_score_date": "20261030"
   }
 }
