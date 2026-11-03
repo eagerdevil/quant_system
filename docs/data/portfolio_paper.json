@@ -210,33 +210,14 @@
     }
   ],
   "_execution_receipt": {
-    "date": "20261102",
-    "trades": [
-      {
-        "date": "20261102",
-        "code": "513800",
-        "name": "日本东证指数ETF南方",
-        "action": "SELL",
-        "price": 1.814,
-        "shares": 19400,
-        "amount": 35179.28,
-        "fee": 12.32,
-        "pnl_pct": -5.6,
-        "realized_pnl": -2088.1171,
-        "reason": "止损触发(-5%)",
-        "order_id": "560d2bf4658e9e93b06be56d",
-        "price_basis": "unadjusted",
-        "commission": 8.7979,
-        "slippage": 3.5192,
-        "requested_shares": 19400
-      }
-    ],
+    "date": "20261103",
+    "trades": [],
     "expired": [],
     "dividends": [],
     "warnings": []
   },
   "_session": {
-    "date": "20261102",
+    "date": "20261103",
     "stage": "complete"
   },
   "_research": {
@@ -281,7 +262,7 @@
     "reference_start_date": "20261016",
     "reference_initial_capital": 491055.23,
     "reference_strategy_start_assets": 491055.23,
-    "reference_as_of": "20261102"
+    "reference_as_of": "20261103"
   },
   "_research_segments": [
     {
@@ -302,18 +283,18 @@
     "buy_date": "20260831",
     "stale_date": "",
     "score_history": [
-      75,
       73,
       72,
       76,
       71,
       74,
+      76,
       76
     ],
     "_last_mark": {
-      "price": 1.237,
-      "date": "20261102"
+      "price": 1.238,
+      "date": "20261103"
     },
-    "_score_date": "20261102"
+    "_score_date": "20261103"
   }
 }
