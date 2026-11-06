@@ -16,7 +16,18 @@
       "note": "8/13策略转向全球宽基ETF，清空待执行行业ETF订单（512800/515650/510880/513800/515220）"
     }
   ],
-  "_pending": [],
+  "_pending": [
+    {
+      "code": "512890",
+      "name": "红利低波ETF华泰柏瑞",
+      "action": "BUY",
+      "shares": 77600,
+      "signal_date": "20261106",
+      "retries": 0,
+      "reason": "A_强烈买入；波动率风险预算1%（20交易日尺度），本次配置上限23.7%；评分只用于筛选",
+      "order_id": "e6d22a664fa9759e3f150333"
+    }
+  ],
   "_cooldowns": {
     "510300": "20261013",
     "513800": "20261102"
@@ -210,14 +221,14 @@
     }
   ],
   "_execution_receipt": {
-    "date": "20261105",
+    "date": "20261106",
     "trades": [],
     "expired": [],
     "dividends": [],
     "warnings": []
   },
   "_session": {
-    "date": "20261105",
+    "date": "20261106",
     "stage": "complete"
   },
   "_research": {
@@ -262,7 +273,7 @@
     "reference_start_date": "20261016",
     "reference_initial_capital": 491055.23,
     "reference_strategy_start_assets": 491055.23,
-    "reference_as_of": "20261105"
+    "reference_as_of": "20261106"
   },
   "_research_segments": [
     {
@@ -283,18 +294,18 @@
     "buy_date": "20260831",
     "stale_date": "",
     "score_history": [
-      76,
       71,
       74,
       76,
       76,
       77,
-      81
+      81,
+      78
     ],
     "_last_mark": {
-      "price": 1.221,
-      "date": "20261105"
+      "price": 1.237,
+      "date": "20261106"
     },
-    "_score_date": "20261105"
+    "_score_date": "20261106"
   }
 }
