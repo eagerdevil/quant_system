@@ -1,7 +1,7 @@
 {
   "_comment": "模拟盘虚拟账户（与 portfolio.json 完全隔离）| 初始资金10万 | 由 paper_trading.py 每日18:10自动运行",
   "_initial_capital": 500000.0,
-  "_available_cash": 487914.60895,
+  "_available_cash": 392277.94783,
   "_cash_flows": [
     {
       "date": "20260812",
@@ -16,18 +16,7 @@
       "note": "8/13策略转向全球宽基ETF，清空待执行行业ETF订单（512800/515650/510880/513800/515220）"
     }
   ],
-  "_pending": [
-    {
-      "code": "512890",
-      "name": "红利低波ETF华泰柏瑞",
-      "action": "BUY",
-      "shares": 77600,
-      "signal_date": "20261106",
-      "retries": 0,
-      "reason": "A_强烈买入；波动率风险预算1%（20交易日尺度），本次配置上限23.7%；评分只用于筛选",
-      "order_id": "e6d22a664fa9759e3f150333"
-    }
-  ],
+  "_pending": [],
   "_cooldowns": {
     "510300": "20261013",
     "513800": "20261102"
@@ -203,6 +192,22 @@
       "commission": 8.7979,
       "slippage": 3.5192,
       "requested_shares": 19400
+    },
+    {
+      "date": "20261109",
+      "code": "512890",
+      "name": "红利低波ETF华泰柏瑞",
+      "action": "BUY",
+      "price": 1.232,
+      "shares": 77600,
+      "amount": 95636.66,
+      "fee": 33.46,
+      "reason": "A_强烈买入；波动率风险预算1%（20交易日尺度），本次配置上限23.7%；评分只用于筛选",
+      "order_id": "e6d22a664fa9759e3f150333",
+      "price_basis": "unadjusted",
+      "commission": 23.9008,
+      "slippage": 9.5603,
+      "requested_shares": 77600
     }
   ],
   "_corporate_action_start": "20261014",
@@ -218,17 +223,42 @@
       "reason": "按现金与仓位约束成交；余量取消",
       "date": "20261102",
       "filled_shares": 19400
+    },
+    {
+      "order_id": "e6d22a664fa9759e3f150333",
+      "code": "512890",
+      "status": "filled",
+      "reason": "按现金与仓位约束成交；余量取消",
+      "date": "20261109",
+      "filled_shares": 77600
     }
   ],
   "_execution_receipt": {
-    "date": "20261106",
-    "trades": [],
+    "date": "20261109",
+    "trades": [
+      {
+        "date": "20261109",
+        "code": "512890",
+        "name": "红利低波ETF华泰柏瑞",
+        "action": "BUY",
+        "price": 1.232,
+        "shares": 77600,
+        "amount": 95636.66,
+        "fee": 33.46,
+        "reason": "A_强烈买入；波动率风险预算1%（20交易日尺度），本次配置上限23.7%；评分只用于筛选",
+        "order_id": "e6d22a664fa9759e3f150333",
+        "price_basis": "unadjusted",
+        "commission": 23.9008,
+        "slippage": 9.5603,
+        "requested_shares": 77600
+      }
+    ],
     "expired": [],
     "dividends": [],
     "warnings": []
   },
   "_session": {
-    "date": "20261106",
+    "date": "20261109",
     "stage": "complete"
   },
   "_research": {
@@ -273,7 +303,7 @@
     "reference_start_date": "20261016",
     "reference_initial_capital": 491055.23,
     "reference_strategy_start_assets": 491055.23,
-    "reference_as_of": "20261106"
+    "reference_as_of": "20261109"
   },
   "_research_segments": [
     {
@@ -288,24 +318,42 @@
     }
   ],
   "512890": {
-    "shares": 1500,
-    "cost": 1.184,
+    "shares": 79100,
+    "cost": 1.2310897597977244,
     "name": "红利低波ETF华泰柏瑞",
     "buy_date": "20260831",
     "stale_date": "",
     "score_history": [
-      71,
       74,
       76,
       76,
       77,
       81,
-      78
+      78,
+      76
     ],
     "_last_mark": {
-      "price": 1.237,
-      "date": "20261106"
+      "price": 1.242,
+      "date": "20261109"
     },
-    "_score_date": "20261106"
+    "_score_date": "20261109",
+    "lots": [
+      {
+        "shares": 1500,
+        "cost": 1.184,
+        "date": "20260831",
+        "note": "迁移旧持仓；旧买入费用未追溯分摊"
+      },
+      {
+        "shares": 77600,
+        "cost": 1.232,
+        "date": "20261109",
+        "order_id": "e6d22a664fa9759e3f150333",
+        "fee": 33.46112000000721
+      }
+    ],
+    "economic_cost": 1.231512782806574,
+    "stop_reference_cost": 1.2310897597977244,
+    "last_buy_date": "20261109"
   }
 }
