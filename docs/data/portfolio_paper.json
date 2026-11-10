@@ -234,31 +234,14 @@
     }
   ],
   "_execution_receipt": {
-    "date": "20261109",
-    "trades": [
-      {
-        "date": "20261109",
-        "code": "512890",
-        "name": "红利低波ETF华泰柏瑞",
-        "action": "BUY",
-        "price": 1.232,
-        "shares": 77600,
-        "amount": 95636.66,
-        "fee": 33.46,
-        "reason": "A_强烈买入；波动率风险预算1%（20交易日尺度），本次配置上限23.7%；评分只用于筛选",
-        "order_id": "e6d22a664fa9759e3f150333",
-        "price_basis": "unadjusted",
-        "commission": 23.9008,
-        "slippage": 9.5603,
-        "requested_shares": 77600
-      }
-    ],
+    "date": "20261110",
+    "trades": [],
     "expired": [],
     "dividends": [],
     "warnings": []
   },
   "_session": {
-    "date": "20261109",
+    "date": "20261110",
     "stage": "complete"
   },
   "_research": {
@@ -303,7 +286,7 @@
     "reference_start_date": "20261016",
     "reference_initial_capital": 491055.23,
     "reference_strategy_start_assets": 491055.23,
-    "reference_as_of": "20261109"
+    "reference_as_of": "20261110"
   },
   "_research_segments": [
     {
@@ -324,19 +307,19 @@
     "buy_date": "20260831",
     "stale_date": "",
     "score_history": [
-      74,
       76,
       76,
       77,
       81,
       78,
-      76
+      76,
+      77
     ],
     "_last_mark": {
-      "price": 1.242,
-      "date": "20261109"
+      "price": 1.237,
+      "date": "20261110"
     },
-    "_score_date": "20261109",
+    "_score_date": "20261110",
     "lots": [
       {
         "shares": 1500,
