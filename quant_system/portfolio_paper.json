@@ -16,7 +16,38 @@
       "note": "8/13策略转向全球宽基ETF，清空待执行行业ETF订单（512800/515650/510880/513800/515220）"
     }
   ],
-  "_pending": [],
+  "_pending": [
+    {
+      "code": "512890",
+      "name": "红利低波ETF华泰柏瑞",
+      "action": "BUY",
+      "shares": 20400,
+      "signal_date": "20261111",
+      "retries": 0,
+      "reason": "A_强烈买入；波动率风险预算1%（20交易日尺度），本次配置上限25.0%；评分只用于筛选",
+      "order_id": "6d4942cb0097e6a01263cd53"
+    },
+    {
+      "code": "511260",
+      "name": "十年国债ETF国泰",
+      "action": "BUY",
+      "shares": 500,
+      "signal_date": "20261111",
+      "retries": 0,
+      "reason": "B_买入；波动率风险预算1%（20交易日尺度），本次配置上限25.0%；评分只用于筛选",
+      "order_id": "8acc92be65c1b793c16119fd"
+    },
+    {
+      "code": "518880",
+      "name": "黄金ETF华安",
+      "action": "BUY",
+      "shares": 600,
+      "signal_date": "20261111",
+      "retries": 0,
+      "reason": "B_买入；波动率风险预算1%（20交易日尺度），本次配置上限16.7%；评分只用于筛选",
+      "order_id": "0bdd7fe940bc69d3fae094f5"
+    }
+  ],
   "_cooldowns": {
     "510300": "20261013",
     "513800": "20261102"
@@ -234,14 +265,14 @@
     }
   ],
   "_execution_receipt": {
-    "date": "20261110",
+    "date": "20261111",
     "trades": [],
     "expired": [],
     "dividends": [],
     "warnings": []
   },
   "_session": {
-    "date": "20261110",
+    "date": "20261111",
     "stage": "complete"
   },
   "_research": {
@@ -286,7 +317,7 @@
     "reference_start_date": "20261016",
     "reference_initial_capital": 491055.23,
     "reference_strategy_start_assets": 491055.23,
-    "reference_as_of": "20261110"
+    "reference_as_of": "20261111"
   },
   "_research_segments": [
     {
@@ -308,18 +339,18 @@
     "stale_date": "",
     "score_history": [
       76,
-      76,
       77,
       81,
       78,
       76,
-      77
+      77,
+      78
     ],
     "_last_mark": {
-      "price": 1.237,
-      "date": "20261110"
+      "price": 1.23,
+      "date": "20261111"
     },
-    "_score_date": "20261110",
+    "_score_date": "20261111",
     "lots": [
       {
         "shares": 1500,
