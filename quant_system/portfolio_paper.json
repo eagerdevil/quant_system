@@ -1,7 +1,7 @@
 {
   "_comment": "模拟盘虚拟账户（与 portfolio.json 完全隔离）| 初始资金10万 | 由 paper_trading.py 每日18:10自动运行",
   "_initial_capital": 500000.0,
-  "_available_cash": 392277.94783,
+  "_available_cash": 294392.72560999996,
   "_cash_flows": [
     {
       "date": "20260812",
@@ -16,38 +16,7 @@
       "note": "8/13策略转向全球宽基ETF，清空待执行行业ETF订单（512800/515650/510880/513800/515220）"
     }
   ],
-  "_pending": [
-    {
-      "code": "512890",
-      "name": "红利低波ETF华泰柏瑞",
-      "action": "BUY",
-      "shares": 20400,
-      "signal_date": "20261111",
-      "retries": 0,
-      "reason": "A_强烈买入；波动率风险预算1%（20交易日尺度），本次配置上限25.0%；评分只用于筛选",
-      "order_id": "6d4942cb0097e6a01263cd53"
-    },
-    {
-      "code": "511260",
-      "name": "十年国债ETF国泰",
-      "action": "BUY",
-      "shares": 500,
-      "signal_date": "20261111",
-      "retries": 0,
-      "reason": "B_买入；波动率风险预算1%（20交易日尺度），本次配置上限25.0%；评分只用于筛选",
-      "order_id": "8acc92be65c1b793c16119fd"
-    },
-    {
-      "code": "518880",
-      "name": "黄金ETF华安",
-      "action": "BUY",
-      "shares": 600,
-      "signal_date": "20261111",
-      "retries": 0,
-      "reason": "B_买入；波动率风险预算1%（20交易日尺度），本次配置上限16.7%；评分只用于筛选",
-      "order_id": "0bdd7fe940bc69d3fae094f5"
-    }
-  ],
+  "_pending": [],
   "_cooldowns": {
     "510300": "20261013",
     "513800": "20261102"
@@ -239,6 +208,54 @@
       "commission": 23.9008,
       "slippage": 9.5603,
       "requested_shares": 77600
+    },
+    {
+      "date": "20261112",
+      "code": "512890",
+      "name": "红利低波ETF华泰柏瑞",
+      "action": "BUY",
+      "price": 1.225,
+      "shares": 20400,
+      "amount": 24998.75,
+      "fee": 8.75,
+      "reason": "A_强烈买入；波动率风险预算1%（20交易日尺度），本次配置上限25.0%；评分只用于筛选",
+      "order_id": "6d4942cb0097e6a01263cd53",
+      "price_basis": "unadjusted",
+      "commission": 6.2475,
+      "slippage": 2.499,
+      "requested_shares": 20400
+    },
+    {
+      "date": "20261112",
+      "code": "511260",
+      "name": "十年国债ETF国泰",
+      "action": "BUY",
+      "price": 135.92,
+      "shares": 500,
+      "amount": 67983.79,
+      "fee": 23.79,
+      "reason": "B_买入；波动率风险预算1%（20交易日尺度），本次配置上限25.0%；评分只用于筛选",
+      "order_id": "8acc92be65c1b793c16119fd",
+      "price_basis": "unadjusted",
+      "commission": 16.99,
+      "slippage": 6.796,
+      "requested_shares": 500
+    },
+    {
+      "date": "20261112",
+      "code": "518880",
+      "name": "黄金ETF华安",
+      "action": "BUY",
+      "price": 8.162,
+      "shares": 600,
+      "amount": 4902.69,
+      "fee": 5.49,
+      "reason": "B_买入；波动率风险预算1%（20交易日尺度），本次配置上限16.7%；评分只用于筛选",
+      "order_id": "0bdd7fe940bc69d3fae094f5",
+      "price_basis": "unadjusted",
+      "commission": 5.0,
+      "slippage": 0.4897,
+      "requested_shares": 600
     }
   ],
   "_corporate_action_start": "20261014",
@@ -262,17 +279,90 @@
       "reason": "按现金与仓位约束成交；余量取消",
       "date": "20261109",
       "filled_shares": 77600
+    },
+    {
+      "order_id": "6d4942cb0097e6a01263cd53",
+      "code": "512890",
+      "status": "filled",
+      "reason": "按现金与仓位约束成交；余量取消",
+      "date": "20261112",
+      "filled_shares": 20400
+    },
+    {
+      "order_id": "8acc92be65c1b793c16119fd",
+      "code": "511260",
+      "status": "filled",
+      "reason": "按现金与仓位约束成交；余量取消",
+      "date": "20261112",
+      "filled_shares": 500
+    },
+    {
+      "order_id": "0bdd7fe940bc69d3fae094f5",
+      "code": "518880",
+      "status": "filled",
+      "reason": "按现金与仓位约束成交；余量取消",
+      "date": "20261112",
+      "filled_shares": 600
     }
   ],
   "_execution_receipt": {
-    "date": "20261111",
-    "trades": [],
+    "date": "20261112",
+    "trades": [
+      {
+        "date": "20261112",
+        "code": "512890",
+        "name": "红利低波ETF华泰柏瑞",
+        "action": "BUY",
+        "price": 1.225,
+        "shares": 20400,
+        "amount": 24998.75,
+        "fee": 8.75,
+        "reason": "A_强烈买入；波动率风险预算1%（20交易日尺度），本次配置上限25.0%；评分只用于筛选",
+        "order_id": "6d4942cb0097e6a01263cd53",
+        "price_basis": "unadjusted",
+        "commission": 6.2475,
+        "slippage": 2.499,
+        "requested_shares": 20400
+      },
+      {
+        "date": "20261112",
+        "code": "511260",
+        "name": "十年国债ETF国泰",
+        "action": "BUY",
+        "price": 135.92,
+        "shares": 500,
+        "amount": 67983.79,
+        "fee": 23.79,
+        "reason": "B_买入；波动率风险预算1%（20交易日尺度），本次配置上限25.0%；评分只用于筛选",
+        "order_id": "8acc92be65c1b793c16119fd",
+        "price_basis": "unadjusted",
+        "commission": 16.99,
+        "slippage": 6.796,
+        "requested_shares": 500
+      },
+      {
+        "date": "20261112",
+        "code": "518880",
+        "name": "黄金ETF华安",
+        "action": "BUY",
+        "price": 8.162,
+        "shares": 600,
+        "amount": 4902.69,
+        "fee": 5.49,
+        "reason": "B_买入；波动率风险预算1%（20交易日尺度），本次配置上限16.7%；评分只用于筛选",
+        "order_id": "0bdd7fe940bc69d3fae094f5",
+        "price_basis": "unadjusted",
+        "commission": 5.0,
+        "slippage": 0.4897,
+        "requested_shares": 600
+      }
+    ],
     "expired": [],
     "dividends": [],
     "warnings": []
   },
   "_session": {
-    "date": "20261111",
+    "date": "20261112",
     "stage": "complete"
   },
   "_research": {
@@ -317,7 +407,7 @@
     "reference_start_date": "20261016",
     "reference_initial_capital": 491055.23,
     "reference_strategy_start_assets": 491055.23,
-    "reference_as_of": "20261111"
+    "reference_as_of": "20261112"
   },
   "_research_segments": [
     {
@@ -332,25 +422,25 @@
     }
   ],
   "512890": {
-    "shares": 79100,
-    "cost": 1.2310897597977244,
+    "shares": 99500,
+    "cost": 1.2298412060301507,
     "name": "红利低波ETF华泰柏瑞",
     "buy_date": "20260831",
     "stale_date": "",
     "score_history": [
-      76,
       77,
       81,
       78,
       76,
       77,
-      78
+      78,
+      76
     ],
     "_last_mark": {
-      "price": 1.23,
-      "date": "20261111"
+      "price": 1.229,
+      "date": "20261112"
     },
-    "_score_date": "20261111",
+    "_score_date": "20261112",
     "lots": [
       {
         "shares": 1500,
@@ -364,10 +454,71 @@
         "date": "20261109",
         "order_id": "e6d22a664fa9759e3f150333",
         "fee": 33.46112000000721
+      },
+      {
+        "shares": 20400,
+        "cost": 1.225,
+        "date": "20261112",
+        "order_id": "6d4942cb0097e6a01263cd53",
+        "fee": 8.746500000001106
       }
     ],
-    "economic_cost": 1.231512782806574,
-    "stop_reference_cost": 1.2310897597977244,
-    "last_buy_date": "20261109"
+    "economic_cost": 1.2302654032160805,
+    "stop_reference_cost": 1.2298412060301507,
+    "last_buy_date": "20261112"
+  },
+  "511260": {
+    "shares": 500,
+    "cost": 135.92,
+    "name": "十年国债ETF国泰",
+    "buy_date": "20261112",
+    "economic_cost": 135.967572,
+    "stop_reference_cost": 135.92,
+    "last_buy_date": "20261112",
+    "lots": [
+      {
+        "shares": 500,
+        "cost": 135.92,
+        "date": "20261112",
+        "order_id": "8acc92be65c1b793c16119fd",
+        "fee": 23.785999999992782
+      }
+    ],
+    "_last_mark": {
+      "price": 135.969,
+      "date": "20261112"
+    },
+    "stale_date": "",
+    "score_history": [
+      66
+    ],
+    "_score_date": "20261112"
+  },
+  "518880": {
+    "shares": 600,
+    "cost": 8.162,
+    "name": "黄金ETF华安",
+    "buy_date": "20261112",
+    "economic_cost": 8.171149533333335,
+    "stop_reference_cost": 8.162,
+    "last_buy_date": "20261112",
+    "lots": [
+      {
+        "shares": 600,
+        "cost": 8.162,
+        "date": "20261112",
+        "order_id": "0bdd7fe940bc69d3fae094f5",
+        "fee": 5.489719999999579
+      }
+    ],
+    "_last_mark": {
+      "price": 8.085,
+      "date": "20261112"
+    },
+    "stale_date": "",
+    "score_history": [
+      66
+    ],
+    "_score_date": "20261112"
   }
 }
