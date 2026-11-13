@@ -16,7 +16,18 @@
       "note": "8/13策略转向全球宽基ETF，清空待执行行业ETF订单（512800/515650/510880/513800/515220）"
     }
   ],
-  "_pending": [],
+  "_pending": [
+    {
+      "code": "512890",
+      "name": "红利低波ETF华泰柏瑞",
+      "action": "SELL",
+      "shares": 16600,
+      "signal_date": "20261113",
+      "retries": 0,
+      "reason": "目标仓位收敛(40%→20%, 超额98396元, 本日减32799元)",
+      "order_id": "1185633e7ad90f692b94a3a2"
+    }
+  ],
   "_cooldowns": {
     "510300": "20261013",
     "513800": "20261102"
@@ -306,63 +317,14 @@
     }
   ],
   "_execution_receipt": {
-    "date": "20261112",
-    "trades": [
-      {
-        "date": "20261112",
-        "code": "512890",
-        "name": "红利低波ETF华泰柏瑞",
-        "action": "BUY",
-        "price": 1.225,
-        "shares": 20400,
-        "amount": 24998.75,
-        "fee": 8.75,
-        "reason": "A_强烈买入；波动率风险预算1%（20交易日尺度），本次配置上限25.0%；评分只用于筛选",
-        "order_id": "6d4942cb0097e6a01263cd53",
-        "price_basis": "unadjusted",
-        "commission": 6.2475,
-        "slippage": 2.499,
-        "requested_shares": 20400
-      },
-      {
-        "date": "20261112",
-        "code": "511260",
-        "name": "十年国债ETF国泰",
-        "action": "BUY",
-        "price": 135.92,
-        "shares": 500,
-        "amount": 67983.79,
-        "fee": 23.79,
-        "reason": "B_买入；波动率风险预算1%（20交易日尺度），本次配置上限25.0%；评分只用于筛选",
-        "order_id": "8acc92be65c1b793c16119fd",
-        "price_basis": "unadjusted",
-        "commission": 16.99,
-        "slippage": 6.796,
-        "requested_shares": 500
-      },
-      {
-        "date": "20261112",
-        "code": "518880",
-        "name": "黄金ETF华安",
-        "action": "BUY",
-        "price": 8.162,
-        "shares": 600,
-        "amount": 4902.69,
-        "fee": 5.49,
-        "reason": "B_买入；波动率风险预算1%（20交易日尺度），本次配置上限16.7%；评分只用于筛选",
-        "order_id": "0bdd7fe940bc69d3fae094f5",
-        "price_basis": "unadjusted",
-        "commission": 5.0,
-        "slippage": 0.4897,
-        "requested_shares": 600
-      }
-    ],
+    "date": "20261113",
+    "trades": [],
     "expired": [],
     "dividends": [],
     "warnings": []
   },
   "_session": {
-    "date": "20261112",
+    "date": "20261113",
     "stage": "complete"
   },
   "_research": {
@@ -407,7 +369,7 @@
     "reference_start_date": "20261016",
     "reference_initial_capital": 491055.23,
     "reference_strategy_start_assets": 491055.23,
-    "reference_as_of": "20261112"
+    "reference_as_of": "20261113"
   },
   "_research_segments": [
     {
@@ -428,19 +390,19 @@
     "buy_date": "20260831",
     "stale_date": "",
     "score_history": [
-      77,
       81,
       78,
       76,
       77,
       78,
-      76
+      76,
+      74
     ],
     "_last_mark": {
-      "price": 1.229,
-      "date": "20261112"
+      "price": 1.245,
+      "date": "20261113"
     },
-    "_score_date": "20261112",
+    "_score_date": "20261113",
     "lots": [
       {
         "shares": 1500,
@@ -485,14 +447,15 @@
       }
     ],
     "_last_mark": {
-      "price": 135.969,
-      "date": "20261112"
+      "price": 135.886,
+      "date": "20261113"
     },
     "stale_date": "",
     "score_history": [
-      66
+      66,
+      67
     ],
-    "_score_date": "20261112"
+    "_score_date": "20261113"
   },
   "518880": {
     "shares": 600,
@@ -512,13 +475,14 @@
       }
     ],
     "_last_mark": {
-      "price": 8.085,
-      "date": "20261112"
+      "price": 7.954,
+      "date": "20261113"
     },
     "stale_date": "",
     "score_history": [
-      66
+      66,
+      67
     ],
-    "_score_date": "20261112"
+    "_score_date": "20261113"
   }
 }
