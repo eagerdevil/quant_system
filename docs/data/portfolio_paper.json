@@ -1,7 +1,7 @@
 {
   "_comment": "模拟盘虚拟账户（与 portfolio.json 完全隔离）| 初始资金10万 | 由 paper_trading.py 每日18:10自动运行",
   "_initial_capital": 500000.0,
-  "_available_cash": 350904.51755,
+  "_available_cash": 357861.82125,
   "_cash_flows": [
     {
       "date": "20260812",
@@ -18,14 +18,24 @@
   ],
   "_pending": [
     {
+      "code": "518880",
+      "name": "黄金ETF华安",
+      "action": "SELL",
+      "shares": 600,
+      "signal_date": "20261120",
+      "retries": 0,
+      "reason": "止损触发(-8%)",
+      "order_id": "ab395b3bd9c4c402be605d98"
+    },
+    {
       "code": "512890",
       "name": "红利低波ETF华泰柏瑞",
       "action": "SELL",
-      "shares": 5500,
-      "signal_date": "20261119",
+      "shares": 4300,
+      "signal_date": "20261120",
       "retries": 0,
-      "reason": "目标仓位收敛(29%→20%, 超额43101元, 本日减14367元)",
-      "order_id": "756b5e9e458df0fb6cf02926"
+      "reason": "目标仓位收敛(27%→20%, 超额36155元, 本日减12052元)",
+      "order_id": "e2ec26bd58d63a58941bc402"
     }
   ],
   "_cooldowns": {
@@ -339,6 +349,24 @@
       "commission": 5.0,
       "slippage": 0.8883,
       "requested_shares": 7000
+    },
+    {
+      "date": "20261120",
+      "code": "512890",
+      "name": "红利低波ETF华泰柏瑞",
+      "action": "SELL",
+      "price": 1.266,
+      "shares": 5500,
+      "amount": 6957.3,
+      "fee": 5.7,
+      "pnl_pct": 2.82,
+      "realized_pnl": 190.844,
+      "reason": "目标仓位收敛(29%→20%, 超额43101元, 本日减14367元)",
+      "order_id": "756b5e9e458df0fb6cf02926",
+      "price_basis": "unadjusted",
+      "commission": 5.0,
+      "slippage": 0.6963,
+      "requested_shares": 5500
     }
   ],
   "_corporate_action_start": "20261014",
@@ -419,38 +447,44 @@
       "reason": "按现金与仓位约束成交；余量取消",
       "date": "20261119",
       "filled_shares": 7000
+    },
+    {
+      "order_id": "756b5e9e458df0fb6cf02926",
+      "code": "512890",
+      "status": "filled",
+      "reason": "按现金与仓位约束成交；余量取消",
+      "date": "20261120",
+      "filled_shares": 5500
     }
   ],
   "_execution_receipt": {
-    "date": "20261119",
+    "date": "20261120",
     "trades": [
       {
-        "date": "20261119",
+        "date": "20261120",
         "code": "512890",
         "name": "红利低波ETF华泰柏瑞",
         "action": "SELL",
-        "price": 1.269,
-        "shares": 7000,
-        "amount": 8877.11,
-        "fee": 5.89,
-        "pnl_pct": 3.08,
-        "realized_pnl": 265.2539,
-        "reason": "目标仓位收敛(31%→20%, 超额52100元, 本日减17367元)",
-        "order_id": "a874bab6b4656e6c4a2388f0",
+        "price": 1.266,
+        "shares": 5500,
+        "amount": 6957.3,
+        "fee": 5.7,
+        "pnl_pct": 2.82,
+        "realized_pnl": 190.844,
+        "reason": "目标仓位收敛(29%→20%, 超额43101元, 本日减14367元)",
+        "order_id": "756b5e9e458df0fb6cf02926",
         "price_basis": "unadjusted",
         "commission": 5.0,
-        "slippage": 0.8883,
-        "requested_shares": 7000
+        "slippage": 0.6963,
+        "requested_shares": 5500
       }
     ],
     "expired": [],
     "dividends": [],
-    "warnings": [
-      "511260分红/拆分未核验；账户收益暂定"
-    ]
+    "warnings": []
   },
   "_session": {
-    "date": "20261119",
+    "date": "20261120",
     "stage": "complete"
   },
   "_research": {
@@ -496,7 +530,7 @@
     "reference_start_date": "20261016",
     "reference_initial_capital": 491055.23,
     "reference_strategy_start_assets": 491055.23,
-    "reference_as_of": "20261119"
+    "reference_as_of": "20261120"
   },
   "_research_segments": [
     {
@@ -511,41 +545,41 @@
     }
   ],
   "512890": {
-    "shares": 54500,
+    "shares": 49000,
     "cost": 1.2298412060301507,
     "name": "红利低波ETF华泰柏瑞",
     "buy_date": "20260831",
     "stale_date": "",
     "score_history": [
-      78,
       76,
       74,
       74,
       74,
       75,
+      76,
       76
     ],
     "_last_mark": {
-      "price": 1.266,
-      "date": "20261119"
+      "price": 1.271,
+      "date": "20261120"
     },
-    "_score_date": "20261119",
+    "_score_date": "20261120",
     "lots": [
       {
-        "shares": 821.608040201005,
+        "shares": 738.6934673366834,
         "cost": 1.184,
         "date": "20260831",
         "note": "迁移旧持仓；旧买入费用未追溯分摊"
       },
       {
-        "shares": 42504.52261306533,
+        "shares": 38215.07537688443,
         "cost": 1.232,
         "date": "20261109",
         "order_id": "e6d22a664fa9759e3f150333",
         "fee": 33.46112000000721
       },
       {
-        "shares": 11173.869346733669,
+        "shares": 10046.231155778896,
         "cost": 1.225,
         "date": "20261112",
         "order_id": "6d4942cb0097e6a01263cd53",
@@ -574,8 +608,8 @@
       }
     ],
     "_last_mark": {
-      "price": 136.077,
-      "date": "20261119"
+      "price": 136.023,
+      "date": "20261120"
     },
     "stale_date": "",
     "score_history": [
@@ -584,9 +618,10 @@
       73,
       69,
       69,
-      66
+      66,
+      70
     ],
-    "_score_date": "20261119"
+    "_score_date": "20261120"
   },
   "518880": {
     "shares": 600,
@@ -606,8 +641,8 @@
       }
     ],
     "_last_mark": {
-      "price": 7.612,
-      "date": "20261119"
+      "price": 7.282,
+      "date": "20261120"
     },
     "stale_date": "",
     "score_history": [
@@ -616,8 +651,9 @@
       63,
       64,
       63,
-      61
+      61,
+      57
     ],
-    "_score_date": "20261119"
+    "_score_date": "20261120"
   }
 }
