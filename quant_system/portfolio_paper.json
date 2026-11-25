@@ -516,33 +516,14 @@
     }
   ],
   "_execution_receipt": {
-    "date": "20261124",
-    "trades": [
-      {
-        "date": "20261124",
-        "code": "512890",
-        "name": "红利低波ETF华泰柏瑞",
-        "action": "SELL",
-        "price": 1.249,
-        "shares": 3000,
-        "amount": 3741.63,
-        "fee": 5.37,
-        "pnl_pct": 1.38,
-        "realized_pnl": 50.8291,
-        "reason": "目标仓位收敛(25%→20%, 超额25750元, 本日减8583元)",
-        "order_id": "aa97bf65f683153247f3a022",
-        "price_basis": "unadjusted",
-        "commission": 5.0,
-        "slippage": 0.3747,
-        "requested_shares": 3000
-      }
-    ],
+    "date": "20261125",
+    "trades": [],
     "expired": [],
     "dividends": [],
     "warnings": []
   },
   "_session": {
-    "date": "20261124",
+    "date": "20261125",
     "stage": "complete"
   },
   "_research": {
@@ -588,7 +569,7 @@
     "reference_start_date": "20261016",
     "reference_initial_capital": 491055.23,
     "reference_strategy_start_assets": 491055.23,
-    "reference_as_of": "20261124"
+    "reference_as_of": "20261125"
   },
   "_research_segments": [
     {
@@ -610,18 +591,18 @@
     "stale_date": "",
     "score_history": [
       74,
-      74,
       75,
       76,
       76,
       80,
-      74
+      74,
+      73
     ],
     "_last_mark": {
       "price": 1.255,
-      "date": "20261124"
+      "date": "20261125"
     },
-    "_score_date": "20261124",
+    "_score_date": "20261125",
     "lots": [
       {
         "shares": 628.643216080402,
@@ -666,19 +647,19 @@
       }
     ],
     "_last_mark": {
-      "price": 136.038,
-      "date": "20261124"
+      "price": 135.83,
+      "date": "20261125"
     },
     "stale_date": "",
     "score_history": [
-      73,
       69,
       69,
       66,
       70,
       72,
-      67
+      67,
+      71
     ],
-    "_score_date": "20261124"
+    "_score_date": "20261125"
   }
 }
