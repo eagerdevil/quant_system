@@ -516,14 +516,14 @@
     }
   ],
   "_execution_receipt": {
-    "date": "20261125",
+    "date": "20261126",
     "trades": [],
     "expired": [],
     "dividends": [],
     "warnings": []
   },
   "_session": {
-    "date": "20261125",
+    "date": "20261126",
     "stage": "complete"
   },
   "_research": {
@@ -569,7 +569,7 @@
     "reference_start_date": "20261016",
     "reference_initial_capital": 491055.23,
     "reference_strategy_start_assets": 491055.23,
-    "reference_as_of": "20261125"
+    "reference_as_of": "20261126"
   },
   "_research_segments": [
     {
@@ -590,19 +590,19 @@
     "buy_date": "20260831",
     "stale_date": "",
     "score_history": [
-      74,
       75,
       76,
       76,
       80,
       74,
-      73
+      73,
+      74
     ],
     "_last_mark": {
-      "price": 1.255,
-      "date": "20261125"
+      "price": 1.261,
+      "date": "20261126"
     },
-    "_score_date": "20261125",
+    "_score_date": "20261126",
     "lots": [
       {
         "shares": 628.643216080402,
@@ -647,19 +647,19 @@
       }
     ],
     "_last_mark": {
-      "price": 135.83,
-      "date": "20261125"
+      "price": 135.926,
+      "date": "20261126"
     },
     "stale_date": "",
     "score_history": [
-      69,
       69,
       66,
       70,
       72,
       67,
-      71
+      71,
+      69
     ],
-    "_score_date": "20261125"
+    "_score_date": "20261126"
   }
 }
